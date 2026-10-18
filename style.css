@@ -115,3 +115,60 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .fx{position:fixed;left:50%;top:40%;font-size:34px;font-weight:800;color:#c9a45c;pointer-events:none;animation:fxu 1.2s ease-out forwards;z-index:60}@keyframes fxu{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,-90px)}}
 .calm .stg svg,.calm .stg,.calm .a-idle,.calm .a-sp,.calm .arm-r,.calm .cl,.calm .bd,.calm .sun,.calm .busin,.calm .dot,.calm .wd{animation:none!important;transition:none!important}
 @media(prefers-reduced-motion:reduce){.stg svg,.stg,.a-idle,.a-sp,.arm-r,.cl,.bd,.sun,.busin,.dot{animation:none!important}}
+
+/* ---------- Auth page (sign in / create account / reset): one form, a blade sweeps across when the mode changes ---------- */
+.auth.au{max-width:430px;margin:4vh auto 0;padding:0 2px}
+.au__card{background:var(--card);border-radius:26px;box-shadow:0 26px 60px -26px rgba(11,74,168,.45),0 0 0 1px var(--line)}
+.au__stage{position:relative;overflow:hidden;border-radius:26px;padding-bottom:20px}
+.au__stage::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:linear-gradient(90deg,#0b4aa8,#3b82e8,#c9a45c)}
+.au__head{padding:28px 26px 4px}
+.au__logo{display:block;width:46px;height:46px;object-fit:contain;margin-bottom:14px}
+.au__title{margin:0;font-size:2rem;line-height:1.08;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.au__title em{font-style:italic;color:var(--ac)}
+.au__sub{margin:8px 0 0;color:var(--mut);font-size:.95rem}
+.au__pad{padding:0 26px}
+.au__form{padding:14px 26px 0;margin:0}
+.au__row{margin:0 0 12px}
+.au__row label{display:block;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin:0 0 5px 2px}
+.au input{width:100%;min-height:50px;margin:0;padding:0 14px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);font-size:16px;-webkit-appearance:none;appearance:none;-webkit-user-select:text;user-select:text;touch-action:manipulation;transition:border-color .2s,box-shadow .2s,background .2s}
+.au input:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 4px rgba(11,74,168,.16);background:var(--card)}
+.au__pw{position:relative}.au__pw input{padding-right:64px}
+.au__eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--ac);font:inherit;font-size:.85rem;font-weight:700;padding:10px;cursor:pointer;min-height:40px}
+.au__meter{display:flex;gap:5px;margin:8px 2px 0}.au__meter i{flex:1;height:5px;border-radius:5px;background:var(--line);transition:background .25s}
+.au__meter[data-s="0"] i:nth-child(1),.au__meter[data-s="1"] i:nth-child(1){background:#d1483f}
+.au__meter[data-s="2"] i:nth-child(-n+2){background:#e0a030}
+.au__meter[data-s="3"] i:nth-child(-n+3){background:#3b82e8}
+.au__meter[data-s="4"] i{background:#0f9d6b}
+.au__hint{margin:6px 2px 0;font-size:.82rem;color:var(--mut)}
+.au .msg{min-height:1.3em;margin:2px 2px 8px;font-size:.9rem}
+.au__go{position:relative;width:100%;min-height:54px;border:0;border-radius:15px;background:linear-gradient(135deg,#0b4aa8,#0a3a85 60%,#06183a);color:#fff;font:inherit;font-size:1.05rem;font-weight:800;letter-spacing:.01em;cursor:pointer;box-shadow:0 12px 24px -12px rgba(11,74,168,.8);transition:transform .15s,box-shadow .15s,opacity .2s}
+.au__go:hover{transform:translateY(-1px)}.au__go:active{transform:translateY(1px)}.au__go:disabled{opacity:.75;cursor:progress}
+.au__spin{position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border:3px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;opacity:0;animation:auspin .7s linear infinite}
+.au__go.is-busy span{opacity:0}.au__go.is-busy .au__spin{opacity:1}
+@keyframes auspin{to{transform:rotate(360deg)}}
+.au__links{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 14px;margin-top:10px;font-size:.9rem}
+.au .lnk{padding:6px 0;font-size:.9rem}
+.au .lnk.pulse{animation:aupulse 1s ease 3;font-weight:700}
+@keyframes aupulse{50%{transform:scale(1.08);color:var(--ac2)}}
+.au__sw{margin:12px 0 0;text-align:center;color:var(--mut);font-size:.92rem}
+.au__foot{padding:6px 26px 0;text-align:center}
+.au__foot .btn2,.au__soc{width:100%;margin:6px 0}
+.au__soc{min-height:46px;border:1.5px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.au__foot .mut{font-size:.82rem}
+/* mode switching: only the elements that belong to the current mode are shown */
+.au[data-mode=in] [data-m]:not([data-m~=in]),.au[data-mode=up] [data-m]:not([data-m~=up]),.au[data-mode=fg] [data-m]:not([data-m~=fg]){display:none}
+.au__card.shake{animation:aushake .45s}
+@keyframes aushake{20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+/* the blade: ONE skewed rectangle, ONE translateX; its inner layer undoes both so the headline stays put and is sliced by the blade */
+.au__band{--bw:600px;--w:380px;--sweep:-3000px;--rake:-12deg;position:absolute;top:0;bottom:0;left:0;width:var(--bw);overflow:hidden;z-index:6;pointer-events:none;visibility:hidden;background:linear-gradient(115deg,#0b4aa8 0%,#093a86 55%,#06183a 100%);transform:skewX(var(--rake)) translateX(var(--sweep));will-change:transform}
+.au__band.go{visibility:visible}
+.band__inner{position:absolute;top:0;bottom:0;left:0;width:var(--w);transform:translateX(calc(-1 * var(--sweep))) skewX(calc(-1 * var(--rake)))}
+.band__page{position:absolute;inset:0}
+.au__head--band .au__title{color:#fff}.au__head--band .au__title em{color:#e7c987}.au__head--band .au__sub{color:#cfe0fb}
+.au__head--band .au__logo{filter:brightness(0) invert(1)}
+.band__edge{position:absolute;top:0;bottom:0;width:3px;background:linear-gradient(#f3d98f,#c9a45c);box-shadow:0 0 16px 3px rgba(231,201,135,.65)}
+.band__edge--lead{right:0}.band__edge--trail{left:0;opacity:.7}
+[data-d] .au__go{background:linear-gradient(135deg,#1d63d6,#0b4aa8)}
+[data-d] .au input:focus{box-shadow:0 0 0 4px rgba(217,184,114,.2)}
+.calm .au__band{display:none}
+@media(max-width:380px){.au__title{font-size:1.7rem}.au__head,.au__form,.au__foot{padding-left:20px;padding-right:20px}}

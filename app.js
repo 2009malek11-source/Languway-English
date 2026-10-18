@@ -129,14 +129,14 @@ async function signOut(){if(sb&&SESS){clearTimeout(pushT);await push();if(SYNC!=
 async function delAcct(){if(!sb||!SESS)return alert('Connect to the internet and sign in first.');
  if(!confirm('Delete your account and all cloud data? This cannot be undone.')||!confirm('Are you sure? Your progress will be lost.'))return;
  try{const r=await sb.rpc('delete_my_account');if(r.error)throw r.error;localStorage.removeItem(KEY());try{await sb.auth.signOut({scope:'local'})}catch(e){}forget();alert('Your account was deleted.')}catch(e){alert('Could not delete the account: '+friendly(e))}}
-function msg(t,ok){AMSG=t;const e=$('#ae');if(e){e.textContent=t;e.className='msg '+(ok?'ok':'bad')}}
-function busy(on){const b=document.querySelector('.auth .btn');if(b)b.disabled=on}
+function msg(t,ok){AMSG=t;const e=$('#ae');if(e){e.textContent=t;e.className='msg '+(ok?'ok':'bad')}if(t&&!ok)try{const c=$('#auc');if(c&&c.classList){c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake')}}catch(x){}}
+function busy(on){const b=$('#ago');if(b){b.disabled=on;if(b.classList)b.classList.toggle('is-busy',on)}}
 /* Sign in, retrying a few times right after sign-up (the new account can take a moment to be readable everywhere). */
 async function signInRetry(em,pw,n){let r;for(let i=0;i<n;i++){r=await sb.auth.signInWithPassword({email:em,password:pw});if(!r.error||r.error.code!='invalid_credentials')return r;if(i<n-1)await new Promise(z=>setTimeout(z,600))}return r}
 async function cauth(){const g=id=>($(id)||{}).value||'',em=g('#au').trim(),pw=g('#ap'),nm=g('#an').trim();
  if(!/^\S+@\S+\.\S+$/.test(em))return msg('Enter a valid email address.');
  busy(true);try{
-  if(AM=='forgot'){const r=await sb.auth.resetPasswordForEmail(em,{redirectTo:RED()});if(r.error)throw r.error;return msg('If this email has an account, a reset link is on its way.',1)}
+  if(AM=='fg'){const r=await sb.auth.resetPasswordForEmail(em,{redirectTo:RED()});if(r.error)throw r.error;return msg('If this email has an account, a reset link is on its way.',1)}
   if(pw.length<8)return msg('Password must have at least 8 characters.');
   const em2=em.toLowerCase();let r;
   if(AM=='up'){
@@ -148,7 +148,7 @@ async function cauth(){const g=id=>($(id)||{}).value||'',em=g('#au').trim(),pw=g
    if(code=='weak_password')throw{code:'weak_password'};
    if(!code||code=='exists'){
     r=await signInRetry(em2,pw,code=='exists'?1:4);
-    if(r.error){if(code=='exists'){AM='in';draw.force=1;draw();draw.force=0;return msg('This email already has an account, and this is not its password. Enter the password you chose when you created it, or tap “Forgot password?”.')}throw r.error}
+    if(r.error){if(code=='exists'){auGo('in');const pe=$('#ap');if(pe)pe.value='';auHint();return msg('This email already has an account, and this is not its password. Enter the password you chose when you created it, or tap “Forgot password?”.')}throw r.error}
    }else{
     /* 2) Fallback: normal sign-up (needs “Confirm email” to be off in the cloud settings). */
     r=await sb.auth.signUp({email:em2,password:pw,options:{data:{name:nm.slice(0,30)},emailRedirectTo:RED()}});
@@ -156,11 +156,11 @@ async function cauth(){const g=id=>($(id)||{}).value||'',em=g('#au').trim(),pw=g
     if(r.error||dup||!r.data||!r.data.session){
      const t=await sb.auth.signInWithPassword({email:em2,password:pw});
      if(!t.error&&t.data&&t.data.session)r=t;
-     else if(dup){AM='in';RS='';return msg('This email already has an account. Sign in with your password, or use “Forgot password?”.')}
+     else if(dup){auGo('in');auHint();return msg('This email already has an account. Sign in with your password, or use “Forgot password?”.')}
      else if(r.error)throw r.error;
-     else{AM='in';RS=em2;draw.force=1;draw();draw.force=0;return msg('Account created. Please confirm your email: open the link we sent (check Spam), then sign in.',1)}}}
+     else{auGo('in');showResend(em2);return msg('Account created. Please confirm your email: open the link we sent (check Spam), then sign in.',1)}}}
   }
-  else{r=await sb.auth.signInWithPassword({email:em2,password:pw});if(r.error){if(r.error.code=='email_not_confirmed'||/not confirmed/i.test(r.error.message||''))RS=em2;throw r.error}}
+  else{r=await sb.auth.signInWithPassword({email:em2,password:pw});if(r.error){if(r.error.code=='email_not_confirmed'||/not confirmed/i.test(r.error.message||''))showResend(em2);throw r.error}}
   await onSignedIn(r.data.session)
  }catch(e){msg(friendly(e))}finally{busy(false)}}
 async function mlink(){const em=(($('#au')||{}).value||'').trim();if(!/^\S+@\S+\.\S+$/.test(em))return msg('Enter your email first.');
@@ -169,23 +169,52 @@ async function oauth(p){if(location.protocol=='file:')return msg('Social sign-in
  try{const r=await sb.auth.signInWithOAuth({provider:p,options:{redirectTo:RED()}});if(r.error)throw r.error}catch(e){msg(friendly(e))}}
 async function newPass(){const pw=(($('#ap')||{}).value)||'';if(pw.length<8)return msg('Password must have at least 8 characters.');
  try{const r=await sb.auth.updateUser({password:pw});if(r.error)throw r.error;REC=0;AMSG='';if(SESS)await onSignedIn(SESS);else draw()}catch(e){msg(friendly(e))}}
-function vCloudAuth(){
- if(REC)return`<div class="card auth"><h1>New password</h1><form onsubmit="newPass();return false"><input id=ap type=password aria-label="New password" placeholder="New password (8+ characters)" autocomplete=new-password enterkeyhint=go><button type=submit hidden></button></form><p id=ae class="msg bad" role=status>${esc(AMSG)}</p><button class=btn onclick="newPass()">Save password</button></div>`;
- const up=AM=='up',fg=AM=='forgot',Pv=CFG.providers||{},bt=(p,l)=>Pv[p]?`<button class="btn2 oauth" onclick="oauth('${p}')">Continue with ${l}</button>`:'';
- const soc=bt('google','Google')+bt('apple','Apple (iCloud)');
- return`<div class="card auth"><h1>LanguWay English</h1><p class=mut>${fg?'Reset your password':up?'Create your account':'Sign in to continue'}</p>
- ${location.protocol=='file:'?'<p class="msg bad">Cloud sign-in works only when the site is hosted on https.</p>':''}
- <form onsubmit="cauth();return false" novalidate>${up?'<input id=an aria-label="Your name" placeholder="Your name" maxlength=30 autocomplete=name enterkeyhint=next>':''}
- <input id=au type=email inputmode=email aria-label=Email placeholder=Email autocomplete=email autocapitalize=none autocorrect=off spellcheck=false enterkeyhint=next>
- ${fg?'':`<input id=ap type=password aria-label=Password placeholder="Password (8+ characters)" autocomplete="${up?'new-password':'current-password'}" enterkeyhint=go>`}<button type=submit hidden></button></form>
- <p id=ae class="msg bad" role=status>${esc(AMSG)}</p>
- <button class=btn onclick="cauth()">${fg?'Send reset link':up?'Create account':'Sign in'}</button>
- ${fg?`<button class=btn2 onclick="AM='in';AMSG='';draw()">Back to sign in</button>`:`<button class=btn2 onclick="AM='${up?'in':'up'}';AMSG='';draw()">${up?'I have an account':'Create account'}</button>`}
- ${RS&&!up&&!fg?'<br><button class=lnk type=button onclick="resendMail()">Resend confirmation email</button>':''}${!fg&&!up?`<br><button class=lnk onclick="AM='forgot';AMSG='';draw()">Forgot password?</button><br><button class=lnk onclick="mlink()">Email me a sign-in link instead</button>`:''}
- ${soc&&!fg?`<div class=sep>or</div>${soc}`:''}
- <p class=mut>Your progress is saved to your account and follows you to every device.</p>${fg?'':GBTN()}</div>`}
+/* ---------- Auth page: ONE form with three modes (in / up / fg). Changing mode sweeps a blade across the card and swaps the mode while the blade covers it. ---------- */
+const AUT={in:['Welcome <em>back.</em>','Sign in to keep learning.'],up:['Start <em>learning.</em>','Create your free account in a few seconds.'],fg:['Reset <em>password.</em>','Enter your email and we will send you a link.']};
+let AUB=0;
+function auSet(m){AM=m;const r=$('#authx');if(!r||!r.dataset)return;r.dataset.mode=m;const t=AUT[m]||AUT.in,h=$('#aut'),s=$('#aus2');if(h)h.innerHTML=t[0];if(s)s.textContent=t[1];
+ const p=$('#ap');if(p){p.setAttribute('autocomplete',m=='up'?'new-password':'current-password');p.type='password';const e=$('#aey');if(e){e.textContent='Show';e.setAttribute('aria-pressed','false')}auStr(p.value)}}
+function auGo(m,clr){if(AUB||m==AM)return;if(clr)msg('');
+ const r=$('#authx'),st=$('#auss'),b=$('#aub');
+ if(!r||!st||!st.getBoundingClientRect||!b||!window.requestAnimationFrame||document.documentElement.classList.contains('calm')||(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)){auSet(m);return}
+ const t=AUT[m],W=st.getBoundingClientRect().width,bw=Math.round(W*1.7+80),cov=-(bw-W)/2,from=-bw,D=950;
+ $('#abt').innerHTML=t[0];$('#abs').textContent=t[1];b.style.setProperty('--bw',bw+'px');b.style.setProperty('--w',W+'px');
+ const set=v=>b.style.setProperty('--sweep',v+'px'),ez=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+ let sw=0,t0=0,dn=0;AUB=1;set(from);b.classList.add('go');
+ const fin=()=>{if(dn)return;dn=1;if(!sw){sw=1;auSet(m)}b.classList.remove('go');AUB=0;
+  try{if(matchMedia('(pointer:fine)').matches){const f=m=='up'?'#an':'#au';const e=$(f);if(e&&!e.value)e.focus();else if(m!='fg'&&$('#ap'))$('#ap').focus()}}catch(x){}};
+ const step=ts=>{if(dn)return;if(!t0)t0=ts;const p=Math.min(1,(ts-t0)/D),v=from+(W-from)*ez(p);set(v);if(!sw&&v>=cov){sw=1;auSet(m)}if(p<1)requestAnimationFrame(step);else fin()};
+ requestAnimationFrame(step);setTimeout(fin,D+600)}
+function auEye(){const p=$('#ap'),b=$('#aey');if(!p)return;const s=p.type=='password';p.type=s?'text':'password';if(b){b.textContent=s?'Hide':'Show';b.setAttribute('aria-pressed',s?'true':'false')}}
+function auStr(v){const m=$('#aum');if(!m||!m.dataset)return;v=v||'';let n=0;if(v.length>=8)n++;if(v.length>=12)n++;if(/[a-z]/i.test(v)&&/\d/.test(v))n++;if((/[A-Z]/.test(v)&&/[a-z]/.test(v))||/[^A-Za-z0-9]/.test(v))n++;
+ m.dataset.s=!v?'':v.length<8?'0':String(Math.max(1,n));const h=$('#auh');if(h)h.textContent=!v?'Use 8 or more characters, with letters and numbers.':v.length<8?'Use at least 8 characters ('+v.length+'/8).':['','Weak. Add letters and numbers.','Okay. Add letters and numbers.','Good.','Strong.'][Math.max(1,n)]}
+function auHint(){try{const f=$('#afg');if(f&&f.classList){f.classList.remove('pulse');void f.offsetWidth;f.classList.add('pulse')}}catch(e){}}
+function showResend(em){RS=em;const x=$('#ars');if(x)x.hidden=false}
+function authView(L){
+ if(REC&&!L)return`<div class="auth au" id=authx data-mode=in><div class=au__card id=auc><div class=au__stage><div class=au__head><img class=au__logo src=logo-light.png alt="" width=46 height=46><h3 class=au__title>New <em>password.</em></h3><p class=au__sub>Choose a new password for your account.</p></div><form class=au__form onsubmit="newPass();return false" novalidate><div class=au__row><label for=ap>New password</label><input id=ap type=password autocomplete=new-password enterkeyhint=go placeholder="8+ characters"></div><p id=ae class="msg bad" role=alert>${esc(AMSG)}</p><button class=au__go id=ago type=submit>Save password<i class=au__spin></i></button></form></div></div></div>`;
+ const Pv=CFG.providers||{},bt=(p,l)=>!L&&Pv[p]?`<button type=button class=au__soc onclick="oauth('${p}')">Continue with ${l}</button>`:'';
+ const soc=bt('google','Google')+bt('apple','Apple (iCloud)'),m=L?(AM=='up'?'up':'in'):(AM=='up'||AM=='fg'?AM:'in'),t=AUT[m];
+ return`<div class="auth au" id=authx data-mode="${m}"><div class=au__card id=auc><div class=au__stage id=auss>
+ <div class=au__head><img class=au__logo src=logo-light.png alt="" width=46 height=46><h3 class=au__title id=aut>${t[0]}</h3><p class=au__sub id=aus2>${t[1]}</p></div>
+ ${!L&&location.protocol=='file:'?'<p class="msg bad au__pad">Cloud sign-in works only when the site is hosted on https.</p>':''}
+ <form class=au__form onsubmit="${L?'localAuth':'cauth'}();return false" novalidate>
+  <div class=au__row data-m=up><label for=an>Your name</label><input id=an maxlength=30 autocomplete=name enterkeyhint=next placeholder="What should we call you?"></div>
+  <div class=au__row><label for=au>${L?'Username':'Email'}</label><input id=au ${L?'maxlength=20':'type=email inputmode=email'} autocomplete=${L?'username':'email'} autocapitalize=none autocorrect=off spellcheck=false enterkeyhint=next placeholder="${L?'letters, numbers, _':'you@example.com'}"></div>
+  <div class=au__row data-m="in up"><label for=ap>Password</label><div class=au__pw><input id=ap type=password ${L?'':'oninput="auStr(this.value)"'} autocomplete="${m=='up'?'new-password':'current-password'}" enterkeyhint=go placeholder="${L?'6+':'8+'} characters"><button type=button class=au__eye id=aey onclick="auEye()" aria-pressed=false aria-label="Show or hide password">Show</button></div>
+   ${L?'':'<div class=au__meter id=aum data-m=up><i></i><i></i><i></i><i></i></div><p class="au__hint" id=auh data-m=up>Use 8 or more characters, with letters and numbers.</p>'}</div>
+  <p id=ae class="msg bad" role=alert aria-live=polite>${esc(AMSG)}</p>
+  <button class=au__go id=ago type=submit><span data-m=in>Sign in</span><span data-m=up>Create account</span><span data-m=fg>Send reset link</span><i class=au__spin></i></button>
+  ${L?'':`<div class=au__links data-m=in><button type=button class=lnk id=afg onclick="auGo('fg',1)">Forgot password?</button><button type=button class=lnk onclick="mlink()">Email me a sign-in link</button><button type=button class=lnk id=ars onclick="resendMail()" ${RS?'':'hidden'}>Resend confirmation email</button></div>`}
+  <p class=au__sw data-m=in>${L?'':'New here? '}<button type=button class=lnk onclick="auGo('up',1)">Create an account</button></p>
+  <p class=au__sw data-m=up>Already have an account? <button type=button class=lnk onclick="auGo('in',1)">Sign in</button></p>
+  <p class=au__sw data-m=fg><button type=button class=lnk onclick="auGo('in',1)">← Back to sign in</button></p>
+ </form>
+ <div class=au__foot data-m="in up">${soc}${GBTN()}${L?'<p class=mut>Cloud sign-in is not set up, so accounts are stored on this device only.</p>':''}</div>
+ <div class=au__band id=aub aria-hidden=true><span class="band__edge band__edge--trail"></span><div class=band__inner><div class=band__page><div class="au__head au__head--band"><img class=au__logo src=logo-light.png alt="" width=46 height=46><h3 class=au__title id=abt></h3><p class=au__sub id=abs></p></div></div></div><span class="band__edge band__edge--lead"></span></div>
+ </div></div></div>`}
+function vCloudAuth(){return authView(0)}
 async function hash(p,s){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s+p));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){let x=5381;for(const c of s+p)x=(x*33^c.charCodeAt(0))>>>0;return'x'+x}}
-function vLocalAuth(){const up=AM=='up';return`<div class="card auth"><h1>LanguWay English</h1><p class=mut>${up?'Create your account':'Sign in to continue'}</p><form onsubmit="localAuth();return false" novalidate>${up?'<input id=an aria-label="Your name" placeholder="Your name" maxlength=30 enterkeyhint=next>':''}<input id=au aria-label=Username placeholder=Username maxlength=20 autocapitalize=none autocorrect=off spellcheck=false autocomplete=username enterkeyhint=next><input id=ap type=password aria-label=Password placeholder="Password (6+ characters)" autocomplete=current-password enterkeyhint=go><button type=submit hidden></button></form><p id=ae class="msg bad">${esc(AMSG)}</p><button class=btn onclick="localAuth()">${up?'Create account':'Sign in'}</button> <button class=btn2 onclick="AM='${up?'in':'up'}';AMSG='';draw()">${up?'I have an account':'Create account'}</button>${GBTN()}<p class=mut>Cloud sign-in is not set up, so accounts are stored on this device only. See SETUP-CLOUD.md to turn on email, Google and Apple sign-in.</p></div>`}
+function vLocalAuth(){return authView(1)}
 async function localAuth(){const u=$('#au').value.trim().toLowerCase(),p=$('#ap').value,L=ACC(),e=m=>msg(m),nm=AM=='up'?$('#an').value.trim():'';
  if(!/^[a-z0-9_]{3,20}$/.test(u))return e('Username: 3 to 20 letters, numbers or _');if(p.length<6)return e('Password must have at least 6 characters.');
  if(AM=='up'){if(L[u])return e('This username is taken.');const s=Math.random().toString(36).slice(2);L[u]={s,h:await hash(p,s)};localStorage.setItem('ef_acc',JSON.stringify(L))}
