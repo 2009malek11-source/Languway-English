@@ -92,9 +92,9 @@ function setSync(s,e){SYNC=s;SERR=e?friendly(e):'';const a=$('#syn');if(a){a.inn
 function friendly(e){const m=String((e&&e.message)||e||''),c=String((e&&(e.code||e.error_code))||''),st=e&&e.status;
  if(c=='over_email_send_rate_limit'||/email rate limit/i.test(m))return'The free email service has reached its hourly limit. If you already created the account, tap Sign in. Otherwise wait a while and try again.';
  if(c=='over_request_rate_limit'||c=='over_sms_send_rate_limit'||st==429||/rate limit|too many/i.test(m))return'Too many attempts from this network. Wait a few minutes and try again.';
- if(c=='invalid_credentials'||/invalid login/i.test(m))return'The email or password is not correct. If you just created this account, confirm your email first. You can also use “Forgot password?”.';
+ if(c=='invalid_credentials'||/invalid login/i.test(m))return'The email or password is not correct. Check the spelling, or tap “Forgot password?”. If you have no account yet, tap “Create account”: it signs you in straight away.';
  if(c=='email_not_confirmed'||/not confirmed/i.test(m))return'Please confirm your email first. Open the link we sent to your inbox (also check Spam), or resend it below.';
- if(c=='user_already_exists'||c=='email_exists'||/already registered|already been registered|already exists/i.test(m))return'This email already has an account. Tap Sign in instead.';
+ if(c=='user_already_exists'||c=='email_exists'||/already registered|already been registered|already exists/i.test(m))return'This email already has an account. Tap Sign in and enter its password, or use “Forgot password?”.';
  if(c=='weak_password'||(/password/i.test(m)&&/(weak|at least|short|characters)/i.test(m)))return'Choose a stronger password: 8 or more characters with letters and numbers.';
  if(c=='email_address_invalid'||/email address.*invalid|invalid.*email/i.test(m))return'This email address is not accepted. Check it for typing mistakes.';
  if(c=='signup_disabled'||/signups? (not allowed|disabled)/i.test(m))return'New sign-ups are switched off in the cloud settings.';
@@ -131,6 +131,8 @@ async function delAcct(){if(!sb||!SESS)return alert('Connect to the internet and
  try{const r=await sb.rpc('delete_my_account');if(r.error)throw r.error;localStorage.removeItem(KEY());try{await sb.auth.signOut({scope:'local'})}catch(e){}forget();alert('Your account was deleted.')}catch(e){alert('Could not delete the account: '+friendly(e))}}
 function msg(t,ok){AMSG=t;const e=$('#ae');if(e){e.textContent=t;e.className='msg '+(ok?'ok':'bad')}}
 function busy(on){const b=document.querySelector('.auth .btn');if(b)b.disabled=on}
+/* Sign in, retrying a few times right after sign-up (the new account can take a moment to be readable everywhere). */
+async function signInRetry(em,pw,n){let r;for(let i=0;i<n;i++){r=await sb.auth.signInWithPassword({email:em,password:pw});if(!r.error||r.error.code!='invalid_credentials')return r;if(i<n-1)await new Promise(z=>setTimeout(z,600))}return r}
 async function cauth(){const g=id=>($(id)||{}).value||'',em=g('#au').trim(),pw=g('#ap'),nm=g('#an').trim();
  if(!/^\S+@\S+\.\S+$/.test(em))return msg('Enter a valid email address.');
  busy(true);try{
@@ -145,8 +147,8 @@ async function cauth(){const g=id=>($(id)||{}).value||'',em=g('#au').trim(),pw=g
    if(code=='invalid_email')throw{code:'email_address_invalid'};
    if(code=='weak_password')throw{code:'weak_password'};
    if(!code||code=='exists'){
-    r=await sb.auth.signInWithPassword({email:em2,password:pw});
-    if(r.error){if(code=='exists'){AM='in';draw.force=1;draw();draw.force=0;return msg('This email already has an account with a different password. Sign in with your password, or use “Forgot password?”.')}throw r.error}
+    r=await signInRetry(em2,pw,code=='exists'?1:4);
+    if(r.error){if(code=='exists'){AM='in';draw.force=1;draw();draw.force=0;return msg('This email already has an account, and this is not its password. Enter the password you chose when you created it, or tap “Forgot password?”.')}throw r.error}
    }else{
     /* 2) Fallback: normal sign-up (needs “Confirm email” to be off in the cloud settings). */
     r=await sb.auth.signUp({email:em2,password:pw,options:{data:{name:nm.slice(0,30)},emailRedirectTo:RED()}});
@@ -233,6 +235,7 @@ pen:'<path d="M4 20l1-4.5L16.5 4a2.1 2.1 0 0 1 3 3L8 18.5z"/><path class=f d="m1
 dl:'<path d="M12 4v11"/><path d="m7.5 11 4.5 4.5L16.5 11"/><path class=f d="M5 19h14v1.8H5z"/>',
 copy:'<rect x="8" y="8" width="12" height="12" rx="2.2"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/>',
 stories:'<rect x="3.5" y="5" width="17" height="14" rx="2.4"/><path class=f d="m10.3 9.2 4.8 2.8-4.8 2.8z"/>',
+user:'<circle cx="12" cy="8.5" r="3.6"/><path class=f d="M4.5 20c.8-4 3.9-6 7.5-6s6.7 2 7.5 6z"/>',
 doc:'<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4"/><path class=f d="M9 12h6v1.8H9z"/><path d="M9 16.5h4"/>'};
 ICP.cloud='<path d="M7 18.5h10a4 4 0 0 0 .6-7.95A5.6 5.6 0 0 0 7 9.2 4.7 4.7 0 0 0 7 18.5z"/><path class=f d="m9.6 14 1.8 1.8 3.2-3.4" style="fill:none;stroke:var(--ac2);stroke-width:2"/>';ICP.cloudoff='<path d="M7 18.5h10a4 4 0 0 0 1.6-7.7A5.6 5.6 0 0 0 9 6.8"/><path d="M5.2 9.7A4.6 4.6 0 0 0 7 18.5"/><path d="m4 4 16 16" style="stroke:var(--bad)"/>';ICP.refresh='<path d="M20 12a8 8 0 0 1-14 5.3"/><path d="M4 12a8 8 0 0 1 14-5.3"/><path class=g d="M18.5 3v4.5H14z M5.5 21v-4.5H10z"/>';ICP.alert='<path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5"/><circle class=g cx="12" cy="17.2" r="1"/>';ICP.device='<rect x="7" y="2.8" width="10" height="18.4" rx="2.4"/><path class=f d="M10.5 18h3v1.6h-3z"/>';
 const ic=(n,x)=>`<svg class="ic ic-${n} ${x||''}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICP[n]}</svg>`;
@@ -242,7 +245,7 @@ function draw(){
  if(!USER||REC||AUTHV){$('#nav').innerHTML='';$('#app').innerHTML=vAuth();return}
  const tabs=[['home','home','Home'],['learn','learn','Learn'],['stories','stories','Stories'],['review','review','Review'],['progress','progress','Progress'],['settings','gear','Settings']];
  $('#nav').innerHTML=tabs.map(t=>`<button class="${V==t[0]||((V=='lesson'||V=='gram')&&t[0]=='learn')||(V=='story'&&t[0]=='stories')?'on':''}" onclick="go('${t[0]}')"><span>${ic(t[1])}</span>${t[2]}</button>`).join('');
- const top=`<div class=top><img class=logo src="favicon.png" alt=""><b>LanguWay English</b><input id=sq value="${SQ.replace(/"/g,'')}" placeholder="Search lessons and words" aria-label=Search onkeydown="if(event.key=='Enter'){SQ=this.value;go('search')}"><button class=ib aria-label="Due words" onclick="go('review')">${ic('bell')}</button><button class=ib aria-label="Install and share" onclick="go('share')">${ic('share')}</button><button class=ib id=syn aria-label="Sync status" title="${SL[SYNC]}" onclick="go('settings')">${SIH(SYNC)}</button><div class=av>${esc((S.set.name||EMAIL||USER||'?')[0].toUpperCase())}</div><button class=ib aria-label="Switch theme" onclick="tgl()">${ic('moon')}</button></div>`;
+ const top=`<div class=top><img class=logo src="favicon.png" alt=""><b>LanguWay English</b><input id=sq value="${SQ.replace(/"/g,'')}" placeholder="Search lessons and words" aria-label=Search onkeydown="if(event.key=='Enter'){SQ=this.value;go('search')}"><button class=ib aria-label="Due words" onclick="go('review')">${ic('bell')}</button><button class=ib aria-label="Install and share" onclick="go('share')">${ic('share')}</button><button class=ib id=syn aria-label="Sync status" title="${SL[SYNC]}" onclick="go('settings')">${SIH(SYNC)}</button>${isG(USER)?`<button class=av type=button title="Guest mode: your progress stays on this device. Tap to sign in." aria-label="Guest mode. Tap to sign in" onclick="wantAuth()">${ic('user')}</button>`:`<div class=av title="${esc(EMAIL||S.set.name||'Signed in')}">${esc((S.set.name||EMAIL||USER||'?')[0].toUpperCase())}</div>`}<button class=ib aria-label="Switch theme" onclick="tgl()">${ic('moon')}</button></div>`;
  $('#app').innerHTML=(isG(USER)?`<div class=gbar role=region aria-label="Sign in reminder"><span>Sign in to save your progress</span><button type=button onclick="wantAuth()">Sign in</button></div>`:'')+top+({home:vHome,learn:vLearn,lesson:vLesson,gram:vGram,review:vReview,progress:vProgress,settings:vSet,test:vTest,cert:vCert,search:vSearch,help:vHelp,share:vShare,stories:vStories,story:vStory})[V]();
 }
 
@@ -388,23 +391,33 @@ function pick(j){if(Q.lock)return;Q.lock=1;const q=Q.qs[Q.i];document.querySelec
 /* ---------- Built-in tutor: explains why an answer is right or wrong. Rule-based, works offline, no AI service or internet needed ---------- */
 const tk=t=>String(t).toLowerCase().replace(/[^a-z' ]/g,' ').split(/\s+/).filter(Boolean);
 const evid=(raw,q,a)=>{const want=new Set(tk(q+' '+a).filter(w=>w.length>2));let best='',bs=0;sents(raw).forEach(x=>{const n=tk(x).filter(w=>want.has(w)).length;if(n>bs){bs=n;best=x}});return best};
+/* An example sentence from the lessons that contains the word (shortest one that fits). */
+const exOf=en=>{const re=new RegExp('\\b'+en.replace(/[^a-z' ]/gi,'')+'\\b','i');let b='';for(const l of LS){for(const x of l.ss)if(re.test(x)&&(!b||x.length<b.length)&&wc(x)>=3)b=x}return b};
+const lev=(a,b)=>{const m=[...Array(a.length+1)].map((_,i)=>[i]);for(let j=1;j<=b.length;j++)m[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]==b[j-1]?0:1));return m[a.length][b.length]};
+/* Finds a grammar rule whose examples contain the answer and share words with the sentence. */
+const ruleFor=(sentence,ans)=>{const t=new Set(tk(sentence)),a=tk(ans).join(' ');let best=null,bs=0;GR.forEach(g=>{const ex=g.x.map(x=>tk(x).join(' '));if(!ex.some(x=>(' '+x+' ').includes(' '+a+' ')))return;const sc=tk(g.x.join(' ')+' '+g.t+' '+g.f).filter(w=>t.has(w)).length;if(sc>bs){bs=sc;best=g}});return bs>=2?best:null};
 function tutor(q,ok,g){
- const em=t=>t?`<div class=tutor><b>Tutor</b> · ${t}</div>`:'';
+ const em=t=>t?`<div class=tutor><b>Tutor</b><br>${t}</div>`:'',q1=t=>'“'+esc(t)+'”',ex=en=>{const e=exOf(en);return e?`<br><i>Example:</i> ${q1(e)}`:''};
  try{
   if(q.w&&q.k=='Vocabulary'){const w=q.w,o=g!=null?ALL.find(x=>x.d==g):0;
-   return em(ok?`Yes. <b>${esc(w.en)}</b> means “${esc(w.d)}”.`:`<b>${esc(w.en)}</b> means “${esc(w.d)}”.`+(o&&o.en!=w.en?` The meaning you chose belongs to <b>${esc(o.en)}</b>, a different word.`:''))}
-  if(q.w&&q.type){const w=q.w,o=g?ALL.find(x=>x.en==String(g).trim().toLowerCase()):0;
-   return em(ok?`Correct. “${esc(w.d)}” describes <b>${esc(w.en)}</b>.`:`The meaning “${esc(w.d)}” belongs to <b>${esc(w.en)}</b>.`+(o&&o.en!=w.en?` You typed <b>${esc(o.en)}</b>, which means “${esc(o.d)}”.`:` Check the spelling, one letter at a time.`))}
-  if(q.dict)return ok?'':em(`Listen again, slowly. Words in red are wrong or missing.${q.acc!=null?` You got ${q.acc}% of the words right.`:''}`);
-  if(q.ord){if(ok)return '';const gw=String(g||'').split(' '),aw=q.a.split(' ');let i=0;while(i<aw.length&&gw[i]==aw[i])i++;
-   return em(`Your sentence goes wrong at word ${i+1}: you put “${esc(gw[i]||'…')}” but the sentence needs “${esc(aw[i]||'')}”. The full sentence is: “${esc(q.a)}”.`)}
-  if(q.k=='Listening'&&q.o){if(ok)return '';const A=tk(q.a),B=tk(g||''),miss=A.filter(x=>!B.includes(x)),ext=B.filter(x=>!A.includes(x));
-   return em(`You heard: “${esc(q.a)}”.`+(ext.length||miss.length?` Your choice has ${ext.length?'“'+esc(ext.join(' '))+'”':'different words'} where the sentence has ${miss.length?'“'+esc(miss.join(' '))+'”':'other words'}. Listen again for those words.`:''))}
-  if(q.k=='Reading'&&q.r){const e=evid(q.r,q.q,q.a);if(!e)return '';
-   return em(ok?`Right. The text says: “${esc(e)}”`:`Look at this sentence in the text: “${esc(e)}” It gives the answer “${esc(q.a)}”.`+(g?` “${esc(g)}” is not what the text says.`:''))}
-  if(q.gr){const r=q.gr;return em(ok?`Right. ${esc(r.e)}`:`Rule: <b>${esc(r.t)}</b>. ${esc(r.e)} Pattern: <b>${esc(r.f)}</b>. Common mistake: ✘ ${esc(r.m[0])} ✔ ${esc(r.m[1])}`)}
-  if(q.k=='Grammar'&&q.o&&/___/.test(q.q)){const full=q.q.replace('___',q.a);
-   return em(ok?`The full sentence is: “${esc(full)}”.`:`The full sentence is: “${esc(full)}”.`+(g?` “${esc(q.q.replace('___',g))}” does not sound right in English.`:''))}
+   if(ok)return em(`<b>Yes.</b> <b>${esc(w.en)}</b> means ${q1(w.d)}.${ex(w.en)}<br><i>Tip:</i> say the word aloud once, then use it in your own sentence.`);
+   const others=(q.o||[]).filter(x=>x!=q.a&&x!=g).map(x=>ALL.find(y=>y.d==x)).filter(Boolean).slice(0,2);
+   return em(`<b>${esc(w.en)}</b> means ${q1(w.d)}.${ex(w.en)}`+(o&&o.en!=w.en?`<br><b>Why not that one?</b> You chose ${q1(g)}. That is the meaning of <b>${esc(o.en)}</b>, not of <b>${esc(w.en)}</b>.`:'')+(others.length?`<br><b>The other choices:</b> `+others.map(x=>`${q1(x.d)} is <b>${esc(x.en)}</b>`).join('; ')+'.':'')+`<br><i>Tip:</i> link <b>${esc(w.en)}</b> to its meaning and make a sentence with it.`)}
+  if(q.w&&q.type){const w=q.w,u=String(g||'').trim().toLowerCase(),o=u?ALL.find(x=>x.en==u):0;
+   if(ok)return em(`<b>Correct.</b> ${q1(w.d)} is <b>${esc(w.en)}</b>.${ex(w.en)}`);
+   const d=u?lev(u,w.en):9;
+   return em(`${q1(w.d)} is <b>${esc(w.en)}</b>.`+(o&&o.en!=w.en?`<br>You typed <b>${esc(o.en)}</b>. That is a real word, but it means ${q1(o.d)}.`:d<=2?`<br><b>Very close!</b> Only the spelling is different. You wrote <b>${esc(u)}</b>; the word has ${w.en.length} letters.`:`<br>The word has ${w.en.length} letters and starts with “${esc(w.en[0])}”.`)+ex(w.en)+`<br><i>Tip:</i> spell it letter by letter: ${esc(w.en.split('').join(' - '))}.`)}
+  if(q.dict){if(ok)return em('<b>Perfect.</b> You heard every word.');const A=tk(q.a),B=tk(g||''),miss=A.filter(x=>!B.includes(x)),ext=B.filter(x=>!A.includes(x));
+   return em(`You got ${q.acc!=null?q.acc+'%':'part'} of the words.`+(miss.length?`<br><b>Missing or misspelled:</b> ${miss.map(esc).join(', ')}.`:'')+(ext.length?`<br><b>Not in the sentence:</b> ${ext.map(esc).join(', ')}.`:'')+`<br><i>Tip:</i> press “Slowly”, listen again and write one word at a time.`)}
+  if(q.ord){if(ok)return em('<b>Good word order.</b>');const gw=String(g||'').split(' '),aw=q.a.split(' ');let i=0;while(i<aw.length&&gw[i]==aw[i])i++;
+   return em(`Your sentence goes wrong at word ${i+1}: you put ${q1(gw[i]||'…')} but the sentence needs ${q1(aw[i]||'')}.<br>The full sentence is: ${q1(q.a)}<br><i>Tip:</i> in English the usual order is <b>who</b> (subject), then <b>what they do</b> (verb), then the rest.`)}
+  if(q.k=='Listening'&&q.o){if(ok)return em('<b>Good listening.</b> You caught the exact words.');const A=tk(q.a),B=tk(g||''),miss=A.filter(x=>!B.includes(x)),ext=B.filter(x=>!A.includes(x));
+   return em(`You heard: ${q1(q.a)}`+(ext.length||miss.length?`<br>Your choice has ${ext.length?q1(ext.join(' ')):'different words'} where the sentence has ${miss.length?q1(miss.join(' ')):'other words'}. Those words sound similar, so listen to them again.`:'')+`<br><i>Tip:</i> use “Slowly” and focus on the small words.`)}
+  if(q.k=='Reading'&&q.r){const e=evid(q.r,q.q,q.a);if(!e)return '';const kw=[...new Set(tk(q.q).filter(w=>w.length>3&&tk(q.r).includes(w)))].slice(0,3);
+   return em(ok?`<b>Right.</b> The text says: ${q1(e)}`:`The answer is ${q1(q.a)}.<br>Look at this sentence in the text: ${q1(e)}`+(g?`<br>${q1(g)} is not what the text says.`:'')+(kw.length?`<br><i>Tip:</i> find the key words (${kw.map(esc).join(', ')}) from the question in the text, then read that sentence slowly.`:''))}
+  if(q.gr){const r=q.gr;return em(ok?`<b>Right.</b> ${esc(r.e)}<br><i>Example:</i> ${q1(r.x[0])}`:`<b>Rule:</b> ${esc(r.t)}<br>${esc(r.e)}<br><b>Pattern:</b> ${esc(r.f)}<br><b>Common mistake:</b> <span style="color:var(--bad)">✘ ${esc(r.m[0])}</span> <span style="color:var(--ok)">✔ ${esc(r.m[1])}</span><br><i>Example:</i> ${q1(r.x[0])}`)}
+  if(q.k=='Grammar'&&q.o&&/___/.test(q.q)){const full=q.q.replace('___',q.a),r=ruleFor(full,q.a);
+   return em((ok?`<b>Right.</b> `:'')+`The full sentence is: ${q1(full)}`+(!ok&&g?`<br>${q1(q.q.replace('___',g))} does not sound right in English.`:'')+(r?`<br><b>Related rule:</b> ${esc(r.t)}. ${esc(r.e)}<br><b>Pattern:</b> ${esc(r.f)}`:''))}
  }catch(e){}
  return ''}
 function fin1(ok,q,g){Q.last=ok;const k=q.k||'Other',t=S.sk[k]=S.sk[k]||[0,0];t[1]++;if(ok)t[0]++;if(ok)Q.s++;else if(q.w){const w=q.w;S.mist=[w,...S.mist.filter(m=>m.en!=w.en)].slice(0,50);if(S.vocab[w.en]){S.vocab[w.en].box=0;S.vocab[w.en].due=Date.now();S.vocab[w.en].t=Date.now()}}save();
