@@ -12,6 +12,21 @@
     Cache-Control = "no-cache"
 
 [[headers]]
+  for = "/app.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/style.css"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/story.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
   for = "/manifest.json"
   [headers.values]
     Content-Type = "application/manifest+json"
