@@ -32,7 +32,7 @@ Object.keys(OLDC).forEach(k=>{const ok=+k;OLDC[k].forEach((u,uo)=>u[1].forEach((
 const ALL=LS.flatMap(l=>l.w);let POOL=ALL,OL=0;
 const lvWords=n=>LS.filter(l=>l.lv==n).flatMap(l=>l.w);
 /* ---------- State ---------- */
-const DEF=()=>({cid:{},sec:{},gr:{},ver:3,ls:{},rv:0,sty:{},start:0,ut:{},lt:{},placed:0,sk:{},done:{},vocab:{},mist:[],days:{},fav:{},test:null,upd:0,rst:0,set:{theme:'system',acc:'en-US',rate:.9,name:'',goal:1,font:'normal',calm:false,auto:false,sa:false}});
+const DEF=()=>({cid:{},sec:{},gr:{},ver:3,ls:{},rv:0,sty:{},start:0,ut:{},lt:{},placed:0,sk:{},done:{},vocab:{},mist:[],days:{},fav:{},test:null,upd:0,rst:0,set:{theme:'system',acc:'en-US',rate:.9,name:'',goal:1,font:'normal',calm:false,auto:false,sa:false,vib:true,fx:true,rem:'off',wk:5,wl:false,cmp:false}});
 let S=DEF(),INQ=0;
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const isO=o=>o&&typeof o=='object'&&!Array.isArray(o);
@@ -59,7 +59,7 @@ function clean(o){const d=DEF();if(!isO(o))return d;
   for(const k in d.cid)cid[m2(+k)]=d.cid[k];d.cid=cid;
   d.start=d.start?m1(d.start):0;if(d.test)d.test.lvl=m1(d.test.lvl)}
  const s=isO(o.set)?o.set:{};
- d.set={theme:['system','light','dark'].includes(s.theme)?s.theme:'system',acc:s.acc=='en-GB'?'en-GB':'en-US',rate:[.6,.9,1.15].includes(s.rate)?s.rate:.9,name:String(s.name||'').slice(0,30),goal:[1,2,3].includes(s.goal)?s.goal:1,font:['small','normal','large','xl'].includes(s.font)?s.font:'normal',calm:!!s.calm,auto:!!s.auto,sa:!!s.sa};
+ d.set={theme:['system','light','dark'].includes(s.theme)?s.theme:'system',acc:s.acc=='en-GB'?'en-GB':'en-US',rate:[.6,.9,1.15].includes(s.rate)?s.rate:.9,name:String(s.name||'').slice(0,30),goal:[1,2,3].includes(s.goal)?s.goal:1,font:['small','normal','large','xl'].includes(s.font)?s.font:'normal',calm:!!s.calm,auto:!!s.auto,sa:!!s.sa,vib:s.vib!==false,fx:s.fx!==false,rem:['off','morning','evening'].includes(s.rem)?s.rem:'off',wk:[3,5,7,10,14].includes(s.wk)?s.wk:5,wl:!!s.wl,cmp:!!s.cmp};
  return d}
 /* mergeS(): combine two copies of the same learner's progress without losing anything (a reset wins over older progress) */
 function mergeS(a,b){a=clean(a);b=clean(b);if(a.rst!==b.rst)return a.rst>b.rst?a:b;
@@ -88,7 +88,8 @@ function persist(){if(USER)try{localStorage.setItem(KEY(),JSON.stringify(S))}cat
 function save(){if(!USER)return;S.upd=Date.now();persist();if(sb&&SESS){clearTimeout(pushT);pushT=setTimeout(push,1500);setSync('wait')}}
 const SIC={ok:'cloud',busy:'refresh',wait:'cloud',off:'cloudoff',err:'alert',local:'device',idle:'cloud'};const SIH=s=>ic(SIC[s]||'cloud');const SI={ok:'☁️',busy:'🔄',wait:'☁️',off:'📴',err:'⚠️',local:'💾',idle:'☁️'};
 const SL={ok:'Synced',busy:'Syncing…',wait:'Changes waiting to sync',off:'Offline. Changes will sync when you are back online',err:'Sync problem',local:'Saved on this device only',idle:'Not signed in'};
-function setSync(s,e){SYNC=s;SERR=e?friendly(e):'';const a=$('#syn');if(a){a.innerHTML=SIH(s);a.title=SL[s]}const b=$('#sst');if(b)b.textContent=SL[s]+(SERR?': '+SERR:'')}
+let LSY=+(localStorage.getItem('ef_lsy_'+USER)||0);
+function setSync(s,e){if(s=='ok'){LSY=Date.now();try{localStorage.setItem('ef_lsy_'+USER,LSY)}catch(x){}}SYNC=s;SERR=e?friendly(e):'';const a=$('#syn');if(a){a.innerHTML=SIH(s);a.title=SL[s]}const b=$('#sst');if(b)b.textContent=SL[s]+(SERR?': '+SERR:'')}
 function friendly(e){const m=String((e&&e.message)||e||''),c=String((e&&(e.code||e.error_code))||''),st=e&&e.status;
  if(c=='over_email_send_rate_limit'||/email rate limit/i.test(m))return'The free email service has reached its hourly limit. If you already created the account, tap Sign in. Otherwise wait a while and try again.';
  if(c=='over_request_rate_limit'||c=='over_sms_send_rate_limit'||st==429||/rate limit|too many/i.test(m))return'Too many attempts from this network. Wait a few minutes and try again.';
@@ -103,12 +104,12 @@ function friendly(e){const m=String((e&&e.message)||e||''),c=String((e&&(e.code|
  if(c=='same_password'||/different from the old password/i.test(m))return'Choose a password that is different from your current one.';
  if(/provider is not enabled|unsupported provider/i.test(m))return'This sign-in method is not enabled yet.';
  if(/delete_my_account/i.test(m))return'Account deletion is not set up. Run the latest SUPABASE_SETUP.sql.';
- if(/progress/i.test(m)&&/(schema cache|exist|find)/i.test(m))return'The cloud database is not set up yet. Run SUPABASE_SETUP.sql.';
+ if(/progress/i.test(m)&&/(schema cache|exist|find)/i.test(m))return'Cloud saving is not switched on for this project yet, so your progress stays on this device for now.';
  return 'Something went wrong. Please try again.'}
 let RS='';
 async function resendMail(){if(!RS)return;try{const r=await sb.auth.resend({type:'signup',email:RS,options:{emailRedirectTo:RED()}});if(r.error)throw r.error;msg('Confirmation email sent again. Check your inbox and Spam.',1)}catch(e){msg(friendly(e))}}
 async function push(){if(!sb||!SESS)return;if(!navigator.onLine){setSync('off');return}setSync('busy');
- try{const r=await sb.from('progress').upsert({user_id:SESS.user.id,data:S,updated_at:new Date().toISOString()});if(r.error)throw r.error;setSync('ok')}catch(e){setSync(navigator.onLine?'err':'off',e)}}
+ try{const r=await sb.from('progress').upsert({user_id:SESS.user.id,data:S,updated_at:new Date().toISOString()});if(r.error)throw r.error;setSync('ok')}catch(e){setSync(navigator.onLine?'err':'off',e);if(!/switched on/i.test(SERR)){clearTimeout(pushT);pushT=setTimeout(push,navigator.onLine?20000:60000)}}}
 async function pull(){if(!sb||!SESS)return false;setSync('busy');
  const r=await sb.from('progress').select('data').eq('user_id',SESS.user.id).maybeSingle();if(r.error)throw r.error;
  const rc=clean(r.data&&r.data.data),m=mergeS(S,rc),chL=jx(m)!==jx(S),chR=!r.data||jx(m)!==jx(rc);S=m;persist();
@@ -138,9 +139,10 @@ async function signInRetry(em,pw,n){let r;for(let i=0;i<n;i++){r=await sb.auth.s
 async function cauth(){const g=id=>($(id)||{}).value||'',em=g('#au').trim(),pw=g('#ap'),nm=g('#an').trim();
  if(!/^\S+@\S+\.\S+$/.test(em))return msg('Enter a valid email address.');
  busy(true);try{
-  if(AM=='fg'){const r=await sb.auth.resetPasswordForEmail(em,{redirectTo:RED()});if(r.error)throw r.error;auGo('rc');return msg('If this email has an account, a 6-digit code is on its way. Check Spam too.',1)}
-  if(AM=='rc'){const code=g('#acd').replace(/\s/g,'');if(!/^\d{6,10}$/.test(code))return msg('Enter the 6-digit code from the email.');if(pw.length<8)return msg('Password must have at least 8 characters.');
-   const ses=await pwApply(em.toLowerCase(),code,pw);await onSignedIn(ses);return}
+  if(AM=='fg'){const r=await sb.auth.resetPasswordForEmail(em,{redirectTo:RED()});if(r.error)throw r.error;const re=$('#rce');if(re)re.textContent=em;auGo('rc');rsStart();return msg('If this email has an account, a 6-digit code is on its way. Check Spam too.',1)}
+  if(AM=='rc'){const code=g('#acd').replace(/\D/g,'');if(code.length!=6)return msg('Enter the 6-digit code from the email.');
+   PWF=1;const v=await sb.auth.verifyOtp({email:em.toLowerCase(),token:code,type:'recovery'});if(v.error){PWF=0;throw v.error}RCS=(v.data&&v.data.session)||null;auGo('rc2');return msg('Code accepted. Now choose a new password.',1)}
+  if(AM=='rc2'){if(pw.length<8)return msg('Password must have at least 8 characters.');const u=await sb.auth.updateUser({password:pw});if(u.error)throw u.error;const ses=RCS;RCS=null;setTimeout(()=>{PWF=0},1500);await onSignedIn(ses);return}
   if(pw.length<8)return msg('Password must have at least 8 characters.');
   const em2=em.toLowerCase();let r;
   if(AM=='up'){
@@ -166,16 +168,30 @@ async function cauth(){const g=id=>($(id)||{}).value||'',em=g('#au').trim(),pw=g
   }
   else{r=await sb.auth.signInWithPassword({email:em2,password:pw});if(r.error){if(r.error.code=='email_not_confirmed'||/not confirmed/i.test(r.error.message||''))showResend(em2);throw r.error}}
   await onSignedIn(r.data.session)
- }catch(e){msg(friendly(e))}finally{busy(false)}}
-async function resendCode(){const em=((($('#au')||{}).value)||'').trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(em))return msg('Enter your email first.');try{const r=await sb.auth.resetPasswordForEmail(em,{redirectTo:RED()});if(r.error)throw r.error;msg('A new code is on its way. Check Spam too.',1)}catch(e){msg(friendly(e))}}
-/* Password change / reset with a code from the email: verify the code, then set the new password. */
-let PWF=0,CP=0,CPM='',CPK=0,SO={};
-async function pwApply(em,code,pw){PWF=1;try{const v=await sb.auth.verifyOtp({email:em,token:code,type:'recovery'});if(v.error)throw v.error;const u=await sb.auth.updateUser({password:pw});if(u.error)throw u.error;return(v.data&&v.data.session)||SESS}finally{setTimeout(()=>{PWF=0},1500)}}
-async function cpSend(){if(!sb||!SESS||!EMAIL)return;CPM='';try{const r=await sb.auth.resetPasswordForEmail(EMAIL,{redirectTo:RED()});if(r.error)throw r.error;CP=1;CPK=1;CPM='Code sent. Check your inbox and Spam.'}catch(e){CPK=0;CPM=friendly(e)}SO.acct=true;draw.force=1;draw();draw.force=0}
-async function cpDone(){const c=((($('#cpc')||{}).value)||'').trim().replace(/\s/g,''),pw=($('#cpn')||{}).value||'',st=(m,k)=>{CPM=m;CPK=k;const e=$('#cpm');if(e){e.textContent=m;e.className='msg '+(k?'ok':'bad')}};
- if(!/^\d{6,10}$/.test(c))return st('Enter the 6-digit code from the email.');if(pw.length<8)return st('Password must have at least 8 characters.');
- st('Saving…',1);try{const ses=await pwApply(EMAIL,c,pw);if(ses)SESS=ses;CP=0;CPM='Password changed.';CPK=1;draw.force=1;draw();draw.force=0}catch(e){st(friendly(e))}}
-function cpHtml(){return`<div class=cpx><h3>Password</h3>${CP?`<p class=mut>We sent a 6-digit code to <b>${esc(EMAIL)}</b>. Enter it with your new password.</p><label class=cpl for=cpc>6-digit code</label><input id=cpc inputmode=numeric autocomplete=one-time-code maxlength=10 placeholder="123456"><label class=cpl for=cpn>New password</label><input id=cpn type=password autocomplete=new-password placeholder="8+ characters"><p id=cpm class="msg ${CPK?'ok':'bad'}" role=alert>${esc(CPM)}</p><button class=btn type=button onclick="cpDone()">Save new password</button> <button class=btn2 type=button onclick="cpSend()">Resend code</button> <button class=lnk type=button onclick="CP=0;CPM='';draw()">Cancel</button>`:`<p class=mut>We will email you a 6-digit code first.</p><p id=cpm class="msg ${CPK?'ok':'bad'}">${esc(CPM)}</p><button class=btn2 type=button onclick="cpSend()">Change password</button>`}</div>`}
+ }catch(e){msg(friendly(e));if(AM=='rc')otpClear('acd')}finally{busy(false)}}
+async function resendCode(){const em=((($('#au')||{}).value)||'').trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(em))return msg('Enter your email first.');try{const r=await sb.auth.resetPasswordForEmail(em,{redirectTo:RED()});if(r.error)throw r.error;rsStart();msg('A new code is on its way. Check Spam too.',1)}catch(e){msg(friendly(e))}}
+/* ---------- One-time code boxes (6 digits). The real input is invisible and sits on top of the boxes, so typing, paste and phone auto-fill all work. ---------- */
+function otpHtml(id,cb){return`<div class=otp id=${id}w><input class=otp__in id=${id} inputmode=numeric pattern="[0-9]*" autocomplete=one-time-code maxlength=6 aria-label="6-digit code" oninput="otpIn(this,'${cb}')" onfocus="this.parentNode.classList.add('foc')" onblur="this.parentNode.classList.remove('foc')"><i class="otp__b on"><span></span></i>${'<i class=otp__b><span></span></i>'.repeat(5)}</div>`}
+function otpIn(el,cb){const v=el.value.replace(/\D/g,'').slice(0,6);if(el.value!==v)el.value=v;const p=el.parentNode;if(!p||!p.querySelectorAll)return;
+ p.querySelectorAll('.otp__b').forEach((b,i)=>{b.firstChild.textContent=v[i]||'';b.classList.toggle('f',i<v.length);b.classList.toggle('on',i==v.length&&v.length<6)});if(v.length==6&&cb&&window[cb])window[cb]()}
+function otpClear(id){const e=$('#'+id);if(e){e.value='';otpIn(e,'')}}
+let RSAT=0;
+function rsStart(){RSAT=Date.now()+30000;rsTick()}
+function rsTick(){const b=$('#rsb');if(!b||!b.getBoundingClientRect)return;const s=Math.ceil((RSAT-Date.now())/1000);if(s>0){b.disabled=true;b.textContent='Resend in '+s+'s';setTimeout(rsTick,1000)}else{b.disabled=false;b.textContent='Resend'}}
+function otpAuto(){if(AM=='rc')cauth()}
+async function rcCancel(){PWF=0;RCS=null;try{if(sb)await sb.auth.signOut()}catch(e){}auGo('in',1)}
+/* Password reset (login page) and password change (Settings): 1) email a code, 2) the code is checked as soon as 6 digits are typed, 3) choose the new password. */
+let PWF=0,RCS=null,CP=0,CPM='',CPK=0,CPS=null,SO={};
+function cpSet(m,k){CPM=m;CPK=k;const e=$('#cpm');if(e){e.textContent=m;e.className='msg '+(k?'ok':'bad')}}
+async function cpSend(){if(!sb||!SESS||!EMAIL)return;CPM='';try{const r=await sb.auth.resetPasswordForEmail(EMAIL,{redirectTo:RED()});if(r.error)throw r.error;CP=1;CPK=1;CPM='Code sent. Check your inbox and Spam.'}catch(e){CPK=0;CPM=friendly(e)}SO.acct=true;draw.force=1;draw();draw.force=0;setTimeout(()=>{const e=$('#cpc');if(e&&e.focus)e.focus();rsStart()},60)}
+async function cpVerify(){const c=((($('#cpc')||{}).value)||'').replace(/\D/g,'');if(c.length!=6)return;cpSet('Checking the code…',1);PWF=1;
+ try{const v=await sb.auth.verifyOtp({email:EMAIL,token:c,type:'recovery'});if(v.error)throw v.error;CPS=(v.data&&v.data.session)||SESS;CP=2;CPM='Code accepted. Choose a new password.';CPK=1}catch(e){PWF=0;CPM=friendly(e);CPK=0;otpClear('cpc')}
+ draw.force=1;draw();draw.force=0}
+async function cpDone(){if(CP!==2)return;const pw=($('#cpn')||{}).value||'';if(pw.length<8)return cpSet('Password must have at least 8 characters.',0);cpSet('Saving…',1);
+ try{const u=await sb.auth.updateUser({password:pw});if(u.error)throw u.error;if(CPS)SESS=CPS;CPS=null;CP=0;CPM='Password changed.';CPK=1;setTimeout(()=>{PWF=0},1500);draw.force=1;draw();draw.force=0}catch(e){cpSet(friendly(e),0)}}
+function cpCancel(){PWF=0;CPS=null;CP=0;CPM='';draw()}
+function cpHtml(){const m=`<p id=cpm class="msg ${CPK?'ok':'bad'}" role=alert>${esc(CPM)}</p>`;
+ return`<div class=cpx><h3>Password</h3>${CP==1?`<p class=mut>We sent a 6-digit code to <b>${esc(EMAIL)}</b>. It is checked as soon as you type the last digit.</p>${otpHtml('cpc','cpVerify')}${m}<p class=otp__rs>Didn't receive the code? <button type=button class=lnk id=rsb onclick="cpSend()">Resend</button> · <button class=lnk type=button onclick="cpCancel()">Cancel</button></p>`:CP==2?`<p class=mut>Choose your new password.</p><input id=cpn type=password autocomplete=new-password placeholder="8+ characters">${m}<button class=btn type=button onclick="cpDone()">Save new password</button> <button class=lnk type=button onclick="cpCancel()">Cancel</button>`:`<p class=mut>We will email you a 6-digit code first.</p>${m}<button class=btn2 type=button onclick="cpSend()">Change password</button>`}</div>`}
 async function mlink(){const em=(($('#au')||{}).value||'').trim();if(!/^\S+@\S+\.\S+$/.test(em))return msg('Enter your email first.');
  try{const r=await sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:RED()}});if(r.error)throw r.error;msg('Sign-in link sent. Check your email.',1)}catch(e){msg(friendly(e))}}
 async function oauth(p){if(location.protocol=='file:')return msg('Social sign-in needs the site to be hosted on https.');
@@ -183,7 +199,7 @@ async function oauth(p){if(location.protocol=='file:')return msg('Social sign-in
 async function newPass(){const pw=(($('#ap')||{}).value)||'';if(pw.length<8)return msg('Password must have at least 8 characters.');
  try{const r=await sb.auth.updateUser({password:pw});if(r.error)throw r.error;REC=0;AMSG='';if(SESS)await onSignedIn(SESS);else draw()}catch(e){msg(friendly(e))}}
 /* ---------- Auth page: ONE form with three modes (in / up / fg). Changing mode sweeps a blade across the card and swaps the mode while the blade covers it. ---------- */
-const AUT={in:['Welcome <em>back.</em>','Sign in to keep learning.'],up:['Start <em>learning.</em>','Create your free account in a few seconds.'],fg:['Reset <em>password.</em>','Enter your email and we will email you a 6-digit code.'],rc:['Enter the <em>code.</em>','Type the 6-digit code from the email and choose a new password.']};
+const AUT={in:['Welcome <em>back.</em>','Sign in to keep learning.'],up:['Start <em>learning.</em>','Create your free account in a few seconds.'],fg:['Reset <em>password.</em>','Enter your email and we will email you a 6-digit code.'],rc:['Enter the <em>code.</em>','Type the 6-digit code we emailed you.'],rc2:['New <em>password.</em>','Code accepted. Choose a new password.']};
 let AUB=0;
 function auSet(m){AM=m;const r=$('#authx');if(!r||!r.dataset)return;r.dataset.mode=m;const t=AUT[m]||AUT.in,h=$('#aut'),s=$('#aus2');if(h)h.innerHTML=t[0];if(s)s.textContent=t[1];
  const p=$('#ap');if(p){p.setAttribute('autocomplete',m=='up'||m=='rc'?'new-password':'current-password');p.type='password';const e=$('#aey');if(e){e.textContent='Show';e.setAttribute('aria-pressed','false')}auStr(p.value)}}
@@ -209,19 +225,27 @@ function navFx(swap,title){const bl=$('#bl'),b=$('#blb');
  if(FXOFF||NAVB||!bl||!b||!bl.getBoundingClientRect||!window.requestAnimationFrame||noFx()){swap();return}
  const t=$('#blt');if(t)t.innerHTML=title||'';NAVB=1;
  bladeRun(b,Math.max(320,window.innerWidth||360),swap,()=>{NAVB=0},700)}
-/* ---------- Menu (three dashes) ---------- */
-let MN=0;
-const MI=[['home','home','Home'],['learn','learn','Learn'],['stories','stories','Stories'],['review','review','Review'],['progress','progress','Progress'],['test','pen','Placement test'],['share','share','Install and share'],['help','help','Help'],['settings','gear','Settings']];
-function mnHtml(){const on=v=>V==v||((V=='lesson'||V=='gram')&&v=='learn')||(V=='story'&&v=='stories'),C=isC(USER),d=dueN();
- const who=C?`<b>${esc(S.set.name||EMAIL||'Signed in')}</b><br><span id=mst>${esc(SL[SYNC])}</span>`:isG(USER)?'<b>Guest</b><br>Your progress is saved on this device only.':`<b>${esc(USER)}</b><br>Saved on this device.`;
- const act=C?`<button class=mn__b type=button onclick="mnDo(signOut,'See you <em>soon.</em>')">Sign out</button>`:isG(USER)?`<button class=mn__b type=button onclick="mnDo(wantAuth,'Welcome <em>back.</em>')">Sign in or create account</button>`:`<button class=mn__b type=button onclick="localStorage.removeItem('ef_cur');location.reload()">Log out</button>`;
- return`<div class=mn__in><div class=mn__hd><img class=mn__lg src=logo-light.png alt="LanguWay English" width=48 height=48><button class=mn__x type=button onclick="mnToggle()" aria-label="Close menu">✕</button></div>
- <form class=mn__s onsubmit="mnSearch();return false"><input id=msq type=search placeholder="Search lessons and words" aria-label=Search enterkeyhint=search></form>
- <div class=mn__l role=navigation aria-label="Main menu">${MI.map(x=>`<button type=button class="mn__i ${on(x[0])?'on':''}" onclick="go('${x[0]}')">${ic(x[1])}<span>${x[2]}</span>${x[0]=='review'&&d?`<b>${d}</b>`:''}</button>`).join('')}<button type=button class=mn__i onclick="mnDo(hOpen,'Ask the <em>helper.</em>')">${ic('chat')}<span>Ask the helper</span></button></div>
- <div class=mn__ft><p>${who}</p>${act}</div></div>`}
-function mnShow(){MN=1;const m=$('#mn');if(!m)return;m.innerHTML=mnHtml();m.hidden=false;document.body.style.overflow='hidden'}
+/* ---------- Sidebar: slides over the page on phones, docked (and collapsible to icons) on wide screens ---------- */
+let MN=0,SBC=0;try{SBC=+localStorage.getItem('ef_sbc')||0}catch(e){}
+const DT=()=>!!(window.matchMedia&&matchMedia('(min-width:900px)').matches);
+const MG=[[['home','home','Home'],['learn','learn','Learn'],['stories','stories','Stories'],['review','review','Review']],[['progress','progress','Progress'],['test','pen','Placement test'],['cert','cert','Certificates'],['search','search','Search']],[['share','share','Install and share'],['help','help','Help'],['settings','gear','Settings']]];
+function srch(id,val,ph,fn,cls){return`<form class="srch ${cls||''}" onsubmit="${fn};return false"><input id=${id} type=search value="${String(val||'').replace(/"/g,'')}" placeholder="${ph}" aria-label="${ph}" autocomplete=off enterkeyhint=search><button type=submit aria-label=Search>${ic('search')}</button></form>`}
+function mnHtml(){const on=v=>V==v||((V=='lesson'||V=='gram')&&v=='learn')||(V=='story'&&v=='stories'),C=isC(USER),d=dueN(),dk=DT();
+ const nm=esc(S.set.name||(C?EMAIL:isG(USER)?'Guest':USER)||'Learner'),who=C?esc(SL[SYNC]):isG(USER)?'Saved on this device only':'Saved on this device';
+ const act=C?`<button class=sb__a type=button onclick="mnDo(signOut,'See you <em>soon.</em>')" title="Sign out">${ic('out')}<span class=sb__t>Sign out</span></button>`:isG(USER)?`<button class=sb__a type=button onclick="mnDo(wantAuth,'Welcome <em>back.</em>')" title="Sign in">${ic('user')}<span class=sb__t>Sign in or create account</span></button>`:`<button class=sb__a type=button onclick="localStorage.removeItem('ef_cur');location.reload()" title="Log out">${ic('out')}<span class=sb__t>Log out</span></button>`;
+ const item=x=>`<button type=button class="sb__i ${on(x[0])?'on':''}" title="${x[2]}" onclick="go('${x[0]}')">${ic(x[1])}<span class=sb__t>${x[2]}</span>${x[0]=='review'&&d?`<b>${d}</b>`:''}</button>`;
+ return`<div class=sb__bd onclick="mnToggle()"></div><aside class=side aria-label="Menu"><div class=sb__hd><img class=sb__lg src=logo-light.png alt="" width=40 height=40><b class=sb__t>LanguWay</b>${dk?'':`<button class=sb__x type=button onclick="mnToggle()" aria-label="Close menu">✕</button>`}</div>
+ ${srch('msq','','Search','mnSearch()','sb__s')}
+ <div class=sb__l>${MG.map(g=>g.map(item).join('')).join('<hr class=sb__dv>')}<hr class=sb__dv><button type=button class=sb__i onclick="mnDo(hOpen,'Ask the <em>helper.</em>')" title="Ask the helper">${ic('chat')}<span class=sb__t>Ask the helper</span></button></div>
+ <div class=sb__ft><div class=sb__who>${ic('user')}<span class=sb__t><b>${nm}</b><br><span id=mst>${who}</span></span></div>${act}</div></aside>`}
+function mnSync(){const m=$('#mn');if(!m||!m.classList)return;const dk=DT()&&!!USER&&!REC&&!AUTHV,b=document.body;
+ if(b&&b.classList){b.classList.toggle('sbd',dk);b.classList.toggle('sbc',dk&&!!SBC)}
+ if(dk){MN=0;m.classList.add('dock');m.classList.toggle('col',!!SBC);m.hidden=false;m.innerHTML=mnHtml()}
+ else{m.classList.remove('dock','col');if(MN)m.innerHTML=mnHtml();else m.hidden=true}}
+function mnShow(){MN=1;const m=$('#mn');if(!m)return;if(m.classList)m.classList.remove('dock','col');m.innerHTML=mnHtml();m.hidden=false;document.body.style.overflow='hidden'}
 function mnHide(){if(!MN)return;MN=0;const m=$('#mn');if(m)m.hidden=true;document.body.style.overflow=HO?'hidden':''}
-function mnToggle(){if(MN)navFx(mnHide,'Back to <em>learning.</em>');else navFx(mnShow,'The <em>menu.</em>')}
+function mnToggle(){if(DT()&&!MN){SBC=SBC?0:1;try{localStorage.setItem('ef_sbc',SBC)}catch(e){}mnSync();return}
+ if(MN)navFx(mnHide,'Back to <em>learning.</em>');else navFx(mnShow,'The <em>menu.</em>')}
 function mnDo(fn,title){navFx(()=>{mnHide();fn()},title)}
 function mnSearch(){SQ=(($('#msq')||{}).value||'');go('search')}
 function auEye(){const p=$('#ap'),b=$('#aey');if(!p)return;const s=p.type=='password';p.type=s?'text':'password';if(b){b.textContent=s?'Hide':'Show';b.setAttribute('aria-pressed',s?'true':'false')}}
@@ -232,23 +256,24 @@ function showResend(em){RS=em;const x=$('#ars');if(x)x.hidden=false}
 function authView(L){
  if(REC&&!L)return`<div class="auth au" id=authx data-mode=in><div class=au__card id=auc><div class=au__stage><div class=au__head><img class=au__logo src=logo-light.png alt="" width=46 height=46><h3 class=au__title>New <em>password.</em></h3><p class=au__sub>Choose a new password for your account.</p></div><form class=au__form onsubmit="newPass();return false" novalidate><div class=au__row><label for=ap>New password</label><input id=ap type=password autocomplete=new-password enterkeyhint=go placeholder="8+ characters"></div><p id=ae class="msg bad" role=alert>${esc(AMSG)}</p><button class=au__go id=ago type=submit>Save password<i class=au__spin></i></button></form></div></div></div>`;
  const Pv=CFG.providers||{},bt=(p,l)=>!L&&Pv[p]?`<button type=button class=au__soc onclick="oauth('${p}')">Continue with ${l}</button>`:'';
- const soc=bt('google','Google')+bt('apple','Apple (iCloud)'),m=L?(AM=='up'?'up':'in'):(AM=='up'||AM=='fg'||AM=='rc'?AM:'in'),t=AUT[m];
+ const soc=bt('google','Google')+bt('apple','Apple (iCloud)'),m=L?(AM=='up'?'up':'in'):(AM=='up'||AM=='fg'?AM:'in'),t=AUT[m];
  return`<div class="auth au" id=authx data-mode="${m}"><div class=au__card id=auc><div class=au__stage id=auss>
  <div class=au__head><img class=au__logo src=logo-light.png alt="" width=46 height=46><h3 class=au__title id=aut>${t[0]}</h3><p class=au__sub id=aus2>${t[1]}</p></div>
  ${!L&&location.protocol=='file:'?'<p class="msg bad au__pad">Cloud sign-in works only when the site is hosted on https.</p>':''}
  <form class=au__form onsubmit="${L?'localAuth':'cauth'}();return false" novalidate>
   <div class=au__row data-m=up><label for=an>Your name</label><input id=an maxlength=30 autocomplete=name enterkeyhint=next placeholder="What should we call you?"></div>
   <div class=au__row><label for=au>${L?'Username':'Email'}</label><input id=au ${L?'maxlength=20':'type=email inputmode=email'} autocomplete=${L?'username':'email'} autocapitalize=none autocorrect=off spellcheck=false enterkeyhint=next placeholder="${L?'letters, numbers, _':'you@example.com'}"></div>
-  <div class=au__row data-m=rc><label for=acd>6-digit code</label><input id=acd inputmode=numeric autocomplete=one-time-code maxlength=10 placeholder="123456" enterkeyhint=next><p class=au__hint>Use the code from the email, not the link.</p></div>
-  <div class=au__row data-m="in up rc"><label for=ap><span data-m="in up">Password</span><span data-m=rc>New password</span></label><div class=au__pw><input id=ap type=password ${L?'':'oninput="auStr(this.value)"'} autocomplete="${m=='up'?'new-password':'current-password'}" enterkeyhint=go placeholder="${L?'6+':'8+'} characters"><button type=button class=au__eye id=aey onclick="auEye()" aria-pressed=false aria-label="Show or hide password">Show</button></div>
-   ${L?'':'<div class=au__meter id=aum data-m="up rc"><i></i><i></i><i></i><i></i></div><p class="au__hint" id=auh data-m="up rc">Use 8 or more characters, with letters and numbers.</p>'}</div>
+  <div class=au__row data-m=rc><p class=au__hint style="margin:0">We sent a 6-digit code to <b id=rce></b>.</p>${otpHtml('acd','otpAuto')}<p class=otp__rs>Didn't receive the code? <button type=button class=lnk id=rsb onclick="resendCode()">Resend</button></p></div>
+  <div class=au__row data-m="in up rc2"><label for=ap><span data-m="in up">Password</span><span data-m=rc2>New password</span></label><div class=au__pw><input id=ap type=password ${L?'':'oninput="auStr(this.value)"'} autocomplete="${m=='up'||m=='rc2'?'new-password':'current-password'}" enterkeyhint=go placeholder="${L?'6+':'8+'} characters"><button type=button class=au__eye id=aey onclick="auEye()" aria-pressed=false aria-label="Show or hide password">Show</button></div>
+   ${L?'':'<div class=au__meter id=aum data-m="up rc2"><i></i><i></i><i></i><i></i></div><p class="au__hint" id=auh data-m="up rc2">Use 8 or more characters, with letters and numbers.</p>'}</div>
   <p id=ae class="msg bad" role=alert aria-live=polite>${esc(AMSG)}</p>
-  <button class=au__go id=ago type=submit><span data-m=in>Sign in</span><span data-m=up>Create account</span><span data-m=fg>Send me a code</span><span data-m=rc>Save new password</span><i class=au__spin></i></button>
+  <button class=au__go id=ago type=submit><span data-m=in>Sign in</span><span data-m=up>Create account</span><span data-m=fg>Send me a code</span><span data-m=rc>Verify code</span><span data-m=rc2>Save new password</span><i class=au__spin></i></button>
   ${L?'':`<div class=au__links data-m=in><button type=button class=lnk id=afg onclick="auGo('fg',1)">Forgot password?</button><button type=button class=lnk onclick="mlink()">Email me a sign-in link</button><button type=button class=lnk id=ars onclick="resendMail()" ${RS?'':'hidden'}>Resend confirmation email</button></div>`}
   <p class=au__sw data-m=in>${L?'':'New here? '}<button type=button class=lnk onclick="auGo('up',1)">Create an account</button></p>
   <p class=au__sw data-m=up>Already have an account? <button type=button class=lnk onclick="auGo('in',1)">Sign in</button></p>
   <p class=au__sw data-m=fg><button type=button class=lnk onclick="auGo('in',1)">← Back to sign in</button></p>
-  <p class=au__sw data-m=rc><button type=button class=lnk onclick="resendCode()">Resend code</button> · <button type=button class=lnk onclick="auGo('in',1)">← Back to sign in</button></p>
+  <p class=au__sw data-m=rc><button type=button class=lnk onclick="auGo('in',1)">← Back to sign in</button></p>
+  <p class=au__sw data-m=rc2><button type=button class=lnk onclick="rcCancel()">Cancel</button></p>
  </form>
  <div class=au__foot data-m="in up">${soc}${GBTN()}${L?'<p class=mut>Cloud sign-in is not set up, so accounts are stored on this device only.</p>':''}</div>
  <div class=au__band id=aub aria-hidden=true><span class="band__edge band__edge--trail"></span><div class=band__inner><div class=band__page><div class="au__head au__head--band"><img class=au__logo src=logo-light.png alt="" width=46 height=46><h3 class=au__title id=abt></h3><p class=au__sub id=abs></p></div></div></div><span class="band__edge band__edge--lead"></span></div>
@@ -262,7 +287,7 @@ async function localAuth(){const u=$('#au').value.trim().toLowerCase(),p=$('#ap'
  else{const a=L[u];if(!a||a.h!=await hash(p,a.s))return e('Wrong username or password.')}
  USER=u;localStorage.setItem('ef_cur',u);loadS();mergeGuest();AUTHV=0;if(nm)S.set.name=nm.slice(0,30);save();theme();applyPrefs();go('home')}
 function vAuth(){if(CFGOK&&!sb)return`<div class="card auth"><h1>LanguWay English</h1><p>Cloud sign-in needs an internet connection. Check your connection and try again.</p><button class=btn onclick="location.reload()">Try again</button>${GBTN()}</div>`;return sb?vCloudAuth():vLocalAuth()}
-function applyPrefs(){const f={small:'14px',normal:'16px',large:'18px',xl:'20px'}[S.set.font]||'16px';document.documentElement.style.fontSize=f;document.documentElement.classList.toggle('calm',!!S.set.calm)}
+function applyPrefs(){const f={small:'14px',normal:'16px',large:'18px',xl:'20px'}[S.set.font]||'16px';document.documentElement.style.fontSize=f;document.documentElement.classList.toggle('calm',!!S.set.calm);document.documentElement.classList.toggle('cmp',!!S.set.cmp);wlSync()}
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const sh=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
 const $=s=>document.querySelector(s);
@@ -271,7 +296,7 @@ const avg=()=>{const v=Object.values(S.done);return v.length?Math.round(v.reduce
 const dueN=()=>Object.values(S.vocab).filter(v=>v.due<=Date.now()).length;
 /* ---------- Audio: browser speech only (no music, no sound effects) ---------- */
 function say(t,r){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang=S.set.acc;u.rate=r||S.set.rate;speechSynthesis.speak(u)}catch(e){}}
-function theme(){const t=S.set.theme,d=t=='dark'||(t=='system'&&matchMedia('(prefers-color-scheme:dark)').matches);document.documentElement.toggleAttribute('data-d',d)}
+function theme(){const t=S.set.theme,d=t=='dark'||(t=='system'&&matchMedia('(prefers-color-scheme:dark)').matches);document.documentElement.toggleAttribute('data-d',d);try{document.querySelectorAll('.dn').forEach(b=>{b.classList.toggle('night',d);b.setAttribute('aria-checked',d)})}catch(e){}}
 
 /* ---------- Access rules ---------- */
 const lvOpen=n=>n==1||n<=(S.start||1)||S.lt[n-1]>=75;
@@ -290,7 +315,7 @@ let GATE=0;
 function go(v,a){if((v=='lesson'||v=='gram')&&needTest())return;if(V=='story'&&v!='story'&&typeof stLeave=='function')stLeave();const ch=v!=V||MN;INQ=0;V=v;A=a||0;P=0;
  if(ch)navFx(()=>{mnHide();scrollTo(0,0);draw()},VT[v]);else{scrollTo(0,0);draw()}}
 let SQ='',TD='Lessons';
-function tgl(){S.set.theme=document.documentElement.hasAttribute('data-d')?'light':'dark';save();theme();draw()}
+function tgl(){S.set.theme=document.documentElement.hasAttribute('data-d')?'light':'dark';save();theme()}
 
 const ICP={
 home:'<path d="M3 11.2 12 3.8l9 7.4"/><path d="M5.5 9.8v10.4h13V9.8"/><rect class=f x="10" y="13.6" width="4" height="6.6" rx="1.2"/>',
@@ -309,14 +334,16 @@ stories:'<rect x="3.5" y="5" width="17" height="14" rx="2.4"/><path class=f d="m
 user:'<circle cx="12" cy="8.5" r="3.6"/><path class=f d="M4.5 20c.8-4 3.9-6 7.5-6s6.7 2 7.5 6z"/>',
 doc:'<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4"/><path class=f d="M9 12h6v1.8H9z"/><path d="M9 16.5h4"/>'};
 ICP.cloud='<path d="M7 18.5h10a4 4 0 0 0 .6-7.95A5.6 5.6 0 0 0 7 9.2 4.7 4.7 0 0 0 7 18.5z"/><path class=f d="m9.6 14 1.8 1.8 3.2-3.4" style="fill:none;stroke:var(--ac2);stroke-width:2"/>';ICP.cloudoff='<path d="M7 18.5h10a4 4 0 0 0 1.6-7.7A5.6 5.6 0 0 0 9 6.8"/><path d="M5.2 9.7A4.6 4.6 0 0 0 7 18.5"/><path d="m4 4 16 16" style="stroke:var(--bad)"/>';ICP.refresh='<path d="M20 12a8 8 0 0 1-14 5.3"/><path d="M4 12a8 8 0 0 1 14-5.3"/><path class=g d="M18.5 3v4.5H14z M5.5 21v-4.5H10z"/>';ICP.alert='<path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5"/><circle class=g cx="12" cy="17.2" r="1"/>';ICP.device='<rect x="7" y="2.8" width="10" height="18.4" rx="2.4"/><path class=f d="M10.5 18h3v1.6h-3z"/>';
-ICP.menu='<path d="M4 7h16M4 12h16M4 17h16"/>';ICP.help='<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.7.4-1 .9-1 1.6"/><circle class=g cx="12" cy="16.9" r="1"/>';
+ICP.menu='<path d="M4 7h16M4 12h16M4 17h16"/>';ICP.search='<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>';ICP.cert='<circle cx="12" cy="9" r="5"/><path d="M8.6 13.2 7 21l5-3 5 3-1.6-7.8"/><path class=g d="m12 6.6.8 1.6 1.7.2-1.2 1.2.3 1.7-1.6-.8-1.6.8.3-1.7-1.2-1.2 1.7-.2z"/>';ICP.out='<path d="M10 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H10"/><path d="m15 8 4 4-4 4M19 12H9"/>';ICP.help='<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.7.4-1 .9-1 1.6"/><circle class=g cx="12" cy="16.9" r="1"/>';
 const ic=(n,x)=>`<svg class="ic ic-${n} ${x||''}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICP[n]}</svg>`;
 function draw(){
  const ae=document.activeElement;if((!USER||REC||AUTHV)&&ae&&ae.closest&&ae.closest('.auth')&&/INPUT/.test(ae.tagName)&&$('#app').contains(ae)&&!draw.force)return;
- if(!USER||REC||AUTHV){mnHide();$('#app').innerHTML=vAuth();return}
+ if(!USER||REC||AUTHV){mnHide();$('#app').innerHTML=vAuth();mnSync();return}
  if(V=='settings'&&ae&&ae.closest&&ae.closest('.cpx')&&/INPUT/.test(ae.tagName)&&!draw.force)return;
- const top=`<div class=top><button class=ib id=mnb type=button aria-label="Open menu" aria-haspopup=dialog onclick="mnToggle()">${ic('menu')}</button><button class=ib type=button aria-label="Switch theme" onclick="tgl()">${ic('moon')}</button></div>`;
+ const night=document.documentElement.hasAttribute('data-d'),
+ top=`<div class=top><button class=ib id=mnb type=button aria-label="Open menu" aria-haspopup=dialog onclick="mnToggle()">${ic('menu')}</button><button class="dn ${night?'night':''}" type=button role=switch aria-checked="${night}" aria-label="Day or night mode" onclick="tgl()"><i class=dn__st></i><i class=dn__cl></i><i class=dn__k></i></button></div>`;
  $('#app').innerHTML=top+({home:vHome,learn:vLearn,lesson:vLesson,gram:vGram,review:vReview,progress:vProgress,settings:vSet,test:vTest,cert:vCert,search:vSearch,help:vHelp,share:vShare,stories:vStories,story:vStory})[V]();
+ mnSync();wlSync();
 }
 
 function sk(k,c){const t=S.sk[k]||[0,0],p=t[1]?Math.round(t[0]/t[1]*100):0,a=Math.min(100,t[1]);return`<div class="sk ${c}"><div class=st>${k}</div><div class=sb><span>Questions answered<br><big>${t[1]}</big></span><div class=ring style="--p:${a}"><i>${a}%</i></div></div><div class=sb><span>Correct answers<br><big>${t[0]}</big> / ${t[1]}</span><div class=ring style="--p:${p}"><i>${p}%</i></div></div><div class=fl><b style="min-width:${Math.max(p,16)}%">${p}%</b></div></div>`}
@@ -366,10 +393,17 @@ function regSW(){if(!('serviceWorker' in navigator))return;navigator.serviceWork
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='visible')reg.update().catch(()=>{})})}).catch(()=>{});
  let rl=0;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(rl||!UPD)return;rl=1;location.reload()})}
 function streak(){let n=0;const d=new Date(),k=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');if(!S.days[k(d)])d.setDate(d.getDate()-1);while(S.days[k(d)]){n++;d.setDate(d.getDate()-1)}return n}
-function vHome(){const cl=curLevel(),nm=S.set.name?', '+esc(S.set.name):'',rv=Math.max(...Object.keys(CT).filter(k=>+k<=cl).map(Number));
- return`<h1>HOME</h1>${S.placed?'':`<div class=card style="border-color:var(--ac2)"><b>Take the placement test to start studying</b><p class=mut>You can look around the app now. To study lessons you first need your level.</p><button class=btn type=button onclick="go('test')">Take the placement test</button></div>`}<p class=mut>Welcome${nm}. Your level: <b>Level ${cl} · ${LV[cl-1]}</b> · ${doneN()} of ${LS.length} lessons finished · about ${CEFR(cl)}.${S.ls[cl]&&!(S.lt[cl]>=75)?' · <b>'+dayLbl(cl)+'</b>':''}</p>
+const greet=()=>{const h=new Date().getHours();return h<12?'Good morning':h<18?'Good afternoon':'Good evening'};
+const weekN=()=>{let n=0;const d=new Date();for(let i=0;i<7;i++){const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');n+=S.days[k]||0;d.setDate(d.getDate()-1)}return n};
+function vHome(){const cl=curLevel(),nm=S.set.name?', '+esc(S.set.name):'',rv=Math.max(...Object.keys(CT).filter(k=>+k<=cl).map(Number)),
+ gd=Math.min(S.days[today()]||0,S.set.goal),gp=Math.round(gd/S.set.goal*100),wn=weekN(),wk=Math.min(wn,S.set.wk),
+ rem=S.set.rem!='off'&&!(S.days[today()]>0)&&new Date().getHours()>=(S.set.rem=='morning'?8:18);
+ return`<section class=hero><div class=hero__t><p class=hero__k>${greet()}${nm}</p><h2 class=hero__h>Level ${cl} · ${LV[cl-1]}</h2><p class=hero__s>About ${CEFR(cl)} · ${doneN()} of ${LS.length} lessons finished${S.ls[cl]&&!(S.lt[cl]>=75)?' · '+dayLbl(cl):''}</p><button class=hero__b type=button onclick="${S.placed?'hNext()':"go('test')"}">${S.placed?'Continue learning':'Take the placement test'}</button></div><div class=hero__r style="--p:${gp}" title="Daily goal"><i>${gp}%</i><small>today</small></div></section>
+ ${S.placed?'':`<div class="card note"><b>Take the placement test to start studying</b><p class=mut>You can look around the app now. To study lessons you first need your level.</p></div>`}
+ ${rem?`<div class="card note"><b>Time to study</b><p class=mut>You have not studied yet today. One quiz keeps your ${streak()}-day streak alive.</p><button class=btn type=button onclick="hNext()">Start now</button></div>`:''}
  ${CT[cl]?'':`<div class=card><b>Lessons for Level ${cl} are still being written.</b><p class=mut>Your level is saved and open. Until the lessons arrive you can review Level ${rv}.</p><button class=btn2 onclick="OL=${rv};go('learn')">Open Level ${rv}</button></div>`}
- <div class=card><b>Daily goal</b> <span class=mut>${Math.min(S.days[today()]||0,S.set.goal)} of ${S.set.goal} quiz${S.set.goal>1?'zes':''} passed today · 🔥 ${streak()}-day streak</span><div class=bar><i style="width:${Math.min(100,(S.days[today()]||0)/S.set.goal*100)}%"></i></div></div>
+ <div class=grid><div class=stat><b>${streak()}</b>Day streak</div><div class=stat><b>${Object.keys(S.vocab).length}</b>Words learned</div><div class=stat><b>${doneN()}</b>Lessons done</div><div class=stat><b>${wn}</b>Quizzes this week</div></div>
+ <div class=card><h3 style="margin-top:0">Your goals</h3><p class=mut style="margin:0">Daily goal: ${gd} of ${S.set.goal} quiz${S.set.goal>1?'zes':''} passed today</p><div class=bar><i style="width:${gp}%"></i></div><p class=mut style="margin:8px 0 0">Weekly goal: ${wk} of ${S.set.wk} quizzes</p><div class=bar><i style="width:${Math.round(wk/S.set.wk*100)}%"></i></div></div>
  ${epOf(cl)?`<div class=card><b>Story time</b> <span class=mut>Episode ${cl}: ${esc(epOf(cl).t)}${S.sty[cl]!=null?' · best '+S.sty[cl]+'%':''}</span><br><button class=btn2 style="margin-top:8px" onclick="storyOpen(${cl})">▶ Watch the story</button></div>`:''}
  <div class=sks>${sk('Vocabulary','')}${sk('Reading','c3')}${sk('Listening','c2')}${sk('Grammar','c4')}${sk('Writing','')}${sk('Speaking','c2')}</div><div class=two>${todo()}${cal()}</div>`}
 /* ---------- Learn map ---------- */
@@ -384,7 +418,7 @@ function lvBody(n){let h='';const ct=CT[n];
  return h}
 function vLearn(){OL=OL||curLevel();let h='<h1>LEARN</h1><p class=mut>30 levels · each level takes about 2 weeks · 3 lessons per unit. Tap a level to open it.</p>';
  LV.forEach((nm,i)=>{const n=i+1,op=lvOpen(n),ct=!!CT[n],pc=ct?Math.round(LS.filter(l=>l.lv==n&&S.done[l.id]!=null).length/(lvCnt(n)*3)*100):0;
-  h+=`<div class="card ${op?'':'dim'}"><button class=row style="border:0;padding:0" ${op?'':'disabled'} onclick="OL=${OL==n?-1:n};draw()"><span><b>${op?'🔓':'🔒'} Level ${n} · ${nm}</b>${n==S.start?' · your level':''}${S.lt[n]>=75?' ✔':''}</span><b>${ct?pc+'%':'soon'}</b></button>${OL==n?lvBody(n):''}</div>`});return h}
+  h+=`<div class="card ${op?'':'dim'}"><button class=row style="border:0;padding:0" ${op?'':'disabled'} onclick="OL=${OL==n?-1:n};draw()"><span><b>${op?'🔓':'🔒'} Level ${n} · ${nm}</b>${n==S.start?' · your level':''}${S.lt[n]>=75?' ✔':''}</span><b>${ct?pc+'%':'soon'}</b></button>${ct&&op?`<div class=bar><i style="width:${pc}%"></i></div>`:''}${OL==n?lvBody(n):''}</div>`});return h}
 function vid(id,k){const v=((window.VIDEOS||{})[id]||[])[k]||{};return`<div class=vid>${v.yt?`<iframe src="https://www.youtube-nocookie.com/embed/${v.yt}?rel=0" title="${v.t||'Lesson video'}" allowfullscreen loading=lazy></iframe>`:v.src?`<video controls preload=none src="${v.src}"></video>`:`<span>Video ${k+1} for this lesson has not been added yet.</span>`}</div>${v.t?`<p class=mut>${v.t}</p>`:''}`}
 
 /* ---------- Lesson: 4 sections, then the quiz ---------- */
@@ -427,8 +461,8 @@ function micGo(){if(!SRC||SPK.busy)return;const s=SPK.items[SPK.i];let got=0;con
  try{r.start();const b=$('#mic');if(b){b.disabled=true;b.textContent='🎤 Listening…'}}catch(e){SPK.busy=0}}
 function spkDone(){SPK.i++;SPK.res=null;SPK.tries=0;draw()}
 /* ---------- Celebration (no sound) ---------- */
-function confetti(){if(S.set.calm||(matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches))return;
- const c=document.createElement('canvas');c.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50';c.width=innerWidth;c.height=innerHeight;document.body.appendChild(c);const x=c.getContext('2d'),cols=['#14284f','#c9a45c','#58c4e6','#ef7f5a','#0f9d6b','#a51fcb'],
+function confetti(){if(S.set.calm||S.set.fx===false||(matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches))return;
+ const c=document.createElement('canvas');c.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50';c.width=innerWidth;c.height=innerHeight;document.body.appendChild(c);const x=c.getContext('2d'),cols=['#0b4aa8','#2f80ed','#58a6ff','#9cc8ff','#ffffff','#0f9d6b'],
  P=Array.from({length:140},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height*.5,w:6+Math.random()*7,h:9+Math.random()*9,vx:-2+Math.random()*4,vy:2+Math.random()*4,r:Math.random()*6,vr:-.2+Math.random()*.4,c:cols[Math.random()*cols.length|0]}));let t=0;
  (function f(){t++;x.clearRect(0,0,c.width,c.height);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.w/2,-p.h/2,p.w,p.h);x.restore()});if(t<170)requestAnimationFrame(f);else c.remove()})()}
 const nmS=()=>S.set.name?', '+esc(S.set.name):'';
@@ -447,7 +481,7 @@ const rnd=a=>a[Math.random()*a.length|0];
 const dsOf=l=>rnd(l.ds.length?l.ds:l.ss);
 function runQuiz(qs,title,fin){INQ=1;Q={qs,i:0,s:0,title,fin,lock:0,pick:[]};showQ()}
 function showQ(){const q=Q.qs[Q.i];Q.lock=0;Q.pick=[];
- let h=`<p class=mut>${Q.title} · ${Q.i+1} of ${Q.ad?Q.ad.n:Q.qs.length}</p><div class=bar><i style="width:${Q.i/(Q.ad?Q.ad.n:Q.qs.length)*100}%"></i></div><h2>${q.q}</h2>${q.p?`<div class=card style="font-size:18px;line-height:1.7">${q.p}</div>`:''}`;
+ const qn=Q.ad?Q.ad.n:Q.qs.length,qp=Q.i/qn;let h=`<div class=qh><button class=pr type=button onclick="qExit()" aria-label="Leave the quiz">${prSvg(qp)}</button><div class=qh__t><p class=mut>${Q.title} · ${Q.i+1} of ${qn}</p><div class=bar><i style="width:${qp*100}%"></i></div></div></div><h2>${q.q}</h2>${q.p?`<div class=card style="font-size:18px;line-height:1.7">${q.p}</div>`:''}`;
  if(q.say)h+=`<button class=btn2 onclick="say(Q.qs[Q.i].say)">▶ Listen</button> <button class=btn2 onclick="say(Q.qs[Q.i].say,.6)">🐢 Slowly</button>`;
  if(q.ord)h+=`<div class=line id=ln></div><div id=bank></div><button class=btn id=chk onclick="chkOrd()" disabled>Check</button>`;
  else if(q.type)h+=`<input id=ti autocomplete=off autocapitalize=none spellcheck=false placeholder="Type your answer" style="width:100%" onkeydown="if(event.key=='Enter')chkType()"><br><button class=btn style="margin-top:10px" onclick="chkType()">Check</button>`;else h+=q.o.map((o,j)=>`<button class=opt ${q.ar?'dir=rtl':''} onclick="pick(${j})">${esc(o)}</button>`).join('');
@@ -490,7 +524,7 @@ function tutor(q,ok,g){
    return em((ok?`<b>Right.</b> `:'')+`The full sentence is: ${q1(full)}`+(!ok&&g?`<br>${q1(q.q.replace('___',g))} does not sound right in English.`:'')+(r?`<br><b>Related rule:</b> ${esc(r.t)}. ${esc(r.e)}<br><b>Pattern:</b> ${esc(r.f)}`:''))}
  }catch(e){}
  return ''}
-function fin1(ok,q,g){Q.last=ok;const k=q.k||'Other',t=S.sk[k]=S.sk[k]||[0,0];t[1]++;if(ok)t[0]++;if(ok)Q.s++;else if(q.w){const w=q.w;S.mist=[w,...S.mist.filter(m=>m.en!=w.en)].slice(0,50);if(S.vocab[w.en]){S.vocab[w.en].box=0;S.vocab[w.en].due=Date.now();S.vocab[w.en].t=Date.now()}}save();
+function fin1(ok,q,g){Q.last=ok;buzz(ok);const k=q.k||'Other',t=S.sk[k]=S.sk[k]||[0,0];t[1]++;if(ok)t[0]++;if(ok)Q.s++;else if(q.w){const w=q.w;S.mist=[w,...S.mist.filter(m=>m.en!=w.en)].slice(0,50);if(S.vocab[w.en]){S.vocab[w.en].box=0;S.vocab[w.en].due=Date.now();S.vocab[w.en].t=Date.now()}}save();
  $('#fb').innerHTML=`<p style="color:var(--${ok?'ok':'bad'})"><b>${ok?'Correct!':'Not quite.'}</b></p>${ok?'':q.diff?`<p>The correct answer, with your mistakes marked:<br><span style="font-size:19px">${q.diff}</span></p>`:`<p>Answer: <b>${esc(q.a)}</b></p>`}${tutor(q,ok,g)}<button class=btn onclick="nextQ()">${Q.i+1==Q.qs.length?'Finish':'Next'}</button>`;const n=$('#fb .btn');if(n)n.focus()}
 const ST=[5,4,4,3,3,2,2,2,1,1,1,1,1,1];
 function nextQ(){if(Q.ad){const a=Q.ad,i=Q.i,b=a.h[i],ty=a.k[i]==0;a.r.push([b,Q.last]);a.post=a.post.map((v,j)=>{const p=pLike(PTH[j],b,ty);return v*(Q.last?p:1-p)});const z=Math.max(...a.post);a.post=a.post.map(v=>v/z);if(i+1<a.n)Q.qs.push(pickQ(a))}
@@ -643,7 +677,7 @@ function startTest(){const a={h:[],k:[],u:{},r:[],n:24,post:PTH.map(()=>1)};cons
  showQ()}
 
 function vSearch(){const q=SQ.toLowerCase().trim(),r=LS.filter(l=>l.t.toLowerCase().includes(q)||l.w.some(w=>w.en.toLowerCase().includes(q)||(w.d||'').toLowerCase().includes(q)));
- return`<h1>SEARCH</h1><form class=card onsubmit="SQ=this.q.value;draw();return false"><input name=q id=sq value="${SQ.replace(/"/g,'')}" placeholder="Search lessons and words" aria-label=Search></form><p class=mut>${r.length} result${r.length==1?'':'s'} for “${SQ.replace(/</g,'')}”</p><div class=card>${r.map(l=>`<button class=row onclick="go('lesson',${l.id})"><span>${l.t}</span><b>L${l.lv} · U${l.ui+1}</b></button>`).join('')||'<p>No lessons found.</p>'}</div>`}
+ return`<h1>SEARCH</h1>${srch('sq',SQ,'Search lessons and words',"SQ=$('#sq').value;draw()")}<p class=mut>${r.length} result${r.length==1?'':'s'} for “${SQ.replace(/</g,'')}”</p><div class=card>${r.map(l=>`<button class=row onclick="go('lesson',${l.id})"><span>${l.t}</span><b>L${l.lv} · U${l.ui+1}</b></button>`).join('')||'<p>No lessons found.</p>'}</div>`}
 /* ---------- Review (spaced repetition) ---------- */
 let R=null;
 function vReview(){const due=Object.entries(S.vocab).filter(x=>x[1].due<=Date.now());
@@ -667,24 +701,39 @@ function vCert(){const n=A,dn=Object.keys(S.lt).filter(k=>S.lt[k]>=75);
  const id='EF-L'+n+'-'+(S.cid[n]=S.cid[n]||Math.random().toString(36).slice(2,8).toUpperCase());save();
  return`<div class=cert><h2>LanguWay English</h2><p>Certificate of Completion</p><h1>${esc(S.set.name)||'Learner'}</h1><p>has completed Level ${n} · ${LV[n-1]}<br>Level test score ${S.lt[n]}% · ${today()}</p><p class=mut>${id}<br>Issued by the platform. Not an official or externally accredited certificate.</p></div><p class=noprint><button class=btn onclick="print()">Print or save as PDF</button></p>`}
 function sel(lbl,opts,cur,fn){return`<div class=set>${lbl}<select onchange="${fn}">${opts.map(o=>`<option value="${o[0]}" ${String(o[0])==String(cur)?'selected':''}>${o[1]}</option>`).join('')}</select></div>`}
+const prSvg=p=>`<svg viewBox="0 0 100 100" aria-hidden=true><circle class=pr__t cx=50 cy=50 r=42 /><circle class=pr__v cx=50 cy=50 r=42 pathLength=100 stroke-dasharray="${Math.round(p*100)} 100" /></svg><i class=pr__k style="--a:${Math.round(p*360)}deg"></i><i class=pr__s></i>`;
+function qExit(){if(Q&&Q.i>0&&!confirm('Leave this quiz? Your answers so far will not be saved.'))return;INQ=0;draw()}
+function buzz(ok){try{if(S.set.vib&&navigator.vibrate)navigator.vibrate(ok?15:[25,35,25])}catch(e){}}
+let WL=null;
+function wlSync(){try{if(!navigator.wakeLock)return;const need=S.set.wl&&(INQ||['lesson','story','gram','test'].includes(V));if(need&&!WL){navigator.wakeLock.request('screen').then(l=>{WL=l;l.addEventListener('release',()=>{WL=null})}).catch(()=>{})}else if(!need&&WL){WL.release().catch(()=>{});WL=null}}catch(e){}}
+const VER='3.0';
+async function chkUpd(){const m=$('#updm');if(m)m.textContent='Checking…';try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();setTimeout(()=>{const e=$('#updm');if(e)e.textContent=UPD?'A new version is ready. Choose Update now in the message that appeared.':'You have the latest version.'},1200)}catch(e){if(m)m.textContent='Could not check. Try again when you are online.'}}
 const acc=(k,t,ico,body)=>`<details class="acc card" ${SO[k]?'open':''} ontoggle="SO['${k}']=this.open"><summary><span>${ic(ico)}${t}</span><i class=acc__c></i></summary><div class=acc__b>${body}</div></details>`;
 function vSet(){const s=S.set,C=isC(USER);
- const acct=C?`<div class=set><span>Signed in as<br><b>${esc(EMAIL||'—')}</b><br><span class=mut>${esc(PROV||'email')}</span></span></div><div class=set><span>Cloud sync<br><span class=mut id=sst>${SL[SYNC]}${SERR?': '+esc(SERR):''}</span></span><button class=btn2 onclick="syncNow().then(draw)">Sync now</button></div>${cpHtml()}<button class=btn2 onclick="signOut()">Sign out</button> <button class=btn2 style="border-color:var(--bad);color:var(--bad)" onclick="delAcct()">Delete account</button>`
+ const ago=t=>{if(!t)return'not yet';const m=Math.round((Date.now()-t)/6e4);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' days ago'};
+ const acct=C?`<div class=set><span>Signed in as<br><b>${esc(EMAIL||'—')}</b><br><span class=mut>${esc(PROV||'email')}</span></span></div><div class=set><span>Cloud saving<br><span class=mut id=sst>${SL[SYNC]}${SERR?': '+esc(SERR):''}</span><br><span class=mut>Last saved to your account: ${ago(LSY)}</span></span><button class=btn2 onclick="syncNow().then(draw)">Save now</button></div>${cpHtml()}<button class=btn2 onclick="signOut()">Sign out</button> <button class=btn2 style="border-color:var(--bad);color:var(--bad)" onclick="delAcct()">Delete account</button>`
  :isG(USER)?`<p>You are using the app as a <b>guest</b>. Your progress is saved on this device only.</p><button class=btn type=button onclick="wantAuth()">Sign in or create an account</button><p class=mut>Your guest progress will be added to your account.</p>`
- :`<p>Signed in as <b>${esc(USER)}</b> on this device.</p><p class=mut>${CFGOK?'Cloud sign-in is unavailable right now.':'Cloud sync is not set up, so your progress stays on this device only. See SETUP-CLOUD.md to turn on email, Google and Apple sign-in.'}</p><button class=btn2 onclick="localStorage.removeItem('ef_cur');location.reload()">Log out</button>`;
+ :`<p>Signed in as <b>${esc(USER)}</b> on this device.</p><p class=mut>${CFGOK?'Cloud sign-in is unavailable right now.':'Cloud sync is not set up, so your progress stays on this device only.'}</p><button class=btn2 onclick="localStorage.removeItem('ef_cur');location.reload()">Log out</button>`;
+ const chk=(k,l)=>`<div class=set>${l}<input type=checkbox ${s[k]?'checked':''} onchange="S.set.${k}=this.checked;save();applyPrefs()"></div>`;
  const learn=`<div class=set>Display name<input value="${esc(s.name)}" maxlength=30 onchange="S.set.name=this.value.trim().slice(0,30);save();draw()"></div>
  ${sel('Daily goal',[[1,'1 quiz'],[2,'2 quizzes'],[3,'3 quizzes']],s.goal,'S.set.goal=+this.value;save()')}
  ${sel('Accent',[['en-US','American'],['en-GB','British']],s.acc,'S.set.acc=this.value;save()')}
- <div class=set>Play audio automatically<input type=checkbox ${s.auto?'checked':''} onchange="S.set.auto=this.checked;save()"></div>
+ ${chk('auto','Play audio automatically')}
  ${sel('Speech speed',[['.6','Slow'],['.9','Normal'],['1.15','Fast']],s.rate,'S.set.rate=+this.value;save()')}
- <div class=set>Arabic subtitles in stories<input type=checkbox ${s.sa?'checked':''} onchange="S.set.sa=this.checked;save()"></div>
+ ${chk('sa','Arabic subtitles in stories')}
  <p class=mut>Pronunciation uses your browser's voices, which differ by device.</p>`;
- const look=`${sel('Theme',[['system','System'],['light','Light'],['dark','Dark']],s.theme,'S.set.theme=this.value;save();theme()')}
+ const tools=`${sel('Weekly goal',[[3,'3 quizzes'],[5,'5 quizzes'],[7,'7 quizzes'],[10,'10 quizzes'],[14,'14 quizzes']],s.wk,'S.set.wk=+this.value;save()')}
+ ${sel('Daily reminder',[['off','Off'],['morning','Morning (from 8:00)'],['evening','Evening (from 18:00)']],s.rem,'S.set.rem=this.value;save()')}
+ ${chk('wl','Keep the screen on while studying')}${chk('vib','Vibrate on answers')}${chk('fx','Celebration effects')}
+ <p class=mut>The reminder shows a card on Home when you have not studied yet today.</p>`;
+ const look=`<div class=set>Day or night<button class="dn ${document.documentElement.hasAttribute('data-d')?'night':''}" type=button role=switch aria-label="Day or night mode" onclick="tgl()"><i class=dn__st></i><i class=dn__cl></i><i class=dn__k></i></button></div>
+ ${sel('Theme',[['system','System'],['light','Light'],['dark','Dark']],s.theme,'S.set.theme=this.value;save();theme()')}
  ${sel('Text size',[['small','Small'],['normal','Normal'],['large','Large'],['xl','Extra large']],s.font,'S.set.font=this.value;save();applyPrefs()')}
- <div class=set>Reduce motion<input type=checkbox ${s.calm?'checked':''} onchange="S.set.calm=this.checked;save();applyPrefs()"></div>`;
+ ${chk('cmp','Compact layout')}${chk('calm','Reduce motion')}`;
  const data=`<p class=mut>${C?'Your progress is saved in your account. You can also keep a backup file.':'Your progress is stored in this browser only. Export a backup to move it to another device.'}</p>
- <button class=btn2 onclick="exp()">Export backup</button> <label class=btn2 style="display:inline-block">Import backup<input type=file accept=.json hidden onchange="imp(this.files[0])"></label> <button class=btn2 onclick="resetProg()">Reset progress</button> <button class=btn2 onclick="go('help')">Help</button>`;
- return`<h1>SETTINGS</h1>${acc('acct','Account','user',acct)}${acc('inst','Install and share','share','<p class=mut>Install the app, share it with friends, or show the QR code.</p><button class=btn type=button onclick="go(\'share\')">Open install and share</button>')}${acc('learn','Learning','learn',learn)}${acc('look','Appearance','gear',look)}${acc('data','Your data','doc',data)}`}
+ <button class=btn2 onclick="exp()">Export backup</button> <label class=btn2 style="display:inline-block">Import backup<input type=file accept=.json hidden onchange="imp(this.files[0])"></label> <button class=btn2 onclick="resetProg()">Reset progress</button>`;
+ const about=`<p class=mut>LanguWay English · version ${VER}</p><p class=mut id=updm>Updates install only when you choose. Your progress is kept.</p><button class=btn2 type=button onclick="chkUpd()">Check for updates</button> <button class=btn2 type=button onclick="go('help')">Help</button>`;
+ return`<h1>SETTINGS</h1>${acc('acct','Account','user',acct)}${acc('learn','Learning','learn',learn)}${acc('tools','Study tools','pen',tools)}${acc('look','Appearance','gear',look)}${acc('inst','Install and share','share','<p class=mut>Install the app, share it with friends, or show the QR code.</p><button class=btn type=button onclick="go(\'share\')">Open install and share</button>')}${acc('data','Your data','doc',data)}${acc('about','About and updates','help',about)}`}
 let DIP=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();DIP=e;if((V=='settings'||V=='share')&&!INQ)draw()});
 addEventListener('appinstalled',()=>{DIP=null;if((V=='settings'||V=='share')&&!INQ)draw()});
@@ -714,7 +763,10 @@ document.addEventListener('visibilitychange',()=>{if(sb&&SESS){if(document.visib
 addEventListener('online',async()=>{if(!sb)return;if(!SESS&&isC(USER)){try{const r=await sb.auth.getSession();if(r.data.session)await onSignedIn(r.data.session);else forget()}catch(e){}}else syncNow()});
 addEventListener('offline',()=>{if(SESS)setSync('off')});
 addEventListener('load',regSW);
-addEventListener('keydown',e=>{if(e.key=='Escape'){if($('#zm'))$('#zm').remove();else hClose()}});
+addEventListener('keydown',e=>{if(e.key=='Escape'){if($('#zm'))$('#zm').remove();else if(MN)mnToggle();else hClose()}});
+addEventListener('pagehide',()=>{if(sb&&SESS){clearTimeout(pushT);push()}});
+try{matchMedia('(min-width:900px)').addEventListener('change',()=>{MN=0;draw()})}catch(e){}
+(function syncLoop(){if(sb&&SESS&&(SYNC=='wait'||SYNC=='err')&&navigator.onLine&&!/switched on/i.test(SERR))push();const t=setTimeout(syncLoop,60000);if(t&&t.unref)t.unref()})();
 document.addEventListener('focusin',e=>{const t=e.target;if(t&&/INPUT|TEXTAREA/.test(t.tagName))setTimeout(()=>{try{t.scrollIntoView({block:'center',behavior:'smooth'})}catch(x){}},320)});
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 (function(){const sp=$('#splash');if(!sp)return;let seen=0;try{seen=sessionStorage.getItem('ef_sp')}catch(e){}const end=()=>{sp.classList.add('out');setTimeout(()=>sp.remove(),600)};if(seen){sp.remove();return}try{sessionStorage.setItem('ef_sp','1')}catch(e){}sp.onclick=end;sp.addEventListener('touchstart',end,{passive:true});setTimeout(end,matchMedia('(prefers-reduced-motion:reduce)').matches||S.set.calm?1200:3900)})();
