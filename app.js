@@ -99,6 +99,8 @@ function friendly(e){const m=String((e&&e.message)||e||''),c=String((e&&(e.code|
  if(c=='email_address_invalid'||/email address.*invalid|invalid.*email/i.test(m))return'This email address is not accepted. Check it for typing mistakes.';
  if(c=='signup_disabled'||/signups? (not allowed|disabled)/i.test(m))return'New sign-ups are switched off in the cloud settings.';
  if(/failed to fetch|network|load failed/i.test(m))return'No connection. Check your internet and try again.';
+ if(c=='otp_expired'||/token has expired|otp.*(expired|invalid)|invalid.*(otp|token)/i.test(m))return'That code is wrong or has expired. Check it, or ask for a new code.';
+ if(c=='same_password'||/different from the old password/i.test(m))return'Choose a password that is different from your current one.';
  if(/provider is not enabled|unsupported provider/i.test(m))return'This sign-in method is not enabled yet.';
  if(/delete_my_account/i.test(m))return'Account deletion is not set up. Run the latest SUPABASE_SETUP.sql.';
  if(/progress/i.test(m)&&/(schema cache|exist|find)/i.test(m))return'The cloud database is not set up yet. Run SUPABASE_SETUP.sql.';
@@ -123,7 +125,7 @@ async function onSignedIn(ses){if(SESS&&SESS.user.id===ses.user.id){SESS=ses;ret
  localStorage.setItem('ef_cur',USER);localStorage.setItem('ef_email_'+USER,EMAIL);AMSG='';
  loadS();mergeGuest();AUTHV=0;const nm=u.user_metadata&&(u.user_metadata.name||u.user_metadata.full_name);if(nm&&!S.set.name){S.set.name=String(nm).slice(0,30);persist()}
  try{await pull()}catch(e){setSync(navigator.onLine?'err':'off',e)}
- INQ=0;V='home';theme();applyPrefs();draw()}
+ INQ=0;V='home';theme();applyPrefs();navFx(draw,VT.home)}
 async function signOut(){if(sb&&SESS){clearTimeout(pushT);await push();if(SYNC!='ok'&&!confirm('Your latest progress has not synced yet. A copy stays on this device until you sign in again. Sign out anyway?'))return;if(SYNC=='ok')localStorage.removeItem(KEY())}
  try{if(sb)await sb.auth.signOut()}catch(e){}forget()}
 async function delAcct(){if(!sb||!SESS)return alert('Connect to the internet and sign in first.');
@@ -136,7 +138,9 @@ async function signInRetry(em,pw,n){let r;for(let i=0;i<n;i++){r=await sb.auth.s
 async function cauth(){const g=id=>($(id)||{}).value||'',em=g('#au').trim(),pw=g('#ap'),nm=g('#an').trim();
  if(!/^\S+@\S+\.\S+$/.test(em))return msg('Enter a valid email address.');
  busy(true);try{
-  if(AM=='fg'){const r=await sb.auth.resetPasswordForEmail(em,{redirectTo:RED()});if(r.error)throw r.error;return msg('If this email has an account, a reset link is on its way.',1)}
+  if(AM=='fg'){const r=await sb.auth.resetPasswordForEmail(em,{redirectTo:RED()});if(r.error)throw r.error;auGo('rc');return msg('If this email has an account, a 6-digit code is on its way. Check Spam too.',1)}
+  if(AM=='rc'){const code=g('#acd').replace(/\s/g,'');if(!/^\d{6,10}$/.test(code))return msg('Enter the 6-digit code from the email.');if(pw.length<8)return msg('Password must have at least 8 characters.');
+   const ses=await pwApply(em.toLowerCase(),code,pw);await onSignedIn(ses);return}
   if(pw.length<8)return msg('Password must have at least 8 characters.');
   const em2=em.toLowerCase();let r;
   if(AM=='up'){
@@ -163,6 +167,15 @@ async function cauth(){const g=id=>($(id)||{}).value||'',em=g('#au').trim(),pw=g
   else{r=await sb.auth.signInWithPassword({email:em2,password:pw});if(r.error){if(r.error.code=='email_not_confirmed'||/not confirmed/i.test(r.error.message||''))showResend(em2);throw r.error}}
   await onSignedIn(r.data.session)
  }catch(e){msg(friendly(e))}finally{busy(false)}}
+async function resendCode(){const em=((($('#au')||{}).value)||'').trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(em))return msg('Enter your email first.');try{const r=await sb.auth.resetPasswordForEmail(em,{redirectTo:RED()});if(r.error)throw r.error;msg('A new code is on its way. Check Spam too.',1)}catch(e){msg(friendly(e))}}
+/* Password change / reset with a code from the email: verify the code, then set the new password. */
+let PWF=0,CP=0,CPM='',CPK=0,SO={};
+async function pwApply(em,code,pw){PWF=1;try{const v=await sb.auth.verifyOtp({email:em,token:code,type:'recovery'});if(v.error)throw v.error;const u=await sb.auth.updateUser({password:pw});if(u.error)throw u.error;return(v.data&&v.data.session)||SESS}finally{setTimeout(()=>{PWF=0},1500)}}
+async function cpSend(){if(!sb||!SESS||!EMAIL)return;CPM='';try{const r=await sb.auth.resetPasswordForEmail(EMAIL,{redirectTo:RED()});if(r.error)throw r.error;CP=1;CPK=1;CPM='Code sent. Check your inbox and Spam.'}catch(e){CPK=0;CPM=friendly(e)}SO.acct=true;draw.force=1;draw();draw.force=0}
+async function cpDone(){const c=((($('#cpc')||{}).value)||'').trim().replace(/\s/g,''),pw=($('#cpn')||{}).value||'',st=(m,k)=>{CPM=m;CPK=k;const e=$('#cpm');if(e){e.textContent=m;e.className='msg '+(k?'ok':'bad')}};
+ if(!/^\d{6,10}$/.test(c))return st('Enter the 6-digit code from the email.');if(pw.length<8)return st('Password must have at least 8 characters.');
+ st('Saving…',1);try{const ses=await pwApply(EMAIL,c,pw);if(ses)SESS=ses;CP=0;CPM='Password changed.';CPK=1;draw.force=1;draw();draw.force=0}catch(e){st(friendly(e))}}
+function cpHtml(){return`<div class=cpx><h3>Password</h3>${CP?`<p class=mut>We sent a 6-digit code to <b>${esc(EMAIL)}</b>. Enter it with your new password.</p><label class=cpl for=cpc>6-digit code</label><input id=cpc inputmode=numeric autocomplete=one-time-code maxlength=10 placeholder="123456"><label class=cpl for=cpn>New password</label><input id=cpn type=password autocomplete=new-password placeholder="8+ characters"><p id=cpm class="msg ${CPK?'ok':'bad'}" role=alert>${esc(CPM)}</p><button class=btn type=button onclick="cpDone()">Save new password</button> <button class=btn2 type=button onclick="cpSend()">Resend code</button> <button class=lnk type=button onclick="CP=0;CPM='';draw()">Cancel</button>`:`<p class=mut>We will email you a 6-digit code first.</p><p id=cpm class="msg ${CPK?'ok':'bad'}">${esc(CPM)}</p><button class=btn2 type=button onclick="cpSend()">Change password</button>`}</div>`}
 async function mlink(){const em=(($('#au')||{}).value||'').trim();if(!/^\S+@\S+\.\S+$/.test(em))return msg('Enter your email first.');
  try{const r=await sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:RED()}});if(r.error)throw r.error;msg('Sign-in link sent. Check your email.',1)}catch(e){msg(friendly(e))}}
 async function oauth(p){if(location.protocol=='file:')return msg('Social sign-in needs the site to be hosted on https.');
@@ -170,21 +183,47 @@ async function oauth(p){if(location.protocol=='file:')return msg('Social sign-in
 async function newPass(){const pw=(($('#ap')||{}).value)||'';if(pw.length<8)return msg('Password must have at least 8 characters.');
  try{const r=await sb.auth.updateUser({password:pw});if(r.error)throw r.error;REC=0;AMSG='';if(SESS)await onSignedIn(SESS);else draw()}catch(e){msg(friendly(e))}}
 /* ---------- Auth page: ONE form with three modes (in / up / fg). Changing mode sweeps a blade across the card and swaps the mode while the blade covers it. ---------- */
-const AUT={in:['Welcome <em>back.</em>','Sign in to keep learning.'],up:['Start <em>learning.</em>','Create your free account in a few seconds.'],fg:['Reset <em>password.</em>','Enter your email and we will send you a link.']};
+const AUT={in:['Welcome <em>back.</em>','Sign in to keep learning.'],up:['Start <em>learning.</em>','Create your free account in a few seconds.'],fg:['Reset <em>password.</em>','Enter your email and we will email you a 6-digit code.'],rc:['Enter the <em>code.</em>','Type the 6-digit code from the email and choose a new password.']};
 let AUB=0;
 function auSet(m){AM=m;const r=$('#authx');if(!r||!r.dataset)return;r.dataset.mode=m;const t=AUT[m]||AUT.in,h=$('#aut'),s=$('#aus2');if(h)h.innerHTML=t[0];if(s)s.textContent=t[1];
- const p=$('#ap');if(p){p.setAttribute('autocomplete',m=='up'?'new-password':'current-password');p.type='password';const e=$('#aey');if(e){e.textContent='Show';e.setAttribute('aria-pressed','false')}auStr(p.value)}}
+ const p=$('#ap');if(p){p.setAttribute('autocomplete',m=='up'||m=='rc'?'new-password':'current-password');p.type='password';const e=$('#aey');if(e){e.textContent='Show';e.setAttribute('aria-pressed','false')}auStr(p.value)}}
+const noFx=()=>document.documentElement.classList.contains('calm')||(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
+/* bladeRun(): one skewed band sweeps across an area of width W; swap() runs while it covers the area completely; done() runs at the end. */
+function bladeRun(b,W,swap,done,D){
+ const bw=Math.round(W*1.7+80),cov=-(bw-W)/2,from=-bw,set=v=>b.style.setProperty('--sweep',v+'px'),ez=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+ b.style.setProperty('--bw',bw+'px');b.style.setProperty('--w',W+'px');
+ let sw=0,t0=0,dn=0;set(from);b.classList.add('go');
+ const fin=()=>{if(dn)return;dn=1;if(!sw){sw=1;swap()}b.classList.remove('go');if(done)done()};
+ const step=ts=>{if(dn)return;if(!t0)t0=ts;const p=Math.min(1,(ts-t0)/D),v=from+(W-from)*ez(p);set(v);if(!sw&&v>=cov){sw=1;swap()}if(p<1)requestAnimationFrame(step);else fin()};
+ requestAnimationFrame(step);setTimeout(fin,D+600)}
 function auGo(m,clr){if(AUB||m==AM)return;if(clr)msg('');
  const r=$('#authx'),st=$('#auss'),b=$('#aub');
- if(!r||!st||!st.getBoundingClientRect||!b||!window.requestAnimationFrame||document.documentElement.classList.contains('calm')||(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)){auSet(m);return}
- const t=AUT[m],W=st.getBoundingClientRect().width,bw=Math.round(W*1.7+80),cov=-(bw-W)/2,from=-bw,D=950;
- $('#abt').innerHTML=t[0];$('#abs').textContent=t[1];b.style.setProperty('--bw',bw+'px');b.style.setProperty('--w',W+'px');
- const set=v=>b.style.setProperty('--sweep',v+'px'),ez=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
- let sw=0,t0=0,dn=0;AUB=1;set(from);b.classList.add('go');
- const fin=()=>{if(dn)return;dn=1;if(!sw){sw=1;auSet(m)}b.classList.remove('go');AUB=0;
-  try{if(matchMedia('(pointer:fine)').matches){const f=m=='up'?'#an':'#au';const e=$(f);if(e&&!e.value)e.focus();else if(m!='fg'&&$('#ap'))$('#ap').focus()}}catch(x){}};
- const step=ts=>{if(dn)return;if(!t0)t0=ts;const p=Math.min(1,(ts-t0)/D),v=from+(W-from)*ez(p);set(v);if(!sw&&v>=cov){sw=1;auSet(m)}if(p<1)requestAnimationFrame(step);else fin()};
- requestAnimationFrame(step);setTimeout(fin,D+600)}
+ if(!r||!st||!st.getBoundingClientRect||!b||!window.requestAnimationFrame||noFx()){auSet(m);return}
+ const t=AUT[m];$('#abt').innerHTML=t[0];$('#abs').textContent=t[1];AUB=1;
+ bladeRun(b,st.getBoundingClientRect().width,()=>auSet(m),()=>{AUB=0;
+  try{if(matchMedia('(pointer:fine)').matches){const f=m=='up'?'#an':m=='rc'?'#acd':'#au';const e=$(f);if(e&&!e.value)e.focus();else if(m!='fg'&&$('#ap'))$('#ap').focus()}}catch(x){}},950)}
+/* Page changes use the same blade over the whole screen. */
+let NAVB=0,FXOFF=1;
+const VT={home:'Welcome <em>home.</em>',learn:'Let’s <em>learn.</em>',lesson:'Lesson <em>time.</em>',gram:'Grammar <em>rules.</em>',review:'Review <em>words.</em>',progress:'Your <em>progress.</em>',settings:'Your <em>settings.</em>',test:'Take the <em>test.</em>',cert:'Your <em>certificate.</em>',search:'Find <em>anything.</em>',help:'Need <em>help?</em>',share:'Share <em>LanguWay.</em>',stories:'Story <em>time.</em>',story:'Story <em>time.</em>'};
+function navFx(swap,title){const bl=$('#bl'),b=$('#blb');
+ if(FXOFF||NAVB||!bl||!b||!bl.getBoundingClientRect||!window.requestAnimationFrame||noFx()){swap();return}
+ const t=$('#blt');if(t)t.innerHTML=title||'';NAVB=1;
+ bladeRun(b,Math.max(320,window.innerWidth||360),swap,()=>{NAVB=0},700)}
+/* ---------- Menu (three dashes) ---------- */
+let MN=0;
+const MI=[['home','home','Home'],['learn','learn','Learn'],['stories','stories','Stories'],['review','review','Review'],['progress','progress','Progress'],['test','pen','Placement test'],['share','share','Install and share'],['help','help','Help'],['settings','gear','Settings']];
+function mnHtml(){const on=v=>V==v||((V=='lesson'||V=='gram')&&v=='learn')||(V=='story'&&v=='stories'),C=isC(USER),d=dueN();
+ const who=C?`<b>${esc(S.set.name||EMAIL||'Signed in')}</b><br><span id=mst>${esc(SL[SYNC])}</span>`:isG(USER)?'<b>Guest</b><br>Your progress is saved on this device only.':`<b>${esc(USER)}</b><br>Saved on this device.`;
+ const act=C?`<button class=mn__b type=button onclick="mnDo(signOut,'See you <em>soon.</em>')">Sign out</button>`:isG(USER)?`<button class=mn__b type=button onclick="mnDo(wantAuth,'Welcome <em>back.</em>')">Sign in or create account</button>`:`<button class=mn__b type=button onclick="localStorage.removeItem('ef_cur');location.reload()">Log out</button>`;
+ return`<div class=mn__in><div class=mn__hd><img class=mn__lg src=logo-light.png alt="LanguWay English" width=48 height=48><button class=mn__x type=button onclick="mnToggle()" aria-label="Close menu">✕</button></div>
+ <form class=mn__s onsubmit="mnSearch();return false"><input id=msq type=search placeholder="Search lessons and words" aria-label=Search enterkeyhint=search></form>
+ <div class=mn__l role=navigation aria-label="Main menu">${MI.map(x=>`<button type=button class="mn__i ${on(x[0])?'on':''}" onclick="go('${x[0]}')">${ic(x[1])}<span>${x[2]}</span>${x[0]=='review'&&d?`<b>${d}</b>`:''}</button>`).join('')}<button type=button class=mn__i onclick="mnDo(hOpen,'Ask the <em>helper.</em>')">${ic('chat')}<span>Ask the helper</span></button></div>
+ <div class=mn__ft><p>${who}</p>${act}</div></div>`}
+function mnShow(){MN=1;const m=$('#mn');if(!m)return;m.innerHTML=mnHtml();m.hidden=false;document.body.style.overflow='hidden'}
+function mnHide(){if(!MN)return;MN=0;const m=$('#mn');if(m)m.hidden=true;document.body.style.overflow=HO?'hidden':''}
+function mnToggle(){if(MN)navFx(mnHide,'Back to <em>learning.</em>');else navFx(mnShow,'The <em>menu.</em>')}
+function mnDo(fn,title){navFx(()=>{mnHide();fn()},title)}
+function mnSearch(){SQ=(($('#msq')||{}).value||'');go('search')}
 function auEye(){const p=$('#ap'),b=$('#aey');if(!p)return;const s=p.type=='password';p.type=s?'text':'password';if(b){b.textContent=s?'Hide':'Show';b.setAttribute('aria-pressed',s?'true':'false')}}
 function auStr(v){const m=$('#aum');if(!m||!m.dataset)return;v=v||'';let n=0;if(v.length>=8)n++;if(v.length>=12)n++;if(/[a-z]/i.test(v)&&/\d/.test(v))n++;if((/[A-Z]/.test(v)&&/[a-z]/.test(v))||/[^A-Za-z0-9]/.test(v))n++;
  m.dataset.s=!v?'':v.length<8?'0':String(Math.max(1,n));const h=$('#auh');if(h)h.textContent=!v?'Use 8 or more characters, with letters and numbers.':v.length<8?'Use at least 8 characters ('+v.length+'/8).':['','Weak. Add letters and numbers.','Okay. Add letters and numbers.','Good.','Strong.'][Math.max(1,n)]}
@@ -193,21 +232,23 @@ function showResend(em){RS=em;const x=$('#ars');if(x)x.hidden=false}
 function authView(L){
  if(REC&&!L)return`<div class="auth au" id=authx data-mode=in><div class=au__card id=auc><div class=au__stage><div class=au__head><img class=au__logo src=logo-light.png alt="" width=46 height=46><h3 class=au__title>New <em>password.</em></h3><p class=au__sub>Choose a new password for your account.</p></div><form class=au__form onsubmit="newPass();return false" novalidate><div class=au__row><label for=ap>New password</label><input id=ap type=password autocomplete=new-password enterkeyhint=go placeholder="8+ characters"></div><p id=ae class="msg bad" role=alert>${esc(AMSG)}</p><button class=au__go id=ago type=submit>Save password<i class=au__spin></i></button></form></div></div></div>`;
  const Pv=CFG.providers||{},bt=(p,l)=>!L&&Pv[p]?`<button type=button class=au__soc onclick="oauth('${p}')">Continue with ${l}</button>`:'';
- const soc=bt('google','Google')+bt('apple','Apple (iCloud)'),m=L?(AM=='up'?'up':'in'):(AM=='up'||AM=='fg'?AM:'in'),t=AUT[m];
+ const soc=bt('google','Google')+bt('apple','Apple (iCloud)'),m=L?(AM=='up'?'up':'in'):(AM=='up'||AM=='fg'||AM=='rc'?AM:'in'),t=AUT[m];
  return`<div class="auth au" id=authx data-mode="${m}"><div class=au__card id=auc><div class=au__stage id=auss>
  <div class=au__head><img class=au__logo src=logo-light.png alt="" width=46 height=46><h3 class=au__title id=aut>${t[0]}</h3><p class=au__sub id=aus2>${t[1]}</p></div>
  ${!L&&location.protocol=='file:'?'<p class="msg bad au__pad">Cloud sign-in works only when the site is hosted on https.</p>':''}
  <form class=au__form onsubmit="${L?'localAuth':'cauth'}();return false" novalidate>
   <div class=au__row data-m=up><label for=an>Your name</label><input id=an maxlength=30 autocomplete=name enterkeyhint=next placeholder="What should we call you?"></div>
   <div class=au__row><label for=au>${L?'Username':'Email'}</label><input id=au ${L?'maxlength=20':'type=email inputmode=email'} autocomplete=${L?'username':'email'} autocapitalize=none autocorrect=off spellcheck=false enterkeyhint=next placeholder="${L?'letters, numbers, _':'you@example.com'}"></div>
-  <div class=au__row data-m="in up"><label for=ap>Password</label><div class=au__pw><input id=ap type=password ${L?'':'oninput="auStr(this.value)"'} autocomplete="${m=='up'?'new-password':'current-password'}" enterkeyhint=go placeholder="${L?'6+':'8+'} characters"><button type=button class=au__eye id=aey onclick="auEye()" aria-pressed=false aria-label="Show or hide password">Show</button></div>
-   ${L?'':'<div class=au__meter id=aum data-m=up><i></i><i></i><i></i><i></i></div><p class="au__hint" id=auh data-m=up>Use 8 or more characters, with letters and numbers.</p>'}</div>
+  <div class=au__row data-m=rc><label for=acd>6-digit code</label><input id=acd inputmode=numeric autocomplete=one-time-code maxlength=10 placeholder="123456" enterkeyhint=next><p class=au__hint>Use the code from the email, not the link.</p></div>
+  <div class=au__row data-m="in up rc"><label for=ap><span data-m="in up">Password</span><span data-m=rc>New password</span></label><div class=au__pw><input id=ap type=password ${L?'':'oninput="auStr(this.value)"'} autocomplete="${m=='up'?'new-password':'current-password'}" enterkeyhint=go placeholder="${L?'6+':'8+'} characters"><button type=button class=au__eye id=aey onclick="auEye()" aria-pressed=false aria-label="Show or hide password">Show</button></div>
+   ${L?'':'<div class=au__meter id=aum data-m="up rc"><i></i><i></i><i></i><i></i></div><p class="au__hint" id=auh data-m="up rc">Use 8 or more characters, with letters and numbers.</p>'}</div>
   <p id=ae class="msg bad" role=alert aria-live=polite>${esc(AMSG)}</p>
-  <button class=au__go id=ago type=submit><span data-m=in>Sign in</span><span data-m=up>Create account</span><span data-m=fg>Send reset link</span><i class=au__spin></i></button>
+  <button class=au__go id=ago type=submit><span data-m=in>Sign in</span><span data-m=up>Create account</span><span data-m=fg>Send me a code</span><span data-m=rc>Save new password</span><i class=au__spin></i></button>
   ${L?'':`<div class=au__links data-m=in><button type=button class=lnk id=afg onclick="auGo('fg',1)">Forgot password?</button><button type=button class=lnk onclick="mlink()">Email me a sign-in link</button><button type=button class=lnk id=ars onclick="resendMail()" ${RS?'':'hidden'}>Resend confirmation email</button></div>`}
   <p class=au__sw data-m=in>${L?'':'New here? '}<button type=button class=lnk onclick="auGo('up',1)">Create an account</button></p>
   <p class=au__sw data-m=up>Already have an account? <button type=button class=lnk onclick="auGo('in',1)">Sign in</button></p>
   <p class=au__sw data-m=fg><button type=button class=lnk onclick="auGo('in',1)">← Back to sign in</button></p>
+  <p class=au__sw data-m=rc><button type=button class=lnk onclick="resendCode()">Resend code</button> · <button type=button class=lnk onclick="auGo('in',1)">← Back to sign in</button></p>
  </form>
  <div class=au__foot data-m="in up">${soc}${GBTN()}${L?'<p class=mut>Cloud sign-in is not set up, so accounts are stored on this device only.</p>':''}</div>
  <div class=au__band id=aub aria-hidden=true><span class="band__edge band__edge--trail"></span><div class=band__inner><div class=band__page><div class="au__head au__head--band"><img class=au__logo src=logo-light.png alt="" width=46 height=46><h3 class=au__title id=abt></h3><p class=au__sub id=abs></p></div></div></div><span class="band__edge band__edge--lead"></span></div>
@@ -246,7 +287,8 @@ function curLevel(){let n=Math.max(1,S.start||1);while(n<NLV&&S.lt[n]>=75)n++;re
 let V='home',A=0,P=0;
 function needTest(){if(S.placed)return false;GATE=1;INQ=0;V='test';A=0;scrollTo(0,0);draw();return true}
 let GATE=0;
-function go(v,a){if((v=='lesson'||v=='gram')&&needTest())return;if(V=='story'&&v!='story'&&typeof stLeave=='function')stLeave();INQ=0;V=v;A=a||0;P=0;scrollTo(0,0);draw()}
+function go(v,a){if((v=='lesson'||v=='gram')&&needTest())return;if(V=='story'&&v!='story'&&typeof stLeave=='function')stLeave();const ch=v!=V||MN;INQ=0;V=v;A=a||0;P=0;
+ if(ch)navFx(()=>{mnHide();scrollTo(0,0);draw()},VT[v]);else{scrollTo(0,0);draw()}}
 let SQ='',TD='Lessons';
 function tgl(){S.set.theme=document.documentElement.hasAttribute('data-d')?'light':'dark';save();theme();draw()}
 
@@ -267,15 +309,14 @@ stories:'<rect x="3.5" y="5" width="17" height="14" rx="2.4"/><path class=f d="m
 user:'<circle cx="12" cy="8.5" r="3.6"/><path class=f d="M4.5 20c.8-4 3.9-6 7.5-6s6.7 2 7.5 6z"/>',
 doc:'<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4"/><path class=f d="M9 12h6v1.8H9z"/><path d="M9 16.5h4"/>'};
 ICP.cloud='<path d="M7 18.5h10a4 4 0 0 0 .6-7.95A5.6 5.6 0 0 0 7 9.2 4.7 4.7 0 0 0 7 18.5z"/><path class=f d="m9.6 14 1.8 1.8 3.2-3.4" style="fill:none;stroke:var(--ac2);stroke-width:2"/>';ICP.cloudoff='<path d="M7 18.5h10a4 4 0 0 0 1.6-7.7A5.6 5.6 0 0 0 9 6.8"/><path d="M5.2 9.7A4.6 4.6 0 0 0 7 18.5"/><path d="m4 4 16 16" style="stroke:var(--bad)"/>';ICP.refresh='<path d="M20 12a8 8 0 0 1-14 5.3"/><path d="M4 12a8 8 0 0 1 14-5.3"/><path class=g d="M18.5 3v4.5H14z M5.5 21v-4.5H10z"/>';ICP.alert='<path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5"/><circle class=g cx="12" cy="17.2" r="1"/>';ICP.device='<rect x="7" y="2.8" width="10" height="18.4" rx="2.4"/><path class=f d="M10.5 18h3v1.6h-3z"/>';
+ICP.menu='<path d="M4 7h16M4 12h16M4 17h16"/>';ICP.help='<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.7.4-1 .9-1 1.6"/><circle class=g cx="12" cy="16.9" r="1"/>';
 const ic=(n,x)=>`<svg class="ic ic-${n} ${x||''}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICP[n]}</svg>`;
 function draw(){
  const ae=document.activeElement;if((!USER||REC||AUTHV)&&ae&&ae.closest&&ae.closest('.auth')&&/INPUT/.test(ae.tagName)&&$('#app').contains(ae)&&!draw.force)return;
- const fb=$('#fab');if(fb){fb.style.display=(!USER||REC||AUTHV)?'none':'';if(!fb.firstChild)fb.innerHTML=ic('chat')}
- if(!USER||REC||AUTHV){$('#nav').innerHTML='';$('#app').innerHTML=vAuth();return}
- const tabs=[['home','home','Home'],['learn','learn','Learn'],['stories','stories','Stories'],['review','review','Review'],['progress','progress','Progress'],['settings','gear','Settings']];
- $('#nav').innerHTML=tabs.map(t=>`<button class="${V==t[0]||((V=='lesson'||V=='gram')&&t[0]=='learn')||(V=='story'&&t[0]=='stories')?'on':''}" onclick="go('${t[0]}')"><span>${ic(t[1])}</span>${t[2]}</button>`).join('');
- const top=`<div class=top><img class=logo src="favicon.png" alt=""><b>LanguWay English</b><input id=sq value="${SQ.replace(/"/g,'')}" placeholder="Search lessons and words" aria-label=Search onkeydown="if(event.key=='Enter'){SQ=this.value;go('search')}"><button class=ib aria-label="Due words" onclick="go('review')">${ic('bell')}</button><button class=ib aria-label="Install and share" onclick="go('share')">${ic('share')}</button><button class=ib id=syn aria-label="Sync status" title="${SL[SYNC]}" onclick="go('settings')">${SIH(SYNC)}</button>${isG(USER)?`<button class=av type=button title="Guest mode: your progress stays on this device. Tap to sign in." aria-label="Guest mode. Tap to sign in" onclick="wantAuth()">${ic('user')}</button>`:`<div class=av title="${esc(EMAIL||S.set.name||'Signed in')}">${esc((S.set.name||EMAIL||USER||'?')[0].toUpperCase())}</div>`}<button class=ib aria-label="Switch theme" onclick="tgl()">${ic('moon')}</button></div>`;
- $('#app').innerHTML=(isG(USER)?`<div class=gbar role=region aria-label="Sign in reminder"><span>Sign in to save your progress</span><button type=button onclick="wantAuth()">Sign in</button></div>`:'')+top+({home:vHome,learn:vLearn,lesson:vLesson,gram:vGram,review:vReview,progress:vProgress,settings:vSet,test:vTest,cert:vCert,search:vSearch,help:vHelp,share:vShare,stories:vStories,story:vStory})[V]();
+ if(!USER||REC||AUTHV){mnHide();$('#app').innerHTML=vAuth();return}
+ if(V=='settings'&&ae&&ae.closest&&ae.closest('.cpx')&&/INPUT/.test(ae.tagName)&&!draw.force)return;
+ const top=`<div class=top><button class=ib id=mnb type=button aria-label="Open menu" aria-haspopup=dialog onclick="mnToggle()">${ic('menu')}</button><button class=ib type=button aria-label="Switch theme" onclick="tgl()">${ic('moon')}</button></div>`;
+ $('#app').innerHTML=top+({home:vHome,learn:vLearn,lesson:vLesson,gram:vGram,review:vReview,progress:vProgress,settings:vSet,test:vTest,cert:vCert,search:vSearch,help:vHelp,share:vShare,stories:vStories,story:vStory})[V]();
 }
 
 function sk(k,c){const t=S.sk[k]||[0,0],p=t[1]?Math.round(t[0]/t[1]*100):0,a=Math.min(100,t[1]);return`<div class="sk ${c}"><div class=st>${k}</div><div class=sb><span>Questions answered<br><big>${t[1]}</big></span><div class=ring style="--p:${a}"><i>${a}%</i></div></div><div class=sb><span>Correct answers<br><big>${t[0]}</big> / ${t[1]}</span><div class=ring style="--p:${p}"><i>${p}%</i></div></div><div class=fl><b style="min-width:${Math.max(p,16)}%">${p}%</b></div></div>`}
@@ -602,7 +643,7 @@ function startTest(){const a={h:[],k:[],u:{},r:[],n:24,post:PTH.map(()=>1)};cons
  showQ()}
 
 function vSearch(){const q=SQ.toLowerCase().trim(),r=LS.filter(l=>l.t.toLowerCase().includes(q)||l.w.some(w=>w.en.toLowerCase().includes(q)||(w.d||'').toLowerCase().includes(q)));
- return`<h1>SEARCH</h1><p class=mut>${r.length} result${r.length==1?'':'s'} for “${SQ.replace(/</g,'')}”</p><div class=card>${r.map(l=>`<button class=row onclick="go('lesson',${l.id})"><span>${l.t}</span><b>L${l.lv} · U${l.ui+1}</b></button>`).join('')||'<p>No lessons found.</p>'}</div>`}
+ return`<h1>SEARCH</h1><form class=card onsubmit="SQ=this.q.value;draw();return false"><input name=q id=sq value="${SQ.replace(/"/g,'')}" placeholder="Search lessons and words" aria-label=Search></form><p class=mut>${r.length} result${r.length==1?'':'s'} for “${SQ.replace(/</g,'')}”</p><div class=card>${r.map(l=>`<button class=row onclick="go('lesson',${l.id})"><span>${l.t}</span><b>L${l.lv} · U${l.ui+1}</b></button>`).join('')||'<p>No lessons found.</p>'}</div>`}
 /* ---------- Review (spaced repetition) ---------- */
 let R=null;
 function vReview(){const due=Object.entries(S.vocab).filter(x=>x[1].due<=Date.now());
@@ -626,24 +667,24 @@ function vCert(){const n=A,dn=Object.keys(S.lt).filter(k=>S.lt[k]>=75);
  const id='EF-L'+n+'-'+(S.cid[n]=S.cid[n]||Math.random().toString(36).slice(2,8).toUpperCase());save();
  return`<div class=cert><h2>LanguWay English</h2><p>Certificate of Completion</p><h1>${esc(S.set.name)||'Learner'}</h1><p>has completed Level ${n} · ${LV[n-1]}<br>Level test score ${S.lt[n]}% · ${today()}</p><p class=mut>${id}<br>Issued by the platform. Not an official or externally accredited certificate.</p></div><p class=noprint><button class=btn onclick="print()">Print or save as PDF</button></p>`}
 function sel(lbl,opts,cur,fn){return`<div class=set>${lbl}<select onchange="${fn}">${opts.map(o=>`<option value="${o[0]}" ${String(o[0])==String(cur)?'selected':''}>${o[1]}</option>`).join('')}</select></div>`}
+const acc=(k,t,ico,body)=>`<details class="acc card" ${SO[k]?'open':''} ontoggle="SO['${k}']=this.open"><summary><span>${ic(ico)}${t}</span><i class=acc__c></i></summary><div class=acc__b>${body}</div></details>`;
 function vSet(){const s=S.set,C=isC(USER);
- const acct=C?`<div class=card><h2>Account</h2><div class=set><span>Signed in as<br><b>${esc(EMAIL||'—')}</b><br><span class=mut>${esc(PROV||'email')}</span></span></div><div class=set><span>Cloud sync<br><span class=mut id=sst>${SL[SYNC]}${SERR?': '+esc(SERR):''}</span></span><button class=btn2 onclick="syncNow().then(draw)">Sync now</button></div><button class=btn2 onclick="signOut()">Sign out</button> <button class=btn2 style="border-color:var(--bad);color:var(--bad)" onclick="delAcct()">Delete account</button></div>`
- :isG(USER)?`<div class=card><h2>Account</h2><p>You are using the app as a <b>guest</b>. Your progress is saved on this device only.</p><button class=btn type=button onclick="wantAuth()">Sign in or create an account</button><p class=mut>Your guest progress will be added to your account.</p></div>`
- :`<div class=card><h2>Account</h2><p>Signed in as <b>${esc(USER)}</b> on this device.</p><p class=mut>${CFGOK?'Cloud sign-in is unavailable right now.':'Cloud sync is not set up, so your progress stays on this device only. See SETUP-CLOUD.md to turn on email, Google and Apple sign-in.'}</p><button class=btn2 onclick="localStorage.removeItem('ef_cur');location.reload()">Log out</button></div>`;
- return`<h1>SETTINGS</h1>${acct}${instCard()}<div class=card><h2>Learning</h2>
- <div class=set>Display name<input value="${esc(s.name)}" maxlength=30 onchange="S.set.name=this.value.trim().slice(0,30);save();draw()"></div>
+ const acct=C?`<div class=set><span>Signed in as<br><b>${esc(EMAIL||'—')}</b><br><span class=mut>${esc(PROV||'email')}</span></span></div><div class=set><span>Cloud sync<br><span class=mut id=sst>${SL[SYNC]}${SERR?': '+esc(SERR):''}</span></span><button class=btn2 onclick="syncNow().then(draw)">Sync now</button></div>${cpHtml()}<button class=btn2 onclick="signOut()">Sign out</button> <button class=btn2 style="border-color:var(--bad);color:var(--bad)" onclick="delAcct()">Delete account</button>`
+ :isG(USER)?`<p>You are using the app as a <b>guest</b>. Your progress is saved on this device only.</p><button class=btn type=button onclick="wantAuth()">Sign in or create an account</button><p class=mut>Your guest progress will be added to your account.</p>`
+ :`<p>Signed in as <b>${esc(USER)}</b> on this device.</p><p class=mut>${CFGOK?'Cloud sign-in is unavailable right now.':'Cloud sync is not set up, so your progress stays on this device only. See SETUP-CLOUD.md to turn on email, Google and Apple sign-in.'}</p><button class=btn2 onclick="localStorage.removeItem('ef_cur');location.reload()">Log out</button>`;
+ const learn=`<div class=set>Display name<input value="${esc(s.name)}" maxlength=30 onchange="S.set.name=this.value.trim().slice(0,30);save();draw()"></div>
  ${sel('Daily goal',[[1,'1 quiz'],[2,'2 quizzes'],[3,'3 quizzes']],s.goal,'S.set.goal=+this.value;save()')}
- 
  ${sel('Accent',[['en-US','American'],['en-GB','British']],s.acc,'S.set.acc=this.value;save()')}
  <div class=set>Play audio automatically<input type=checkbox ${s.auto?'checked':''} onchange="S.set.auto=this.checked;save()"></div>
  ${sel('Speech speed',[['.6','Slow'],['.9','Normal'],['1.15','Fast']],s.rate,'S.set.rate=+this.value;save()')}
- <p class=mut>Pronunciation uses your browser's voices, which differ by device.</p></div>
- <div class=card><h2>Appearance</h2>
- ${sel('Theme',[['system','System'],['light','Light'],['dark','Dark']],s.theme,'S.set.theme=this.value;save();theme()')}
+ <div class=set>Arabic subtitles in stories<input type=checkbox ${s.sa?'checked':''} onchange="S.set.sa=this.checked;save()"></div>
+ <p class=mut>Pronunciation uses your browser's voices, which differ by device.</p>`;
+ const look=`${sel('Theme',[['system','System'],['light','Light'],['dark','Dark']],s.theme,'S.set.theme=this.value;save();theme()')}
  ${sel('Text size',[['small','Small'],['normal','Normal'],['large','Large'],['xl','Extra large']],s.font,'S.set.font=this.value;save();applyPrefs()')}
- <div class=set>Reduce motion<input type=checkbox ${s.calm?'checked':''} onchange="S.set.calm=this.checked;save();applyPrefs()"></div></div>
- <div class=card><h2>Your data</h2><p class=mut>${C?'Your progress is saved in your account. You can also keep a backup file.':'Your progress is stored in this browser only. Export a backup to move it to another device.'}</p>
- <button class=btn2 onclick="exp()">Export backup</button> <label class=btn2 style="display:inline-block">Import backup<input type=file accept=.json hidden onchange="imp(this.files[0])"></label> <button class=btn2 onclick="resetProg()">Reset progress</button> <button class=btn2 onclick="go('help')">Help</button></div>`}
+ <div class=set>Reduce motion<input type=checkbox ${s.calm?'checked':''} onchange="S.set.calm=this.checked;save();applyPrefs()"></div>`;
+ const data=`<p class=mut>${C?'Your progress is saved in your account. You can also keep a backup file.':'Your progress is stored in this browser only. Export a backup to move it to another device.'}</p>
+ <button class=btn2 onclick="exp()">Export backup</button> <label class=btn2 style="display:inline-block">Import backup<input type=file accept=.json hidden onchange="imp(this.files[0])"></label> <button class=btn2 onclick="resetProg()">Reset progress</button> <button class=btn2 onclick="go('help')">Help</button>`;
+ return`<h1>SETTINGS</h1>${acc('acct','Account','user',acct)}${acc('inst','Install and share','share','<p class=mut>Install the app, share it with friends, or show the QR code.</p><button class=btn type=button onclick="go(\'share\')">Open install and share</button>')}${acc('learn','Learning','learn',learn)}${acc('look','Appearance','gear',look)}${acc('data','Your data','doc',data)}`}
 let DIP=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();DIP=e;if((V=='settings'||V=='share')&&!INQ)draw()});
 addEventListener('appinstalled',()=>{DIP=null;if((V=='settings'||V=='share')&&!INQ)draw()});
@@ -659,7 +700,7 @@ function vHelp(){const q=[['How do I start?','Create an account, take the placem
 (async function boot(){
  if(sb){
   $('#app').innerHTML='<div class="card auth"><p class=mut>Loading…</p></div>';
-  sb.auth.onAuthStateChange((ev,ses)=>{setTimeout(()=>{if(ev=='PASSWORD_RECOVERY'){REC=1;if(ses)SESS=ses;draw()}else if(ev=='SIGNED_IN'&&ses)onSignedIn(ses);else if(ev=='SIGNED_OUT'&&SESS)forget();else if(ev=='TOKEN_REFRESHED'&&ses)SESS=ses},0)});
+  sb.auth.onAuthStateChange((ev,ses)=>{setTimeout(()=>{if(PWF)return;if(ev=='PASSWORD_RECOVERY'){REC=1;if(ses)SESS=ses;draw()}else if(ev=='SIGNED_IN'&&ses)onSignedIn(ses);else if(ev=='SIGNED_OUT'&&SESS)forget();else if(ev=='TOKEN_REFRESHED'&&ses)SESS=ses},0)});
   let ses=null;try{ses=(await sb.auth.getSession()).data.session}catch(e){}
   if(ses)await onSignedIn(ses);
   else if(isC(USER)&&!navigator.onLine){EMAIL=localStorage.getItem('ef_email_'+USER)||'';loadS();setSync('off')}
@@ -667,7 +708,7 @@ function vHelp(){const q=[['How do I start?','Create an account, take the placem
   else USER='';
  }else if(isC(USER)){EMAIL=localStorage.getItem('ef_email_'+USER)||'';loadS();setSync('off')}
  else if(USER)loadS();
- theme();applyPrefs();draw();
+ theme();applyPrefs();draw();FXOFF=0;
 })();
 document.addEventListener('visibilitychange',()=>{if(sb&&SESS){if(document.visibilityState=='visible')syncNow();else{clearTimeout(pushT);push()}}});
 addEventListener('online',async()=>{if(!sb)return;if(!SESS&&isC(USER)){try{const r=await sb.auth.getSession();if(r.data.session)await onSignedIn(r.data.session);else forget()}catch(e){}}else syncNow()});

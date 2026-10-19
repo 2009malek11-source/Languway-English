@@ -62,3 +62,34 @@
 - سبب خطأ الدخول كان حسابات قديمة بنفس البريد: التسجيل يردّ "مسجّل مسبقًا" ثم يفشل الدخول بكلمة مرور مختلفة. الدالة `signup` (النسخة 2، منشورة على مشروعك) تستعيد الحسابات غير المؤكدة وغير المستعملة بكلمة المرور الجديدة تلقائيًا، وتردّ "exists" للحسابات المؤكدة فيطلب التطبيق كلمة مرورها أو "Forgot password?".
 - نسخة الدالة موجودة في `supabase-function/signup.ts` إن احتجت لصقها يدويًا (Edge Functions ← signup، وأوقف Verify JWT).
 - الـQR الجديد `qr.png` يفتح https://qrco.de/bh42CG : تأكد من موقع QR Code Generator أن هذا الرابط يشير إلى رابط تطبيقك بعد النشر.
+
+---
+
+## رمز تغيير كلمة المرور (6 أرقام) — خطوة لازمة مرة واحدة
+
+التطبيق صار يستعيد كلمة المرور ويغيّرها **برمز من 6 أرقام يصل إلى الإيميل** (بدل الرابط الذي كان يفتح صفحة لا تظهر).
+لكي يظهر الرمز داخل الرسالة عدّل قالب الرسالة في Supabase:
+
+1. Supabase → **Authentication → Emails → Templates → Reset Password**.
+2. اجعل **Subject**: `LanguWay English: your password code`
+3. اجعل **Message body** (استبدل كل ما فيه):
+
+```html
+<div style="font-family:Arial,sans-serif;max-width:420px;margin:auto;padding:24px;border:1px solid #e3ebf0;border-radius:16px">
+  <h2 style="color:#0b4aa8;margin:0 0 8px">LanguWay English</h2>
+  <p>Use this code to set a new password:</p>
+  <p style="font-size:34px;font-weight:800;letter-spacing:8px;color:#06183a;margin:12px 0">{{ .Token }}</p>
+  <p style="color:#6b7486;font-size:13px">The code works for a short time. If you did not ask for it, ignore this email.</p>
+</div>
+```
+4. اضغط Save. (الرمز يصل 6 أرقام افتراضيًا؛ التطبيق يقبل من 6 إلى 10.)
+
+## أن يكون المُرسِل «موقعي» وليس Supabase
+
+حاليًا الرسائل تُرسل من خدمة Supabase الافتراضية (حدّها نحو **2 رسالة في الساعة** فقط). وهذا مقبول مؤقتًا.
+عندما تنشئ بريدًا خاصًا بموقعك:
+
+1. Supabase → **Authentication → Emails → SMTP Settings → Enable Custom SMTP**.
+2. خيارات مجانية: **Brevo** (300 رسالة/يوم)، أو **Resend** (يحتاج نطاقًا/دومين)، أو **Gmail** مع «App password».
+3. ضع: Sender email = بريدك، Sender name = `LanguWay English`، ثم Host/Port/User/Password من مزوّد الخدمة.
+4. بعد ذلك يرتفع حدّ الإرسال وتظهر الرسائل باسم موقعك.

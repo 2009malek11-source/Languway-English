@@ -9,8 +9,8 @@
 <title>LanguWay English</title>
 <link rel="stylesheet" href="style.css"></head><body>
 <div class="app" id="app"></div>
-<nav id="nav"></nav>
-<button id=fab aria-label="Ask the helper" onclick="hOpen()"></button>
+<div id=mn hidden role=dialog aria-modal=true aria-label="Menu"></div>
+<div id=bl aria-hidden=true><div class=au__band id=blb><span class="band__edge band__edge--trail"></span><div class=band__inner><div class="band__page big"><h2 class=au__title id=blt></h2></div></div><span class="band__edge band__edge--lead"></span></div></div>
 <div id=hp hidden role=dialog aria-modal=true aria-label="Helper"><div class=hh><b>Helper</b><button type=button class=hx onclick="hOpen()" aria-label="Close helper">✕</button></div><div id=hl></div><form onsubmit="hSend();return false"><input id=hi placeholder="Ask me anything about the app…" autocomplete=off><button class=btn>Send</button></form></div>
 <div id=splash role=img aria-label="LanguWay English"><i class="bx b1"></i><i class="bx b2"></i><div class=lg><img src="logo-light.png" alt="LanguWay English"></div><div class=rd></div><p>Your road to confident English</p></div>
 <script src="supabase-config.js"></script>
