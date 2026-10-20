@@ -5,7 +5,7 @@
 // 3) Turn on a provider here only after you enabled it in Supabase (Authentication > Providers).
 // Leave url and anonKey empty to run in "this device only" mode.
 window.SUPABASE_CONFIG = {
-  url: 'https://smxlwikhfzxcqjedxdue.supabase.co',
-  anonKey: 'sb_publishable_5ZsLXolv0GNkHvpaJyXX9g_MtL9Rd_R',
+  url: 'https://lqetqsfhilepyclsnznu.supabase.co',
+  anonKey: 'sb_publishable_hzasPPub8jmBkjxGZK26tw_37c02ntP',
   providers: { google: false, apple: false }
 };
