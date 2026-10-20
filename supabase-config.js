@@ -7,5 +7,5 @@
 window.SUPABASE_CONFIG = {
   url: 'https://lqetqsfhilepyclsnznu.supabase.co',
   anonKey: 'sb_publishable_hzasPPub8jmBkjxGZK26tw_37c02ntP',
-  providers: { google: false, apple: false }
+  providers: { google: true, apple: false }
 };

@@ -291,3 +291,20 @@ body.sbd .app>*{max-width:980px;margin-left:auto;margin-right:auto}
 .pr__s{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px;border-radius:5px;background:var(--ac);box-shadow:0 0 12px -2px var(--ac2);transition:transform .15s}.pr:active .pr__s{transform:scale(.8)}
 html.cmp .card{padding:12px;margin:10px 0}html.cmp h1{font-size:24px}html.cmp .hero{padding:16px}
 @media print{#mn{display:none}body.sbd .app{margin:0}}
+
+/* ===== v3.1: sign-in choice, story motion ===== */
+.au__choose{padding:0 26px 4px}
+.au__g{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:50px;margin:6px 0;border:1.5px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);font:inherit;font-weight:700;cursor:pointer;box-shadow:var(--sh);transition:transform .15s,box-shadow .2s}.au__g:hover{transform:translateY(-1px)}.au__g:active{transform:scale(.98)}
+.au__g span[data-m]{display:none}.au[data-mode=in] .au__g span[data-m=in],.au[data-mode=up] .au__g span[data-m=up]{display:inline}
+.au__or{display:flex;align-items:center;gap:10px;color:var(--mut);font-size:13px;margin:10px 0 2px}.au__or::before,.au__or::after{content:"";flex:1;height:1px;background:var(--line)}
+.stg .avo{transform-box:fill-box}.stg.enter .avo{animation:avin .8s cubic-bezier(.2,.9,.3,1) both}
+@keyframes avin{from{opacity:0;transform:translateX(var(--dx))}to{opacity:1;transform:none}}
+.stg svg{will-change:transform}.stg.kb svg{animation:kb2 9s ease-out both}
+@keyframes kb2{from{transform:scale(1)}to{transform:scale(1.13)}}
+.stg.enter{animation:sin .8s cubic-bezier(.2,.8,.2,1)}@keyframes sin{from{opacity:0;transform:scale(1.05)}to{opacity:1;transform:none}}
+.sub{animation:subin .35s ease-out}@keyframes subin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.stg .cap{animation:subin .6s .2s ease-out both}
+.tcard .tc{animation:tcin 1s cubic-bezier(.2,.8,.2,1) both}@keyframes tcin{from{opacity:0;transform:translateY(16px) scale(.96);letter-spacing:.1em}to{opacity:1;transform:none}}
+.wd{transition:color .15s,background .15s}
+@media(prefers-reduced-motion:reduce){.stg .avo,.stg.enter,.sub,.tcard .tc{animation:none!important}}
+.calm .stg .avo,.calm .sub,.calm .tcard .tc{animation:none!important}

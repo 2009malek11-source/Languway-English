@@ -25,7 +25,7 @@ const SKIN=['#f1c9a5','#e0ac82','#c68e63','#a8714a'];
 /* One avatar, drawn with its feet at (x, ground). sp = this person is speaking now: it bounces, one arm gestures
    and a speech bubble with moving dots appears above the head. */
 function avatar(n,x,gy,sp,i){const c=CAST[n]||CAST.Omar,s=c.s||1,sk=SKIN[(n.length+i)%4];
- let b=`<g transform="translate(${x} ${gy}) scale(${s})">`;
+ let b=`<g transform="translate(${x} ${gy}) scale(${s})"><g class=avo style="--dx:${x<180?-70:x>180?70:0}px;animation-delay:${(i*.18).toFixed(2)}s">`;
  b+=`<ellipse cx="0" cy="2" rx="${sp?36:30}" ry="${sp?8:6}" fill="${sp?'#c9a45c':'#000'}" opacity="${sp?.95:.18}"/>`;
  b+=`<g class="${sp?'a-sp':'a-idle'}" style="animation-delay:${(i*.45).toFixed(2)}s">`;
  const arm=(x0,cl)=>`<rect class="${cl}" x="${x0}" y="-78" width="9" height="46" rx="4" fill="${c.c}" stroke="#000" stroke-opacity=".15"/>`;
@@ -41,7 +41,7 @@ function avatar(n,x,gy,sp,i){const c=CAST[n]||CAST.Omar,s=c.s||1,sk=SKIN[(n.leng
   if(c.o)b+=`<path d="M-9,-92 Q0,-80 9,-92 L8,-88 Q0,-78 -8,-88 Z" fill="${c.h}"/>`}
  b+='</g>';
  if(sp)b+=`<g transform="translate(${c.g=='f'?14:12} -138)"><path d="M0,0 h40 a8,8 0 0 1 8,8 v10 a8,8 0 0 1 -8,8 h-26 l-8,8 v-8 h-6 a8,8 0 0 1 -8,-8 v-10 a8,8 0 0 1 8,-8z" fill="#fff" stroke="#0b4aa8" stroke-width="2" transform="translate(-6 0) scale(.95)"/><circle class="dot d1" cx="12" cy="13" r="3" fill="#0b4aa8"/><circle class="dot d2" cx="24" cy="13" r="3" fill="#0b4aa8"/><circle class="dot d3" cx="36" cy="13" r="3" fill="#0b4aa8"/></g>`;
- return b+`<text x="0" y="17" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">${esc(n.replace('Dr. ','Dr '))}</text></g>`}
+ return b+`<text x="0" y="17" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">${esc(n.replace('Dr. ','Dr '))}</text></g></g>`}
 
 /* ---------- Eight settings ---------- */
 const win=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#bfe3ff" stroke="#8a6d3b" stroke-width="3"/><path d="M${x+w/2},${y}V${y+h}M${x},${y+h/2}H${x+w}" stroke="#8a6d3b" stroke-width="2"/>`;
@@ -72,7 +72,7 @@ const PRAISE=['Excellent!','Great listening!','Well done!','You understood it!',
 const stRate=()=>{const lv=SY?SY.n:15,f=.6+.4*Math.min(1,(lv-1)/24);return Math.max(.5,Math.min(1.15,S.set.rate*f*(SYslow?.8:1)))};
 
 /* Voice: pick an English voice that matches the accent, prefer male/female names, then shift pitch per character */
-function stVoice(g){try{const vs=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));if(!vs.length)return null;
+function stVoice(g){try{if(typeof pickVoice=='function')return pickVoice(g)}catch(e){}try{const vs=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));if(!vs.length)return null;
  const acc=vs.filter(v=>v.lang.replace('_','-')==S.set.acc),pool=acc.length?acc:vs,
   f=/female|samantha|zira|susan|hazel|karen|moira|tessa|fiona|victoria|aria|jenny|libby|sonia/i,m=/(^|[^a-z])male|david|mark|daniel|alex|fred|george|guy|ryan|james|thomas|oliver|arthur/i,
   want=g=='f'?f:m;return pool.find(v=>want.test(v.name)&&!(g!='f'&&f.test(v.name)))||pool[0]}catch(e){return null}}
@@ -81,8 +81,8 @@ function stSpeak(who,text,done,onword){let fin=0,gotB=0,tick=null;const words=te
  end=()=>{if(fin)return;fin=1;clearTimeout(tm);clearInterval(tick);done()},tm=setTimeout(end,ms*2.2);
  if(onword){let k=0;onword(0);tick=setInterval(()=>{if(gotB||fin)return clearInterval(tick);k++;if(k<words.length)onword(k)},per)}
  try{if(!window.speechSynthesis||typeof SpeechSynthesisUtterance=='undefined'){clearTimeout(tm);setTimeout(end,ms);return}
-  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text),c=CAST[who]||CAST.Omar,v=stVoice(c.g);if(v)u.voice=v;u.lang=S.set.acc;u.pitch=Math.min(2,c.p);u.rate=stRate();
-  u.onboundary=e=>{if(e.name&&e.name!='word')return;gotB=1;if(onword)onword(Math.max(0,text.slice(0,e.charIndex).split(' ').length-1))};
+  speechSynthesis.cancel();const sp2=(typeof ttsText=='function'?ttsText(text):text),same=sp2.split(' ').length==words.length,u=new SpeechSynthesisUtterance(sp2),c=CAST[who]||CAST.Omar,v=stVoice(c.g);if(v)u.voice=v;u.lang=S.set.acc;u.pitch=Math.max(.8,Math.min(1.4,c.p));u.rate=stRate();
+  u.onboundary=e=>{if(!same||(e.name&&e.name!='word'))return;gotB=1;if(onword)onword(Math.max(0,sp2.slice(0,e.charIndex).split(' ').length-1))};
   const t0=Date.now(),slow=()=>{const el=Date.now()-t0;el<500?setTimeout(end,ms-el):end()};u.onend=slow;u.onerror=slow;speechSynthesis.speak(u)}catch(e){clearTimeout(tm);setTimeout(end,ms)}}
 function stHalt(){SYK++;try{speechSynthesis.cancel()}catch(e){}if(SY)SY.pl=0}
 function stHi(k){document.querySelectorAll('#sub .wd').forEach((w,i)=>{w.classList.toggle('cur',i==k);w.classList.toggle('done',i<k)})}
@@ -95,14 +95,15 @@ function vStories(){const n0=Object.keys(STD()).length;
  for(let n=1;n<=NLV;n++){const e=epOf(n);if(!e)continue;const op=lvOpen(n),d=S.sty[n];
   h+=`<button class="row ${op?'':'lock'}" ${op?'':'disabled'} onclick="storyOpen(${n})"><span>${d!=null?(d>=75?'✔':'▶'):op?'▶':'🔒'} Episode ${n} · ${esc(e.t)}</span><b>${d!=null?'⭐'.repeat(Math.round(d/25))||'☆':''}</b></button>`}
  return h}
-function storyOpen(n){if(needTest())return;if(!epOf(n))return;stHalt();SY={n,i:0,l:0,ph:'scene',ok:0,pl:0,qa:-1,card:1,fresh:1};go('story',n)}
+function storyOpen(n){if(needTest())return;if(!epOf(n))return;stHalt();SY={n,i:0,l:0,ph:'scene',ok:0,pl:0,qa:-1,card:1,fresh:1,rep:1};go('story',n)}
 function svgHtml(){const sc=scOf(),ln=sc.lines[Math.min(SY.l,sc.lines.length-1)],on=SY.pl||SY.l>0,sp=on?ln[0]:'',k=sc.cast.length,xs=k==1?[180]:k==2?[110,250]:[70,180,290],t=TOD[SY.i%4];
- return `<svg viewBox="0 0 360 220" role="img" aria-label="Scene: ${esc(CAP[sc.set]||sc.set)} with ${esc(sc.cast.join(', '))}">${(SETS[sc.set]||SETS.home)()}${t[2]?`<rect width="360" height="220" fill="${t[1]}" opacity="${t[2]}"/>`:''}${sc.cast.map((n,i)=>avatar(n,xs[i],196,n==sp&&on,i)).join('')}</svg>`}
+ const fx=sp&&sc.cast.indexOf(sp)>=0?Math.round(xs[sc.cast.indexOf(sp)]/3.6):50;
+ return `<svg style="transform-origin:${fx}% 66%" viewBox="0 0 360 220" role="img" aria-label="Scene: ${esc(CAP[sc.set]||sc.set)} with ${esc(sc.cast.join(', '))}">${(SETS[sc.set]||SETS.home)()}${t[2]?`<rect width="360" height="220" fill="${t[1]}" opacity="${t[2]}"/>`:''}${sc.cast.map((n,i)=>avatar(n,xs[i],196,n==sp&&on,i)).join('')}</svg>`}
 function subHtml(){const sc=scOf(),ln=sc.lines[Math.min(SY.l,sc.lines.length-1)],on=SY.ph=='scene'&&(SY.pl||SY.l>0);
- return on?`<div class=sub id=sub aria-live=polite><b>${esc(ln[0])}</b><br><span class=en>${ln[1].split(' ').map(w=>`<span class=wd>${esc(w)}</span>`).join('')}</span>${S.set.sa&&ln[2]?`<br><span class=ar>${esc(ln[2])}</span>`:''}</div>`:`<div class=sub id=sub><span class=mut>${SY.ph=='scene'?'Press Play to watch this scene.':'Which answer is right?'}</span></div>`}
+ return on?`<div class=sub id=sub aria-live=polite><b>${esc(ln[0])}</b><br><span class=en>${ln[1].split(' ').map(w=>`<span class=wd>${esc(w)}</span>`).join(' ')}</span>${S.set.sa&&ln[2]?`<br><span class=ar>${esc(ln[2])}</span>`:''}</div>`:`<div class=sub id=sub><span class=mut>${SY.ph=='scene'?'Press Play to watch this scene.':'Which answer is right?'}</span></div>`}
 function cardHtml(){const e=epOf(SY.n);return `<div class="stg tcard enter"><div class=tc><small>CEDAR CITY · LEVEL ${SY.n}</small><h2>Episode ${SY.n}</h2><p>${esc(e.t)}</p></div></div><div class=sub id=sub><span class=mut>Press Play to start the episode.</span></div>`}
 function stageHtml(){if(SY.card&&SY.ph=='scene')return cardHtml();const sc=scOf();
- return `<div class="stg ${SY.fresh?'enter':''} ${SY.pl?'kb':''}" id=stg>${svgHtml()}<div class=cap>${esc(CAP[sc.set]||'')} · ${TOD[SY.i%4][0]}</div></div>`+subHtml()}
+ return `<div class="stg ${SY.fresh?'enter':''} ${SY.pl?'kb':''}" id=stg>${svgHtml()}<div class=cap>${esc(CAP[sc.set]||'')} · ${TOD[SY.i%4][0]}${(S.set.rp||1)>1&&SY.pl?' · Play '+(SY.rep||1)+' of '+S.set.rp:''}</div></div>`+subHtml()}
 function transHtml(){const sc=scOf(),upto=SY.ph=='scene'?(SY.pl||SY.l>0?SY.l:-1):sc.lines.length-1;
  return sc.lines.map((l,i)=>i>upto?'':`<button class=stl onclick="stLineGo(${i})"><b>${esc(l[0])}:</b> ${esc(l[1])}${S.set.sa&&l[2]?`<br><span class=ar>${esc(l[2])}</span>`:''}</button>`).join('')}
 function starsHtml(e){const t=e.scenes.length;return `<span class=stars aria-label="${SY.ok} of ${t} stars">${'⭐'.repeat(SY.ok)}${'☆'.repeat(Math.max(0,t-SY.ok))}</span>`}
@@ -112,7 +113,7 @@ function vStory(){const e=epOf(SY&&SY.n);if(!SY||!e)return'<h1>STORIES</h1><div 
   return head+`${pct>=75?cele('Episode complete'+nmS()+'!','You earned '+SY.ok+' of '+tot+' stars.'):''}<div class=card><h2>${starsHtml(e)}</h2><p>${pct>=75?'Well done. You understood the story. Your English is growing!':'Watch the scenes again and listen for the key words. Every replay makes it easier.'}</p><button class=btn onclick="storyOpen(${SY.n})">Watch again</button> ${SY.n<NLV&&epOf(SY.n+1)&&lvOpen(SY.n+1)?`<button class=btn2 onclick="storyOpen(${SY.n+1})">Next episode</button>`:''} <button class=btn2 onclick="go('stories')">All episodes</button></div>`}
  const fresh=SY.fresh;SY.fresh=0;
  if(SY.ph=='q')return head+`<div id=stage>${stageHtml()}</div>`+stQ();
- return head+`<div id=stage>${stageHtml()}</div><div class=stc><button class=btn onclick="stPlay()">${SY.pl?'⏸ Pause':SY.l>0?'▶ Resume':'▶ Play scene'}</button> <button class=btn2 onclick="stRestart()">↺ Replay</button> <button class=btn2 onclick="SYslow=!SYslow;draw()">🐢 Slower: ${SYslow?'on':'off'}</button> <button class=btn2 onclick="stSkip()">Skip to question</button></div><label class=set>Arabic subtitles<input type=checkbox ${S.set.sa?'checked':''} onchange="S.set.sa=this.checked;save();stRefresh()"></label><div id=trans>${transHtml()}</div>`}
+ return head+`<div id=stage>${stageHtml()}</div><div class=stc><button class=btn onclick="stPlay()">${SY.pl?'⏸ Pause':SY.l>0?'▶ Resume':'▶ Play scene'}</button> <button class=btn2 onclick="stRestart()">↺ Replay</button> <button class=btn2 onclick="S.set.rp=(S.set.rp%3)+1;save();draw()">🔁 Play ${S.set.rp||1}×</button> <button class=btn2 onclick="SYslow=!SYslow;draw()">🐢 Slower: ${SYslow?'on':'off'}</button> <button class=btn2 onclick="stSkip()">Skip to question</button></div><label class=set>Arabic subtitles<input type=checkbox ${S.set.sa?'checked':''} onchange="S.set.sa=this.checked;save();stRefresh()"></label><div id=trans>${transHtml()}</div>`}
 function stQ(){const sc=scOf(),q=sc.q;if(!SY.ord)SY.ord=sh(q.slice(1));
  const a=SY.qa>=0,ok=a&&SY.ord[SY.qa]==q[1];return`<div class="card ${a&&!ok?'shake':''}"><h2>${esc(q[0])}</h2>${SY.ord.map((o,j)=>`<button class="opt ${a?(o==q[1]?'ok pop':j==SY.qa?'no':''):''}" ${a?'disabled':''} onclick="stAnswer(${j})">${esc(o)}</button>`).join('')}${a?stTutor():''}${a?`<button class=btn style="margin-top:10px" onclick="stAfter()">${SY.i+1>=epOf(SY.n).scenes.length?'Finish':'Next scene'}</button> <button class=btn2 onclick="stBack()">Watch this scene again</button>`:''}</div><div id=trans style="margin-top:10px">${transHtml()}</div>`}
 function stTutor(){const sc=scOf(),q=sc.q,g=SY.ord[SY.qa],ok=g==q[1],raw=sc.lines.map(l=>l[1]).join(' '),ev=evid(raw,q[0],q[1]),who=(sc.lines.find(l=>l[1]==ev)||[])[0];
@@ -120,13 +121,13 @@ function stTutor(){const sc=scOf(),q=sc.q,g=SY.ord[SY.qa],ok=g==q[1],raw=sc.line
 
 /* ---------- Actions ---------- */
 function stRefresh(){const g=$('#stg');if(g&&g.querySelector){const sv=g.querySelector('svg');if(sv){const t=document.createElement('div');t.innerHTML=svgHtml();sv.replaceWith(t.firstChild)}}const b=$('#sub');if(b&&b.replaceWith){const t=document.createElement('div');t.innerHTML=subHtml();b.replaceWith(t.firstChild)}const t=$('#trans');if(t)t.innerHTML=transHtml()}
-function stPlay(){if(!SY||SY.ph!='scene')return;if(SY.pl){stHalt();return draw()}const tok=++SYK;SY.pl=1;SY.card=0;if(SY.l>=scOf().lines.length)SY.l=0;draw();stLine(tok)}
+function stPlay(){if(!SY||SY.ph!='scene')return;if(SY.pl){stHalt();return draw()}const tok=++SYK;SY.pl=1;SY.card=0;if(SY.l>=scOf().lines.length)SY.l=0;if(SY.l==0)SY.rep=1;draw();stLine(tok)}
 function stLine(tok){if(tok!=SYK||!SY)return;const sc=scOf();if(SY.l>=sc.lines.length){SY.pl=0;return stSkip()}
- stRefresh();const[sp,en]=sc.lines[SY.l];stSpeak(sp,en,()=>{if(tok!=SYK||!SY)return;SY.l++;if(SY.l>=sc.lines.length){SY.pl=0;SYK++;SY.l=sc.lines.length-1;return stSkip()}setTimeout(()=>stLine(tok),520)},k=>{if(tok==SYK)stHi(k)})}
+ stRefresh();const[sp,en]=sc.lines[SY.l];stSpeak(sp,en,()=>{if(tok!=SYK||!SY)return;SY.l++;if(SY.l>=sc.lines.length){const rp=S.set.rp||1;if((SY.rep||1)<rp){SY.rep=(SY.rep||1)+1;SY.l=0;stRefresh();return setTimeout(()=>stLine(tok),1100)}SY.pl=0;SYK++;SY.l=sc.lines.length-1;return stSkip()}setTimeout(()=>stLine(tok),520)},k=>{if(tok==SYK)stHi(k)})}
 function stLineGo(i){if(!SY)return;stHalt();SY.l=i;SY.card=0;const sc=scOf(),tok=++SYK;SY.pl=1;stRefresh();stSpeak(sc.lines[i][0],sc.lines[i][1],()=>{if(tok==SYK&&SY){SY.pl=0;draw()}},k=>{if(tok==SYK)stHi(k)})}
-function stRestart(){if(!SY)return;stHalt();SY.l=0;SY.card=0;draw();stPlay()}
+function stRestart(){if(!SY)return;stHalt();SY.l=0;SY.rep=1;SY.card=0;draw();stPlay()}
 function stSkip(){if(!SY)return;stHalt();SY.ph='q';SY.qa=-1;SY.ord=null;SY.card=0;draw()}
-function stBack(){if(!SY)return;stHalt();SY.ph='scene';SY.l=0;SY.qa=-1;SY.ord=null;SY.card=0;draw()}
+function stBack(){if(!SY)return;stHalt();SY.ph='scene';SY.l=0;SY.rep=1;SY.qa=-1;SY.ord=null;SY.card=0;draw()}
 function stFx(t){try{const d=document.createElement('div');d.className='fx';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),1300)}catch(e){}}
 function stAnswer(j){if(!SY||SY.qa>=0)return;SY.qa=j;const ok=SY.ord[j]==scOf().q[1];if(ok){SY.ok++;try{confetti()}catch(e){}stFx('+1 ⭐')}const t=S.sk.Listening=S.sk.Listening||[0,0];t[1]++;if(ok)t[0]++;save();draw()}
 function stAfter(){const e=epOf(SY.n);if(SY.i+1>=e.scenes.length){const pct=Math.round(SY.ok/e.scenes.length*100);S.sty[SY.n]=Math.max(S.sty[SY.n]||0,pct);if(pct>=75)S.days[today()]=(S.days[today()]||0)+1;save();SY.ph='end';return draw()}

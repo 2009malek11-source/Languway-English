@@ -32,7 +32,7 @@ Object.keys(OLDC).forEach(k=>{const ok=+k;OLDC[k].forEach((u,uo)=>u[1].forEach((
 const ALL=LS.flatMap(l=>l.w);let POOL=ALL,OL=0;
 const lvWords=n=>LS.filter(l=>l.lv==n).flatMap(l=>l.w);
 /* ---------- State ---------- */
-const DEF=()=>({cid:{},sec:{},gr:{},ver:3,ls:{},rv:0,sty:{},start:0,ut:{},lt:{},placed:0,sk:{},done:{},vocab:{},mist:[],days:{},fav:{},test:null,upd:0,rst:0,set:{theme:'system',acc:'en-US',rate:.9,name:'',goal:1,font:'normal',calm:false,auto:false,sa:false,vib:true,fx:true,rem:'off',wk:5,wl:false,cmp:false}});
+const DEF=()=>({cid:{},sec:{},gr:{},ver:3,ls:{},rv:0,sty:{},start:0,ut:{},lt:{},placed:0,sk:{},done:{},vocab:{},mist:[],days:{},fav:{},test:null,upd:0,rst:0,set:{theme:'system',acc:'en-US',rate:.9,name:'',goal:1,font:'normal',calm:false,auto:false,sa:false,vib:true,fx:true,rem:'off',wk:5,wl:false,cmp:false,vo:'',rp:1}});
 let S=DEF(),INQ=0;
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const isO=o=>o&&typeof o=='object'&&!Array.isArray(o);
@@ -59,7 +59,7 @@ function clean(o){const d=DEF();if(!isO(o))return d;
   for(const k in d.cid)cid[m2(+k)]=d.cid[k];d.cid=cid;
   d.start=d.start?m1(d.start):0;if(d.test)d.test.lvl=m1(d.test.lvl)}
  const s=isO(o.set)?o.set:{};
- d.set={theme:['system','light','dark'].includes(s.theme)?s.theme:'system',acc:s.acc=='en-GB'?'en-GB':'en-US',rate:[.6,.9,1.15].includes(s.rate)?s.rate:.9,name:String(s.name||'').slice(0,30),goal:[1,2,3].includes(s.goal)?s.goal:1,font:['small','normal','large','xl'].includes(s.font)?s.font:'normal',calm:!!s.calm,auto:!!s.auto,sa:!!s.sa,vib:s.vib!==false,fx:s.fx!==false,rem:['off','morning','evening'].includes(s.rem)?s.rem:'off',wk:[3,5,7,10,14].includes(s.wk)?s.wk:5,wl:!!s.wl,cmp:!!s.cmp};
+ d.set={theme:['system','light','dark'].includes(s.theme)?s.theme:'system',acc:s.acc=='en-GB'?'en-GB':'en-US',rate:[.6,.9,1.15].includes(s.rate)?s.rate:.9,name:String(s.name||'').slice(0,30),goal:[1,2,3].includes(s.goal)?s.goal:1,font:['small','normal','large','xl'].includes(s.font)?s.font:'normal',calm:!!s.calm,auto:!!s.auto,sa:!!s.sa,vib:s.vib!==false,fx:s.fx!==false,rem:['off','morning','evening'].includes(s.rem)?s.rem:'off',wk:[3,5,7,10,14].includes(s.wk)?s.wk:5,wl:!!s.wl,cmp:!!s.cmp,vo:String(s.vo||'').slice(0,80),rp:[1,2,3].includes(s.rp)?s.rp:1};
  return d}
 /* mergeS(): combine two copies of the same learner's progress without losing anything (a reset wins over older progress) */
 function mergeS(a,b){a=clean(a);b=clean(b);if(a.rst!==b.rst)return a.rst>b.rst?a:b;
@@ -102,7 +102,7 @@ function friendly(e){const m=String((e&&e.message)||e||''),c=String((e&&(e.code|
  if(/failed to fetch|network|load failed/i.test(m))return'No connection. Check your internet and try again.';
  if(c=='otp_expired'||/token has expired|otp.*(expired|invalid)|invalid.*(otp|token)/i.test(m))return'That code is wrong or has expired. Check it, or ask for a new code.';
  if(c=='same_password'||/different from the old password/i.test(m))return'Choose a password that is different from your current one.';
- if(/provider is not enabled|unsupported provider/i.test(m))return'This sign-in method is not enabled yet.';
+ if(/provider is not enabled|unsupported provider/i.test(m))return'Google sign-in is not switched on in the cloud settings yet. Please use your email for now.';
  if(/delete_my_account/i.test(m))return'Account deletion is not set up. Run the latest SUPABASE_SETUP.sql.';
  if(/progress/i.test(m)&&/(schema cache|exist|find)/i.test(m))return'Cloud saving is not switched on for this project yet, so your progress stays on this device for now.';
  return 'Something went wrong. Please try again.'}
@@ -195,7 +195,7 @@ function cpHtml(){const m=`<p id=cpm class="msg ${CPK?'ok':'bad'}" role=alert>${
 async function mlink(){const em=(($('#au')||{}).value||'').trim();if(!/^\S+@\S+\.\S+$/.test(em))return msg('Enter your email first.');
  try{const r=await sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:RED()}});if(r.error)throw r.error;msg('Sign-in link sent. Check your email.',1)}catch(e){msg(friendly(e))}}
 async function oauth(p){if(location.protocol=='file:')return msg('Social sign-in needs the site to be hosted on https.');
- try{const r=await sb.auth.signInWithOAuth({provider:p,options:{redirectTo:RED()}});if(r.error)throw r.error}catch(e){msg(friendly(e))}}
+ try{const r=await sb.auth.signInWithOAuth({provider:p,options:{redirectTo:RED(),queryParams:{prompt:'select_account'}}});if(r.error)throw r.error}catch(e){msg(friendly(e))}}
 async function newPass(){const pw=(($('#ap')||{}).value)||'';if(pw.length<8)return msg('Password must have at least 8 characters.');
  try{const r=await sb.auth.updateUser({password:pw});if(r.error)throw r.error;REC=0;AMSG='';if(SESS)await onSignedIn(SESS);else draw()}catch(e){msg(friendly(e))}}
 /* ---------- Auth page: ONE form with three modes (in / up / fg). Changing mode sweeps a blade across the card and swaps the mode while the blade covers it. ---------- */
@@ -256,10 +256,11 @@ function showResend(em){RS=em;const x=$('#ars');if(x)x.hidden=false}
 function authView(L){
  if(REC&&!L)return`<div class="auth au" id=authx data-mode=in><div class=au__card id=auc><div class=au__stage><div class=au__head><img class=au__logo src=logo-light.png alt="" width=46 height=46><h3 class=au__title>New <em>password.</em></h3><p class=au__sub>Choose a new password for your account.</p></div><form class=au__form onsubmit="newPass();return false" novalidate><div class=au__row><label for=ap>New password</label><input id=ap type=password autocomplete=new-password enterkeyhint=go placeholder="8+ characters"></div><p id=ae class="msg bad" role=alert>${esc(AMSG)}</p><button class=au__go id=ago type=submit>Save password<i class=au__spin></i></button></form></div></div></div>`;
  const Pv=CFG.providers||{},bt=(p,l)=>!L&&Pv[p]?`<button type=button class=au__soc onclick="oauth('${p}')">Continue with ${l}</button>`:'';
- const soc=bt('google','Google')+bt('apple','Apple (iCloud)'),m=L?(AM=='up'?'up':'in'):(AM=='up'||AM=='fg'?AM:'in'),t=AUT[m];
+ const soc=bt('apple','Apple (iCloud)'),m=L?(AM=='up'?'up':'in'):(AM=='up'||AM=='fg'?AM:'in'),t=AUT[m];
  return`<div class="auth au" id=authx data-mode="${m}"><div class=au__card id=auc><div class=au__stage id=auss>
  <div class=au__head><img class=au__logo src=logo-light.png alt="" width=46 height=46><h3 class=au__title id=aut>${t[0]}</h3><p class=au__sub id=aus2>${t[1]}</p></div>
  ${!L&&location.protocol=='file:'?'<p class="msg bad au__pad">Cloud sign-in works only when the site is hosted on https.</p>':''}
+ ${L?'':`<div class=au__choose data-m="in up"><button type=button class="au__soc au__g" onclick="oauth('google')"><svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg><span data-m=in>Sign in with Google</span><span data-m=up>Sign up with Google</span></button><div class=au__or><span>or use your email</span></div></div>`}
  <form class=au__form onsubmit="${L?'localAuth':'cauth'}();return false" novalidate>
   <div class=au__row data-m=up><label for=an>Your name</label><input id=an maxlength=30 autocomplete=name enterkeyhint=next placeholder="What should we call you?"></div>
   <div class=au__row><label for=au>${L?'Username':'Email'}</label><input id=au ${L?'maxlength=20':'type=email inputmode=email'} autocomplete=${L?'username':'email'} autocapitalize=none autocorrect=off spellcheck=false enterkeyhint=next placeholder="${L?'letters, numbers, _':'you@example.com'}"></div>
@@ -295,7 +296,26 @@ const doneN=()=>Object.keys(S.done).length;
 const avg=()=>{const v=Object.values(S.done);return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):0};
 const dueN=()=>Object.values(S.vocab).filter(v=>v.due<=Date.now()).length;
 /* ---------- Audio: browser speech only (no music, no sound effects) ---------- */
-function say(t,r){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang=S.set.acc;u.rate=r||S.set.rate;speechSynthesis.speak(u)}catch(e){}}
+const LTR={A:'ay',B:'bee',C:'see',D:'dee',E:'ee',F:'eff',G:'jee',H:'aitch',I:'eye',J:'jay',K:'kay',L:'ell',M:'em',N:'en',O:'oh',P:'pee',Q:'cue',R:'ar',S:'ess',T:'tee',U:'you',V:'vee',W:'double you',X:'ex',Y:'why',Z:'zee'};
+/* Make the text easy for a speech engine: titles, symbols, blanks and spelled-out letters */
+function ttsText(t){t=String(t==null?'':t);
+ if(/^[A-Z]$/.test(t.trim()))return LTR[t.trim()];
+ if(/^([A-Za-z]-){1,14}[A-Za-z]$/.test(t.trim()))return t.trim().toUpperCase().split('-').map(c=>LTR[c]).join(', ');
+ return t.replace(/\bDr\.\s?/g,'Doctor ').replace(/\bMr\.\s?/g,'Mister ').replace(/\bMrs\.\s?/g,'Missus ').replace(/\bMs\.\s?/g,'Miss ').replace(/\bSt\.\s/g,'Street ').replace(/&/g,' and ').replace(/_{2,}|…|\.{3}/g,' blank ').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu,'').replace(/[“”"]/g,'').replace(/\s*\n+\s*/g,'. ').replace(/\s{2,}/g,' ').trim()}
+let VOICES=[];function loadVoices(){try{VOICES=(speechSynthesis.getVoices()||[]).filter(v=>/^en/i.test(v.lang))}catch(e){VOICES=[]}}
+try{loadVoices();speechSynthesis.addEventListener&&speechSynthesis.addEventListener('voiceschanged',loadVoices)}catch(e){}
+/* Rank voices: neural/natural and "Google" voices sound far better than the old robotic ones */
+const VQ=v=>{const n=v.name||'';let s=0;if(/natural|neural|online/i.test(n))s+=6;if(/premium|enhanced|siri/i.test(n))s+=5;if(/google/i.test(n))s+=4;if(/samantha|daniel|serena|karen|moira|aaron|jenny|aria|guy|ryan|sonia|libby|ava|allison|oliver/i.test(n))s+=3;if(v.localService)s+=1;if(/compact|espeak|eloquence|novelty|bad news|bells|boing|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|albert|fred|junior|kathy|ralph/i.test(n))s-=10;return s};
+function pickVoice(g,acc){if(!VOICES.length)loadVoices();const en=VOICES;if(!en.length)return null;acc=acc||(S.set&&S.set.acc)||'en-US';
+ if(!g&&S.set&&S.set.vo){const u=en.find(v=>v.name==S.set.vo);if(u)return u}
+ const ac=en.filter(v=>String(v.lang).replace('_','-')==acc),pool=ac.length?ac:en,F=/female|samantha|zira|susan|hazel|karen|moira|tessa|fiona|victoria|aria|jenny|libby|sonia|ava|allison|serena/i,M=/(^|[^a-z])male|david|mark|daniel|alex|george|guy|ryan|james|thomas|oliver|arthur|aaron/i;
+ const sorted=pool.slice().sort((x,y)=>VQ(y)-VQ(x));if(!g)return sorted[0];
+ const w=g=='f'?F:M,m=sorted.find(v=>w.test(v.name)&&!(g!='f'&&F.test(v.name)));return m||sorted[0]}
+let SAYK=0;
+/* Speak a text in sentences (natural pauses, no cut-offs on long text). Returns nothing; cb is called when finished. */
+function say(t,r,cb){try{if(!window.speechSynthesis||typeof SpeechSynthesisUtterance=='undefined'){if(cb)cb();return}
+ speechSynthesis.cancel();const k=++SAYK,parts=ttsText(t).split(/(?<=[.!?;])\s+/).filter(Boolean),v=pickVoice(),rate=Math.max(.5,Math.min(1.3,(r||S.set.rate||.9)));
+ parts.forEach((p,i)=>{const u=new SpeechSynthesisUtterance(p);if(v)u.voice=v;u.lang=(v&&v.lang)||S.set.acc;u.rate=rate;u.pitch=1;if(i==parts.length-1&&cb){u.onend=u.onerror=()=>{if(k==SAYK)cb()}}speechSynthesis.speak(u)})}catch(e){if(cb)cb()}}
 function theme(){const t=S.set.theme,d=t=='dark'||(t=='system'&&matchMedia('(prefers-color-scheme:dark)').matches);document.documentElement.toggleAttribute('data-d',d);try{document.querySelectorAll('.dn').forEach(b=>{b.classList.toggle('night',d);b.setAttribute('aria-checked',d)})}catch(e){}}
 
 /* ---------- Access rules ---------- */
@@ -718,9 +738,11 @@ function vSet(){const s=S.set,C=isC(USER);
  const learn=`<div class=set>Display name<input value="${esc(s.name)}" maxlength=30 onchange="S.set.name=this.value.trim().slice(0,30);save();draw()"></div>
  ${sel('Daily goal',[[1,'1 quiz'],[2,'2 quizzes'],[3,'3 quizzes']],s.goal,'S.set.goal=+this.value;save()')}
  ${sel('Accent',[['en-US','American'],['en-GB','British']],s.acc,'S.set.acc=this.value;save()')}
+ ${sel('Voice',[['','Automatic (best available)']].concat(VOICES.map(v=>[v.name,v.name.replace(/^(Microsoft|Google)\s+/,'$1 ').slice(0,38)+' ('+v.lang+')'])),s.vo,'S.set.vo=this.value;save()')}<div class=set>Hear the voice<button class=btn2 type=button onclick="say('Hello! I am your English voice. Listen to how I say: thirteen, thirty, and three.')">▶ Test</button></div>
  ${chk('auto','Play audio automatically')}
  ${sel('Speech speed',[['.6','Slow'],['.9','Normal'],['1.15','Fast']],s.rate,'S.set.rate=+this.value;save()')}
  ${chk('sa','Arabic subtitles in stories')}
+ ${sel('Story scene plays',[[1,'Once'],[2,'Twice'],[3,'3 times']],s.rp,'S.set.rp=+this.value;save()')}
  <p class=mut>Pronunciation uses your browser's voices, which differ by device.</p>`;
  const tools=`${sel('Weekly goal',[[3,'3 quizzes'],[5,'5 quizzes'],[7,'7 quizzes'],[10,'10 quizzes'],[14,'14 quizzes']],s.wk,'S.set.wk=+this.value;save()')}
  ${sel('Daily reminder',[['off','Off'],['morning','Morning (from 8:00)'],['evening','Evening (from 18:00)']],s.rem,'S.set.rem=this.value;save()')}
