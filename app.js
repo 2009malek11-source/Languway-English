@@ -32,7 +32,7 @@ Object.keys(OLDC).forEach(k=>{const ok=+k;OLDC[k].forEach((u,uo)=>u[1].forEach((
 const ALL=LS.flatMap(l=>l.w);let POOL=ALL,OL=0;
 const lvWords=n=>LS.filter(l=>l.lv==n).flatMap(l=>l.w);
 /* ---------- State ---------- */
-const DEF=()=>({cid:{},sec:{},gr:{},ver:3,ls:{},rv:0,sty:{},start:0,ut:{},lt:{},placed:0,sk:{},done:{},vocab:{},mist:[],days:{},fav:{},test:null,upd:0,rst:0,set:{theme:'system',acc:'en-US',rate:.9,name:'',goal:1,font:'normal',calm:false,auto:false,sa:false,vib:true,fx:true,rem:'off',wk:5,wl:false,cmp:false,vo:'',rp:1}});
+const DEF=()=>({cid:{},sec:{},gr:{},ver:3,ls:{},rv:0,sty:{},start:0,ut:{},lt:{},placed:0,sk:{},done:{},vocab:{},mist:[],days:{},fav:{},test:null,upd:0,rst:0,ex:{xl:{},wk:{},wr:[],sv:{},wd:{}},set:{theme:'system',acc:'en-US',rate:.9,name:'',goal:1,font:'normal',calm:false,auto:false,sa:false,vib:true,fx:true,rem:'off',wk:5,wl:false,cmp:false,vo:'',rp:1}});
 let S=DEF(),INQ=0;
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const isO=o=>o&&typeof o=='object'&&!Array.isArray(o);
@@ -51,6 +51,12 @@ function clean(o){const d=DEF();if(!isO(o))return d;
  d.start=Math.max(0,Math.min(30,Math.round(num(o.start,0))));d.placed=o.placed?1:0;
  d.test=isO(o.test)?{pct:num(o.test.pct,0),lvl:Math.max(1,Math.min(30,Math.round(num(o.test.lvl,1)))),date:/^\d{4}-\d\d-\d\d$/.test(o.test.date)?o.test.date:''}:null;
  d.upd=num(o.upd,0);d.rst=num(o.rst,0);
+ {const x=isO(o.ex)?o.ex:{},e=d.ex;
+  e.xl=nm(x.xl,/^[a-z0-9-]{1,24}$/,0,100);
+  if(isO(x.wk))for(const k in x.wk)if(/^\d{4}-W\d\d$/.test(k)&&isO(x.wk[k]))e.wk[k]={d:Math.max(0,Math.min(127,num(x.wk[k].d,0)|0)),t:Math.max(-1,Math.min(100,Math.round(num(x.wk[k].t,-1))))};
+  if(Array.isArray(x.wr))x.wr.slice(0,15).forEach(w=>{if(isO(w)&&typeof w.t=='string')e.wr.push({k:String(w.k||'').slice(0,30),t:w.t.slice(0,700),d:/^\d{4}-\d\d-\d\d$/.test(w.d)?w.d:'',n:Math.max(0,Math.min(100,Math.round(num(w.n,0))))})});
+  if(isO(x.sv)){let c=0;for(const k in x.sv)if(c<300&&k.length<=40&&typeof x.sv[k]=='string'){e.sv[k]=x.sv[k].slice(0,80);c++}}
+  if(isO(x.wd)){const ks=Object.keys(x.wd).filter(k=>/^\d{4}-\d\d-\d\d$/.test(k)).sort().slice(-400);ks.forEach(k=>e.wd[k]=1)}}
  d.ls={};if(isO(o.ls))for(const k in o.ls)if(/^\d{1,2}$/.test(k)&&+k>=1&&+k<=30&&/^\d{4}-\d\d-\d\d$/.test(String(o.ls[k])))d.ls[k]=o.ls[k];
  d.rv=Math.max(0,Math.min(100,num(o.rv,0)));d.sty=nm(o.sty,/^\d{1,2}$/,0,100);
  if(num(o.ver,2)<3){/* migrate the old 20-level layout to 30 levels: old level k (1-10) became levels 2k-1 and 2k, old 11-20 became 21-30 */
@@ -71,7 +77,11 @@ function mergeS(a,b){a=clean(a);b=clean(b);if(a.rst!==b.rst)return a.rst>b.rst?a
  r.mist=[...nw.mist,...ol.mist.filter(m=>!nw.mist.some(x=>x.en==m.en))].slice(0,50);
  r.ls={};[ol.ls,nw.ls].forEach(m=>{for(const x in m)if(!r.ls[x]||m[x]<r.ls[x])r.ls[x]=m[x]});r.rv=Math.max(ol.rv,nw.rv);r.sty=mx('sty');
  if(!nw.placed&&ol.placed){r.placed=1;r.start=ol.start;r.test=ol.test}
+ {const e=r.ex={xl:mx2(ol.ex.xl,nw.ex.xl),wk:{},wr:[],sv:Object.assign({},ol.ex.sv,nw.ex.sv),wd:Object.assign({},ol.ex.wd,nw.ex.wd)};
+  [ol.ex.wk,nw.ex.wk].forEach(m=>{for(const k in m){const c=e.wk[k]||{d:0,t:-1};e.wk[k]={d:c.d|m[k].d,t:Math.max(c.t,m[k].t)}}});
+  const seen={};[...nw.ex.wr,...ol.ex.wr].forEach(w=>{const id=w.d+'|'+w.k+'|'+w.t.slice(0,20);if(!seen[id]){seen[id]=1;e.wr.push(w)}});e.wr.sort((p,q)=>q.d<p.d?-1:q.d>p.d?1:0);e.wr=e.wr.slice(0,15)}
  r.upd=Math.max(a.upd,b.upd);return clean(r)}
+const mx2=(a,b)=>{const o={};[a,b].forEach(m=>{for(const x in m)if(o[x]===undefined||m[x]>o[x])o[x]=m[x]});return o};
 /* ---------- Accounts: cloud (Supabase) when configured, otherwise this-device-only ---------- */
 let USER=localStorage.getItem('ef_cur')||'';
 const CFG=window.SUPABASE_CONFIG||{};
@@ -79,15 +89,25 @@ const CFGOK=!!(CFG.url&&CFG.anonKey&&!/YOUR-/i.test(CFG.url+CFG.anonKey));
 const isC=u=>/^c_/.test(u||''),isG=u=>u==='guest';let AUTHV=0;
 if(isC(USER)&&!CFGOK)USER='';if(CFGOK&&!isC(USER)&&USER!=='guest')USER='';
 let REM=true;try{REM=localStorage.getItem('ef_rem')!=='0'}catch(e){}
-const STG={getItem:k=>{try{const v=localStorage.getItem(k);return v!=null?v:sessionStorage.getItem(k)}catch(e){return null}},setItem:(k,v)=>{try{(REM?localStorage:sessionStorage).setItem(k,v);(REM?sessionStorage:localStorage).removeItem(k)}catch(e){}},removeItem:k=>{try{localStorage.removeItem(k);sessionStorage.removeItem(k)}catch(e){}}};
+const MEMST={};
+const STG={getItem:k=>{try{const v=localStorage.getItem(k);if(v!=null)return v}catch(e){}try{const v=sessionStorage.getItem(k);if(v!=null)return v}catch(e){}return k in MEMST?MEMST[k]:null},
+ setItem:(k,v)=>{MEMST[k]=v;try{(REM?localStorage:sessionStorage).setItem(k,v);(REM?sessionStorage:localStorage).removeItem(k)}catch(e){try{sessionStorage.setItem(k,v)}catch(x){}}},
+ removeItem:k=>{delete MEMST[k];try{localStorage.removeItem(k)}catch(e){}try{sessionStorage.removeItem(k)}catch(e){}}};
 let sb=null,SESS=null,EMAIL='',PROV='',SYNC=CFGOK?'idle':'local',SERR='',REC=0,AM='in',AMSG='',pushT=0;
-if(CFGOK&&window.supabase){try{sb=window.supabase.createClient(CFG.url,CFG.anonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storage:STG}})}catch(e){sb=null}}
+/* Every database request carries the signed-in user's own token. Some browsers failed to hand the stored session to the library, so requests went out with only the public key and the server refused them (progress was not saved). */
+let AUTHBAD=0;
+function keepTok(){try{if(SESS){const st=REM?localStorage:sessionStorage;st.setItem('ef_tok',JSON.stringify({a:SESS.access_token,r:SESS.refresh_token}))}}catch(e){}}
+async function renewTok(){try{if(!sb||!SESS||!SESS.refresh_token)return false;const r=await sb.auth.refreshSession({refresh_token:SESS.refresh_token});if(r&&r.data&&r.data.session){SESS=r.data.session;keepTok();return true}}catch(e){}return false}
+async function cfetch(u,o){o=o||{};if(String(u).indexOf('/rest/v1/')<0||!SESS||!SESS.access_token)return fetch(u,o);
+ const go1=()=>{const h=new Headers(o.headers||{});h.set('Authorization','Bearer '+SESS.access_token);const x=Object.assign({},o,{headers:h});if(o.method&&o.method!='GET'&&typeof o.body=='string'&&o.body.length<60000)x.keepalive=true;return fetch(u,x)};
+ let r=await go1();if(r.status===401&&await renewTok())r=await go1();return r}
+if(CFGOK&&window.supabase){try{sb=window.supabase.createClient(CFG.url,CFG.anonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storage:STG},global:{fetch:cfetch}})}catch(e){sb=null}}
 const KEY=()=>'ef2_'+USER;
 const RED=()=>location.origin+location.pathname;
 const ACC=()=>{try{return JSON.parse(localStorage.getItem('ef_acc')||'{}')}catch(e){return{}}};
 function loadS(){try{let raw=localStorage.getItem(KEY());if(!raw)raw=localStorage.getItem('ef_bak_'+USER);S=clean(JSON.parse(raw||'null'))}catch(e){S=DEF()}}
 function persist(){if(USER)try{localStorage.setItem(KEY(),JSON.stringify(S))}catch(e){}}
-function save(){if(!USER)return;S.upd=Date.now();persist();if(sb&&SESS){clearTimeout(pushT);pushT=setTimeout(push,3500);setSync('wait')}}
+function save(){if(!USER)return;S.upd=Date.now();persist();if(sb&&SESS){clearTimeout(pushT);pushT=setTimeout(push,1500);setSync('wait')}}
 const SIC={ok:'cloud',busy:'refresh',wait:'cloud',off:'cloudoff',err:'alert',local:'device',idle:'cloud'};const SIH=s=>ic(SIC[s]||'cloud');const SI={ok:'☁️',busy:'🔄',wait:'☁️',off:'📴',err:'⚠️',local:'💾',idle:'☁️'};
 const SL={ok:'Synced',busy:'Syncing…',wait:'Changes waiting to sync',off:'Offline. Changes will sync when you are back online',err:'Sync problem',local:'Saved on this device only',idle:'Not signed in'};
 let LSY=+(localStorage.getItem('ef_lsy_'+USER)||0);
@@ -102,15 +122,16 @@ function friendly(e){const m=String((e&&e.message)||e||''),c=String((e&&(e.code|
  if(/failed to fetch|network|load failed/i.test(m))return'No connection. Check your internet and try again.';
   if(c=='same_password'||/different from the old password/i.test(m))return'Choose a password that is different from your current one.';
  if(c=='email_not_confirmed'||/not confirmed/i.test(m))return'Sign-up is not available right now. Please try again in a few minutes.';
+ if(st===401||c=='42501'||/jwt|not authorized|permission denied/i.test(m))return'The server did not accept your sign-in on this device. Sign out and sign in again to keep saving your progress.';
  if(c=='unavailable'||st>=500)return'The server is busy right now. Wait a few seconds and try again.';
  if(/delete_my_account/i.test(m))return'Account deletion is not set up. Run the latest SUPABASE_SETUP.sql.';
  if(/progress/i.test(m)&&/(schema cache|exist|find)/i.test(m))return'Cloud saving is not switched on for this project yet, so your progress stays on this device for now.';
  return 'Something went wrong. Please try again.'}
-let LASTP='',PBK=0,PBUSY=0;
+let LASTP='',PBK=0,PBUSY=0,PULLOK=0;
 async function push(){if(!sb||!SESS)return;if(!navigator.onLine){setSync('off');return}const j=jx(S);if(j===LASTP&&SYNC=='ok')return;if(PBUSY){clearTimeout(pushT);pushT=setTimeout(push,1500);return}PBUSY=1;setSync('busy');
- try{const r=await sb.from('progress').upsert({user_id:SESS.user.id,data:S,updated_at:new Date().toISOString()});if(r.error)throw r.error;LASTP=j;PBK=0;setSync('ok')}catch(e){setSync(navigator.onLine?'err':'off',e);if(!/switched on/i.test(SERR)){PBK=Math.min(PBK?PBK*2:15000,300000);clearTimeout(pushT);pushT=setTimeout(push,navigator.onLine?PBK+Math.random()*PBK*.4:60000)}}finally{PBUSY=0}}
+ try{if(!PULLOK){await pull();if(!PULLOK)throw new Error('pull')}const r=await sb.from('progress').upsert({user_id:SESS.user.id,data:S,updated_at:new Date().toISOString()});if(r.error){if(r.status)r.error.status=r.status;throw r.error}LASTP=j;PBK=0;AUTHBAD=0;setSync('ok')}catch(e){AUTHBAD=(e&&(e.status===401||e.code=='42501'))?1:0;setSync(navigator.onLine?'err':'off',e);if(!/switched on/i.test(SERR)){PBK=Math.min(PBK?PBK*2:15000,300000);clearTimeout(pushT);pushT=setTimeout(push,navigator.onLine?PBK+Math.random()*PBK*.4:60000)}}finally{PBUSY=0}}
 async function pull(){if(!sb||!SESS)return false;setSync('busy');
- const r=await sb.from('progress').select('data').eq('user_id',SESS.user.id).maybeSingle();if(r.error)throw r.error;
+ const r=await sb.from('progress').select('data').eq('user_id',SESS.user.id).maybeSingle();if(r.error){if(r.status)r.error.status=r.status;AUTHBAD=(r.error.status===401||r.error.code=='42501')?1:0;throw r.error}AUTHBAD=0;PULLOK=1;
  const rc=clean(r.data&&r.data.data),m=mergeS(S,rc),chL=jx(m)!==jx(S),chR=!r.data||jx(m)!==jx(rc);S=m;persist();
  if(chR)await push();else{LASTP=jx(S);setSync('ok')}return chL}
 async function syncNow(){if(!sb||!SESS)return;try{if(await pull()&&!INQ)draw()}catch(e){setSync(navigator.onLine?'err':'off',e)}}
@@ -119,12 +140,12 @@ function guestGo(){AUTHV=0;USER='guest';EMAIL='';SESS=null;try{localStorage.setI
 function wantAuth(){AUTHV=1;AM='in';AMSG='';draw.force=1;draw();draw.force=0}
 function backGuest(){AUTHV=0;go('home')}
 const GBTN=()=>`<div class=sep>or</div><button class=btn2 type=button onclick="${AUTHV?'backGuest()':'guestGo()'}">${AUTHV?'← Back to the app':'Continue as guest'}</button><p class=mut>${AUTHV?'':'No account needed. Your progress stays on this device. You can sign in later from Settings or the top bar.'}</p>`;
-function forget(){clearTimeout(pushT);SESS=null;USER='';EMAIL='';S=DEF();localStorage.removeItem('ef_cur');AM='in';AMSG='';INQ=0;draw()}
+function forget(){clearTimeout(pushT);SESS=null;PULLOK=0;LASTP='';try{localStorage.removeItem('ef_tok');sessionStorage.removeItem('ef_tok')}catch(e){}USER='';EMAIL='';S=DEF();localStorage.removeItem('ef_cur');AM='in';AMSG='';INQ=0;draw()}
 async function onSignedIn(ses){if(SESS&&SESS.user.id===ses.user.id){SESS=ses;return}
- SESS=ses;const u=ses.user;USER='c_'+u.id;EMAIL=u.email||'';PROV='username';
+ SESS=ses;PULLOK=0;LASTP='';keepTok();const u=ses.user;USER='c_'+u.id;EMAIL=u.email||'';PROV='username';
  localStorage.setItem('ef_cur',USER);localStorage.setItem('ef_email_'+USER,EMAIL);AMSG='';
  loadS();mergeGuest();AUTHV=0;const nm=u.user_metadata&&(u.user_metadata.name||u.user_metadata.full_name);if(nm&&!S.set.name){S.set.name=String(nm).slice(0,30);persist()}
- try{await pull()}catch(e){setSync(navigator.onLine?'err':'off',e)}
+ try{await pull()}catch(e){setSync(navigator.onLine?'err':'off',e);setTimeout(()=>{if(SESS&&!PULLOK)syncNow()},4000)}
  INQ=0;V='home';theme();applyPrefs();navFx(draw,VT.home)}
 async function signOut(){if(sb&&SESS){clearTimeout(pushT);await push();if(SYNC!='ok'&&!confirm('Your latest progress has not synced yet. A copy stays on this device until you sign in again. Sign out anyway?'))return;if(SYNC=='ok')localStorage.removeItem(KEY())}
  try{if(sb)await sb.auth.signOut()}catch(e){}forget()}
@@ -191,7 +212,7 @@ function auGo(m,clr){if(AUB||m==AM)return;if(clr)msg('');
   try{if(matchMedia('(pointer:fine)').matches){const f=m=='up'?'#an':'#au';const e=$(f);if(e&&!e.value)e.focus();else if($('#ap'))$('#ap').focus()}}catch(x){}},950)}
 /* Page changes use the same blade over the whole screen. */
 let NAVB=0,FXOFF=1;
-const VT={home:'Welcome <em>home.</em>',learn:'Let’s <em>learn.</em>',lesson:'Lesson <em>time.</em>',gram:'Grammar <em>rules.</em>',review:'Review <em>words.</em>',progress:'Your <em>progress.</em>',settings:'Your <em>settings.</em>',test:'Take the <em>test.</em>',cert:'Your <em>certificate.</em>',search:'Find <em>anything.</em>',help:'Need <em>help?</em>',share:'Share <em>LanguWay.</em>',stories:'Story <em>time.</em>',story:'Story <em>time.</em>'};
+const VT={home:'Welcome <em>home.</em>',learn:'Let’s <em>learn.</em>',lesson:'Lesson <em>time.</em>',gram:'Grammar <em>rules.</em>',review:'Review <em>words.</em>',progress:'Your <em>progress.</em>',settings:'Your <em>settings.</em>',test:'Take the <em>test.</em>',cert:'Your <em>certificate.</em>',search:'Find <em>anything.</em>',help:'Need <em>help?</em>',share:'Share <em>LanguWay.</em>',stories:'Story <em>time.</em>',explore:'Let’s <em>explore.</em>',translate:'Translate <em>anything.</em>',story:'Story <em>time.</em>'};
 function navFx(swap,title){const bl=$('#bl'),b=$('#blb');
  if(FXOFF||NAVB||!bl||!b||!bl.getBoundingClientRect||!window.requestAnimationFrame||noFx()){swap();return}
  const t=$('#blt');if(t)t.innerHTML=title||'';NAVB=1;
@@ -199,7 +220,7 @@ function navFx(swap,title){const bl=$('#bl'),b=$('#blb');
 /* ---------- Sidebar: slides over the page on phones, docked (and collapsible to icons) on wide screens ---------- */
 let MN=0,SBC=0;try{SBC=+localStorage.getItem('ef_sbc')||0}catch(e){}
 const DT=()=>!!(window.matchMedia&&matchMedia('(min-width:900px)').matches);
-const MG=[[['home','home','Home'],['learn','learn','Learn'],['stories','stories','Stories'],['review','review','Review']],[['progress','progress','Progress'],['test','pen','Placement test'],['cert','cert','Certificates'],['search','search','Search']],[['share','share','Install and share'],['help','help','Help'],['settings','gear','Settings']]];
+const MG=[[['home','home','Home'],['learn','learn','Learn'],['explore','cert','Explore'],['stories','stories','Stories'],['review','review','Review']],[['progress','progress','Progress'],['test','pen','Placement test'],['cert','cert','Certificates'],['translate','chat','Translator'],['search','search','Search']],[['share','share','Install and share'],['help','help','Help'],['settings','gear','Settings']]];
 function srch(id,val,ph,fn,cls){return`<form class="srch ${cls||''}" onsubmit="${fn};return false"><input id=${id} type=search value="${String(val||'').replace(/"/g,'')}" placeholder="${ph}" aria-label="${ph}" autocomplete=off enterkeyhint=search><button type=submit aria-label=Search>${ic('search')}</button></form>`}
 function mnHtml(){const on=v=>V==v||((V=='lesson'||V=='gram')&&v=='learn')||(V=='story'&&v=='stories'),C=isC(USER),d=dueN(),dk=DT();
  const nm=esc(S.set.name||(C?UNAME():isG(USER)?'Guest':USER)||'Learner'),who=C?esc(SL[SYNC]):isG(USER)?'Saved on this device only':'Saved on this device';
@@ -296,7 +317,7 @@ function curLevel(){let n=Math.max(1,S.start||1);while(n<NLV&&S.lt[n]>=75)n++;re
 let V='home',A=0,P=0;
 function needTest(){if(S.placed)return false;GATE=1;INQ=0;V='test';A=0;scrollTo(0,0);draw();return true}
 let GATE=0;
-function go(v,a){if((v=='lesson'||v=='gram')&&needTest())return;if(V=='story'&&v!='story'&&typeof stLeave=='function')stLeave();const ch=v!=V||MN;INQ=0;V=v;A=a||0;P=0;
+function go(v,a){if(v=='explore'&&V!='explore'){X={p:'home'};XR=null}if((v=='lesson'||v=='gram')&&needTest())return;if(V=='story'&&v!='story'&&typeof stLeave=='function')stLeave();const ch=v!=V||MN;INQ=0;V=v;A=a||0;P=0;
  if(ch)navFx(()=>{mnHide();scrollTo(0,0);draw()},VT[v]);else{scrollTo(0,0);draw()}}
 let SQ='',TD='Lessons';
 function tgl(){S.set.theme=document.documentElement.hasAttribute('data-d')?'light':'dark';save();theme()}
@@ -326,7 +347,7 @@ function draw(){
  if(V=='settings'&&ae&&ae.closest&&ae.closest('.cpx')&&/INPUT/.test(ae.tagName)&&!draw.force)return;
  const night=document.documentElement.hasAttribute('data-d'),
  top=`<div class=top><button class=ib id=mnb type=button aria-label="Open menu" aria-haspopup=dialog onclick="mnToggle()">${ic('menu')}</button><button class="dn ${night?'night':''}" type=button role=switch aria-checked="${night}" aria-label="Day or night mode" onclick="tgl()"><i class=dn__st></i><i class=dn__cl></i><i class=dn__k></i></button></div>`;
- $('#app').innerHTML=top+({home:vHome,learn:vLearn,lesson:vLesson,gram:vGram,review:vReview,progress:vProgress,settings:vSet,test:vTest,cert:vCert,search:vSearch,help:vHelp,share:vShare,stories:vStories,story:vStory})[V]();
+ $('#app').innerHTML=top+({home:vHome,learn:vLearn,lesson:vLesson,gram:vGram,review:vReview,progress:vProgress,settings:vSet,test:vTest,cert:vCert,search:vSearch,help:vHelp,share:vShare,stories:vStories,story:vStory,explore:vExplore,translate:vTranslate})[V]();
  mnSync();wlSync();
 }
 
@@ -343,25 +364,46 @@ function todo(){const cl=curLevel();let r='';const tr=(pc,t,s,a,l)=>`<div class=
  return`<div class=card><h2>To do list</h2><div class=tabsl>${['Lessons','Grammar','Review','Tests'].map(t=>`<button class="${TD==t?'on':''}" onclick="TD='${t}';draw()">${t}</button>`).join('')}</div>${r}</div>`}
 /* ---------- Helper: finds things in the app, answers questions, explains rules (works offline) ---------- */
 let HL=[],HO=0;
-function hOpen(){HO=!HO;const p=$('#hp');if(!p)return;p.hidden=!HO;const fb=$('#fab');if(fb)fb.style.visibility=HO?'hidden':'';document.body.style.overflow=HO?'hidden':'';if(HO){hDraw();if(!HL.length)hBot('Hi'+nmS()+'! I can find lessons and words, explain a grammar rule, and answer questions about the app. Try: “explain present simple”, “explain past perfect”, “where is my next lesson?”, “meaning of hospital”.',[['Next lesson','next'],['Grammar to do','gram'],['How do tests work?','tests']])}}
+function hOpen(){HO=!HO;const p=$('#hp');if(!p)return;p.hidden=!HO;const fb=$('#fab');if(fb)fb.style.visibility=HO?'hidden':'';document.body.style.overflow=HO?'hidden':'';if(HO){hDraw();if(!HL.length)hBot('Hi'+nmS()+'! I can find lessons and words, explain any grammar rule with pictures and practice, and answer questions about the app. Try: “explain present simple”, “explain past perfect”, “where is my next lesson?”, “meaning of hospital”.',[['Next lesson','next'],['All grammar rules','rlist:0'],['How do tests work?','tests']])}}
 function hBot(t,acts){HL.push({b:1,t,acts:acts||[]});hDraw()}
 function hDraw(){const l=$('#hl');if(!l)return;l.innerHTML=HL.slice(-12).map(m=>m.b?`<div class=hb>${m.t}${(m.acts||[]).map(a=>`<br><button class=chip onclick="hAct('${a[1]}')">${esc(a[0])}</button>`).join('')}</div>`:`<div class=hu>${esc(m.t)}</div>`).join('');l.scrollTop=l.scrollHeight}
 function hSend(){const i=$('#hi'),q=i.value.trim();if(!q)return;i.value='';HL.push({t:q});hDraw();hAns(q)}
 function hClose(){if(HO)hOpen()}
-function hAct(a){if(a=='close')return hOpen();if(a.indexOf('part:')==0){const p=a.split(':');return hBot(gPart(+p[1],p[2])+'<br>Is it clearer now?',[['Yes, thanks','say:Great']].slice(0,0).concat([['Another part','part:'+p[1]+':'+(p[2]=='f'?'x':p[2]=='x'?'m':'f')],['Open the full lesson','gram:'+p[1]]]))}hClose();if(a=='next')return hNext();if(a=='gram'){const d=grDue();return d.length?go('gram',d[0]):go('learn')}if(a=='tests')return hBot2('Unit test: 15 questions after the 3 lessons and the grammar rule of a unit (75% to pass). Level test: 30 questions after the 4 unit tests. The placement test finds your level and opens all levels below it.');
+function hAct(a){if(a=='close')return hOpen();if(a.indexOf('rule:')==0)return hRule(+a.slice(5));if(a.indexOf('rq:')==0){const p=a.split(':');return hRQ(+p[1],+p[2])}if(a.indexOf('rsay:')==0){const g=GR[+a.slice(5)];if(g)say(g.t+'! '+g.e+' '+g.x[0]);return}if(a.indexOf('rlist:')==0)return hRList(+a.slice(6));if(a.indexOf('part:')==0){const p=a.split(':');return hBot(gPart(+p[1],p[2])+'<br>Is it clearer now?',[['Yes, thanks','say:Great']].slice(0,0).concat([['Another part','part:'+p[1]+':'+(p[2]=='f'?'x':p[2]=='x'?'m':'f')],['Open the full lesson','gram:'+p[1]]]))}hClose();if(a=='next')return hNext();if(a=='gram'){const d=grDue();return d.length?go('gram',d[0]):go('learn')}if(a=='tests')return hBot2('Unit test: 15 questions after the 3 lessons and the grammar rule of a unit (75% to pass). Level test: 30 questions after the 4 unit tests. The placement test finds your level and opens all levels below it.');
  const i=a.indexOf(':'),k=a.slice(0,i),v=a.slice(i+1);if(k=='gram')go('gram',+v);else if(k=='lesson'){P=0;go('lesson',+v)}else if(k=='go')go(v);else if(k=='say')say(v)}
+
+/* ---------- Helper: enthusiastic, interactive rule explanation (works offline) ---------- */
+const CHEER=['Great choice!','Wonderful question!','Let us master this together!','This one is fun!','You are going to love this rule!'];
+function hRule(gu){const g=GR[gu];if(!g)return hBot('I could not find that rule.');
+ const pat=g.f.split(/\s*·\s*/).filter(Boolean),pos=pat.length>1;
+ let h=`<b>${CHEER[gu%CHEER.length]} 🎉</b><br>Today’s rule: <b style="color:var(--ac)">${esc(g.t)}</b> <span class=mut>(Level ${lvOf(gu)})</span><p style="margin:6px 0">${esc(g.e)}</p>`;
+ h+=`<div class=hpat><b>Pattern</b><br>${pos?pat.map(x=>`<button type=button class=chip onclick='say(${JSON.stringify(x).replace(/'/g,"&#39;")})'>${esc(x)}</button>`).join(''):`<span class=hfm>${esc(g.f)}</span>`}</div>`;
+ h+='<div class=hx><b>Examples. Tap to listen</b>'+g.x.map(x=>`<button type=button class="chip hxi" onclick='say(${JSON.stringify(x).replace(/'/g,"&#39;")})'>▶ ${esc(x)}</button>`).join('')+'</div>';
+ h+=`<div class=hmis><span style="color:var(--bad)">✘ ${esc(g.m[0])}</span><br><span style="color:var(--ok)">✔ ${esc(g.m[1])}</span></div>`;
+ if(g.a)h+=`<p dir=rtl lang=ar class=mut style="text-align:right">${esc(g.a)}</p>`;
+ if(GP[gu])h+=pImg(gu);
+ hBot(h,[['🔊 Listen to the explanation','rsay:'+gu],['Practice: question 1 of '+g.q.length,'rq:'+gu+':0'],['Open the full lesson','gram:'+gu]]);try{say(g.t+'! '+g.e)}catch(e){}}
+function hRQ(gu,qi){const g=GR[gu];if(!g||!g.q[qi])return;const q=g.q[qi],o=q.slice(1),r=(gu+qi)%o.length,ar=o.slice(r).concat(o.slice(0,r));
+ HL.push({b:1,t:`<b>Question ${qi+1} of ${g.q.length}</b><p style="margin:6px 0">${esc(q[0])}</p>`+ar.map((x,j)=>`<button type=button class=chip onclick="hQA(${gu},${qi},${j})">${esc(x)}</button>`).join(''),acts:[]});hDraw()}
+function hQA(gu,qi,j){const g=GR[gu],q=g.q[qi],o=q.slice(1),r=(gu+qi)%o.length,ar=o.slice(r).concat(o.slice(0,r)),ok=ar[j]==q[1],last=qi>=g.q.length-1;
+ HL.push({t:ar[j]});
+ if(ok)hBot(`<b style="color:var(--ok)">✔ Yes! Excellent${nmS()}! 🌟</b><br>${esc(q[0].replace('___',q[1]))}`,last?[['Rule finished! Open the lesson','gram:'+gu],['Another rule','rlist:'+lvOf(gu)]]:[['Next question','rq:'+gu+':'+(qi+1)]]);
+ else hBot(`<b style="color:var(--bad)">✘ Not quite. Do not worry, mistakes help us learn!</b><br>Look at the pattern: <b>${esc(g.f)}</b>. The right answer is <b>${esc(q[1])}</b>: ${esc(q[0].replace('___',q[1]))}`,[['Try again','rq:'+gu+':'+qi],...(last?[]:[['Next question','rq:'+gu+':'+(qi+1)]]),['Explain the rule again','rule:'+gu]])}
+function hRList(n){n=Math.max(1,Math.min(30,n||curLevel()));const a=[];for(let gu=0;gu<GR.length;gu++)if(lvOf(gu)==n)a.push(gu);
+ hBot(`Grammar rules of <b>Level ${n}</b>. Tap one and I will explain it:`,a.map(gu=>[GR[gu].t,'rule:'+gu]).concat([[n>1?'← Level '+(n-1):'','rlist:'+(n-1)],[n<30?'Level '+(n+1)+' →':'','rlist:'+(n+1)]].filter(x=>x[0])))}
 function hBot2(t){if(!HO)hOpen();hBot(t)}
 function hNext(){const cl=curLevel(),l=LS.filter(x=>x.lv==cl&&S.done[x.id]==null&&lessonOpen(x))[0];if(l){P=0;go('lesson',l.id)}else go('learn')}
 function hAns(q){const t=q.toLowerCase();let tx=t;
  const tok=tx.replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>2&&!['the','and','how','what','does','explain','rule','grammar','about','tell','can','you','with','for','use','when','why','meaning','mean','word','lesson','where','find','show','please'].includes(w));
  const gi=GR.map((g,i)=>{const tl=g.t.toLowerCase().replace(/[^a-z ]/g,' '),tw=tl.split(/\s+/).filter(w=>w.length>2&&!['and','the'].includes(w)),hit=tw.filter(w=>tok.includes(w)).length,body=tok.reduce((s,w)=>s+((g.f+' '+g.e).toLowerCase().includes(w)?.2:0),0);return[i,(hit?hit*4-(tw.length-hit)*1.5:0)+(tx.replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').includes(tl.trim().replace(/\s+/g,' '))?20:0)+body]}).filter(x=>x[1]>0.3).sort((a,b)=>b[1]-a[1]||a[0]-b[0]);
- if(gi.length&&(/explain|rule|grammar/.test(tx)||(gi[0][1]>=1&&tok.length<=3))){const g=GR[gi[0][0]];return hBot(`I found this rule: <b>${esc(g.t)}</b> (Level ${lvOf(gi[0][0])}, Unit ${unOf(gi[0][0])+1}). ${esc(g.e)}<br>Do you want the step-by-step explanation with practice?`,[['Explain it to me','gram:'+gi[0][0]],...PARTS.concat(GP[gi[0][0]]?[['p','Negative and questions (picture)']]:[]).map(a=>['I did not understand: '+a[1],'part:'+gi[0][0]+':'+a[0]]),...(gi[1]?[['Also: '+GR[gi[1][0]].t,'gram:'+gi[1][0]]]:[])])}
+ if(gi.length&&(/explain|rule|grammar/.test(tx)||(gi[0][1]>=1&&tok.length<=3))){const g=GR[gi[0][0]];return hBot(`I found this rule: <b>${esc(g.t)}</b> (Level ${lvOf(gi[0][0])}, Unit ${unOf(gi[0][0])+1}). ${esc(g.e)}<br>Do you want the step-by-step explanation with practice?`,[['✨ Explain it with pictures and practice','rule:'+gi[0][0]],['Open the full lesson','gram:'+gi[0][0]],...PARTS.concat(GP[gi[0][0]]?[['p','Negative and questions (picture)']]:[]).map(a=>['I did not understand: '+a[1],'part:'+gi[0][0]+':'+a[0]]),...(gi[1]?[['Also: '+GR[gi[1][0]].t,'rule:'+gi[1][0]]]:[])])}
+ if(/(all|list|show|which|every).*(rules|grammar)|^(rules|grammar|grammar rules)$/.test(tx.trim()))return hRList(curLevel());
  if(/next|continue|start/.test(tx))return hBot('Your next lesson is ready.',[['Open my next lesson','next']]);
  if(/test|exam|placement/.test(tx))return hBot('The placement test finds your level (1 to 30) and opens everything below it. Unit tests have 15 questions and level tests 30 questions. You need 75% to pass.',[['Open placement test','go:test']]);
  if(/lock|unlock|open|locked/.test(tx))return hBot('A lesson opens after the previous lesson quiz. Inside a lesson you finish Reading, Writing, Listening and Speaking, then the quiz. A unit test opens after the 3 lessons and the grammar rule. A level opens after the previous level test or a higher placement result.');
  if(/update|sync|account|cloud/.test(tx))return hBot('Your progress is saved on this device and in your account (when you are signed in). Updates are never installed without asking you, and your progress is kept.',[['Open settings','go:settings']]);
  if(/speak|mic|microphone|pronounc/.test(tx))return hBot('In the Speaking section the browser listens while you read a sentence and shows wrong words in red. It works best in Chrome or Edge. If your browser cannot listen, you can read aloud and confirm yourself.');
- if(gi.length&&gi[0][1]>=2){const g=GR[gi[0][0]];return hBot(`This rule may help: <b>${esc(g.t)}</b> (Level ${lvOf(gi[0][0])}, Unit ${unOf(gi[0][0])+1}). ${esc(g.e)}<br>Do you want the step-by-step explanation with practice?`,[['Explain it to me','gram:'+gi[0][0]]])}
+ if(gi.length&&gi[0][1]>=2){const g=GR[gi[0][0]];return hBot(`This rule may help: <b>${esc(g.t)}</b> (Level ${lvOf(gi[0][0])}, Unit ${unOf(gi[0][0])+1}). ${esc(g.e)}<br>Do you want the step-by-step explanation with practice?`,[['✨ Explain it with pictures and practice','rule:'+gi[0][0]],['Open the full lesson','gram:'+gi[0][0]]])}
  const wd=tok.map(w=>w).find(w=>LEX[w])||Object.keys(LEX).find(w=>q.toLowerCase().includes(w)&&w.length>3);
  if(wd){const ls=LS.filter(l=>l.w.some(x=>x.en==wd));return hBot(`<b>${esc(wd)}</b> means “${esc(DEFS[wd]||'')}”${ls[0]?`<br>Found in: ${esc(ls[0].t)} (Level ${ls[0].lv})`:''}`,[['Listen','say:'+wd],...(ls[0]?[['Open the lesson','lesson:'+ls[0].id]]:[])])}
  const lz=LS.filter(l=>tok.some(w=>l.t.toLowerCase().includes(w)||l.ut.toLowerCase().includes(w))).slice(0,3);
@@ -382,7 +424,9 @@ const weekN=()=>{let n=0;const d=new Date();for(let i=0;i<7;i++){const k=d.getFu
 function vHome(){const cl=curLevel(),nm=S.set.name?', '+esc(S.set.name):'',rv=Math.max(...Object.keys(CT).filter(k=>+k<=cl).map(Number)),
  gd=Math.min(S.days[today()]||0,S.set.goal),gp=Math.round(gd/S.set.goal*100),wn=weekN(),wk=Math.min(wn,S.set.wk),
  rem=S.set.rem!='off'&&!(S.days[today()]>0)&&new Date().getHours()>=(S.set.rem=='morning'?8:18);
- return`<section class=hero><div class=hero__t><p class=hero__k>${greet()}${nm}</p><h2 class=hero__h>Level ${cl} · ${LV[cl-1]}</h2><p class=hero__s>About ${CEFR(cl)} · ${doneN()} of ${LS.length} lessons finished${S.ls[cl]&&!(S.lt[cl]>=75)?' · '+dayLbl(cl):''}</p><button class=hero__b type=button onclick="${S.placed?'hNext()':"go('test')"}">${S.placed?'Continue learning':'Take the placement test'}</button></div><div class=hero__r style="--p:${gp}" title="Daily goal"><i>${gp}%</i><small>today</small></div></section>
+ const bad=AUTHBAD?`<div class="card note" role=alert><b>Your progress is not reaching your account.</b><p>The server did not accept this device. Tap below, then sign in again. Nothing is lost: a copy stays on this device and is uploaded after you sign in.</p><button class=btn type=button onclick="signOut()">Sign out and sign in again</button></div>`:'';
+ const pf=(isC(USER)&&SESS&&!PULLOK&&!AUTHBAD)?`<div class="card note" role=status><b>Loading your saved progress…</b><p class=mut>Your account is signed in, but the progress could not be loaded yet. Nothing is overwritten. It will retry by itself.</p><button class=btn2 type=button onclick="syncNow().then(()=>draw())">Try now</button></div>`:'';
+ return bad+pf+`<section class=hero><div class=hero__t><p class=hero__k>${greet()}${nm}</p><h2 class=hero__h>Level ${cl} · ${LV[cl-1]}</h2><p class=hero__s>About ${CEFR(cl)} · ${doneN()} of ${LS.length} lessons finished${S.ls[cl]&&!(S.lt[cl]>=75)?' · '+dayLbl(cl):''}</p><button class=hero__b type=button onclick="${S.placed?'hNext()':"go('test')"}">${S.placed?'Continue learning':'Take the placement test'}</button></div><div class=hero__r style="--p:${gp}" title="Daily goal"><i>${gp}%</i><small>today</small></div></section>
  ${S.placed?'':`<div class="card note"><b>Take the placement test to start studying</b><p class=mut>You can look around the app now. To study lessons you first need your level.</p></div>`}
  ${rem?`<div class="card note"><b>Time to study</b><p class=mut>You have not studied yet today. One quiz keeps your ${streak()}-day streak alive.</p><button class=btn type=button onclick="hNext()">Start now</button></div>`:''}
  ${CT[cl]?'':`<div class=card><b>Lessons for Level ${cl} are still being written.</b><p class=mut>Your level is saved and open. Until the lessons arrive you can review Level ${rv}.</p><button class=btn2 onclick="OL=${rv};go('learn')">Open Level ${rv}</button></div>`}
@@ -561,11 +605,15 @@ function gPart(gu,k){const g=GR[gu];if(!g)return'';let h='';
  return h}
 function gPartsRow(gu,hlp){const ks=PARTS.concat(GP[gu]?[['p','Negative and questions (picture)']]:[]);return ks.map(a=>`<button type=button class=chip onclick="${hlp?`hAct('part:${gu}:${a[0]}')`:`gShow(${gu},'${a[0]}')`}">${a[1]}</button>`).join('')}
 function gShow(gu,k){const e=$('#gp');if(e)e.innerHTML='<div class=card style="margin:8px 0">'+gPart(gu,k)+'<p class=mut>Better now?</p><button type=button class=btn2 onclick="gShow('+gu+',\'x\')">Show examples</button></div>'}
+function instGo(){if(DIP){const d=DIP;try{d.prompt();d.userChoice.then(()=>{DIP=null;draw()},()=>{DIP=null;draw()})}catch(e){DIP=null;draw()}return}
+ const m=$('#inm');if(!m){go('share');return}{m.hidden=false;m.textContent=/iphone|ipad|ipod/i.test(navigator.userAgent||'')?'On iPhone or iPad: tap the Share button in Safari, then choose Add to Home Screen.':'Your browser did not offer the install window yet. Open the browser menu and choose Install app (or Add to Home screen). If you use Chrome or Edge, wait a few seconds on this page and try again.'}}
+function instBtn(){if(isApp())return'<div class=card><b>✔ The app is installed on this device.</b></div>';
+ return`<div class=card style="text-align:center"><h2>Install the app</h2><p class=mut>One tap. The app opens full screen and works offline.</p><button class=btn type=button style="font-size:18px;padding:14px 22px" onclick="instGo()">${ic('dl')} Install the app</button><p id=inm class=mut role=status hidden></p></div>`}
 function vShare(){const url=appUrl(),ios=/iphone|ipad|ipod/i.test(navigator.userAgent||'');
  const st=(n,t)=>`<div class=stp><b class=n>${n}</b><span>${t}</span></div>`;
  return`<h1>INSTALL AND SHARE</h1><p class=mut>Install the app on your home screen and share it with your friends.</p>
- ${isApp()?'<div class=card><b>✔ The app is installed on this device.</b></div>':''}
- <div class=card><h2>How to install</h2>${DIP?'<button class=btn type=button onclick="DIP.prompt();DIP.userChoice.finally(()=>{DIP=null;draw()})">'+ic('dl')+' Install now</button>':''}
+ ${instBtn()}
+ <div class=card><h2>How to install</h2>
  <h3>📱 iPhone / iPad (Safari)</h3>${st(1,'Open this site in <b>Safari</b>.')}${st(2,'Tap the <b>Share</b> button ⎘ at the bottom of the screen.')}${st(3,'Choose <b>Add to Home Screen</b> ➕.')}${st(4,'Tap <b>Add</b>. The app opens full screen with its own icon.')}
  <h3>🤖 Samsung / Android (Chrome)</h3>${st(1,'Open this site in <b>Chrome</b>.')}${st(2,'Tap the <b>three dots</b> ⋮ at the top of the browser.')}${st(3,'Choose <b>Install app</b> or <b>Add to Home screen</b>.')}${st(4,'Tap <b>Install</b>.')}
  <h3>💻 Computer (PC / Mac)</h3>${st(1,'Open this site in <b>Chrome</b> or <b>Edge</b>.')}${st(2,'Click the <b>install icon</b> ⬇️ at the right of the address bar.')}${st(3,'Click <b>Install</b>.')}${ios?'<p class=mut>You are on an iPhone or iPad: use the first guide.</p>':''}</div>
@@ -724,7 +772,7 @@ let DIP=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();DIP=e;if((V=='settings'||V=='share')&&!INQ)draw()});
 addEventListener('appinstalled',()=>{DIP=null;if((V=='settings'||V=='share')&&!INQ)draw()});
 const isApp=()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}};
-function instCard(){return`<div class=card><h2>Install and share</h2><p class=mut>Install the app, share it with friends, or show the QR code.</p><button class=btn type=button onclick="go('share')">${ic('share')} Open install and share</button></div>`}
+function instCard(){return`<div class=card><h2>Install and share</h2><p class=mut>Install the app, share it with friends, or show the QR code.</p>${isApp()?'':'<button class=btn type=button onclick="instGo()">'+ic('dl')+' Install the app</button> '}<button class=btn2 type=button onclick="go('share')">${ic('share')} Open install and share</button></div>`}
 function instCardOld(){if(isApp())return'';const ios=/iphone|ipad|ipod/i.test(navigator.userAgent||'');
  return`<div class=card><h2>Install the app</h2><p class=mut>Install LanguWay English on your phone or computer. It opens like an app, works offline, and keeps your progress.</p>${DIP?'<button class=btn onclick="DIP.prompt();DIP.userChoice.finally(()=>{DIP=null;draw()})">Install now</button>':ios?'<p>On iPhone or iPad: tap the Share button in Safari, then <b>Add to Home Screen</b>.</p>':'<p class=mut>In Chrome or Edge, open the browser menu and choose <b>Install app</b> (or <b>Add to Home screen</b> on Android).</p>'}</div>`}
 function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(clean(S))],{type:'application/json'}));a.download='english-first-backup.json';a.click()}
@@ -735,8 +783,9 @@ function vHelp(){const q=[['How do I start?','Create an account, take the placem
 (async function boot(){
  if(sb){
   $('#app').innerHTML='<div class="card auth"><p class=mut>Loading…</p></div>';
-  sb.auth.onAuthStateChange((ev,ses)=>{setTimeout(()=>{if(PWF)return;if(ev=='SIGNED_IN'&&ses)onSignedIn(ses);else if(ev=='SIGNED_OUT'&&SESS)forget();else if(ev=='TOKEN_REFRESHED'&&ses)SESS=ses},0)});
+  sb.auth.onAuthStateChange((ev,ses)=>{setTimeout(()=>{if(PWF)return;if(ev=='SIGNED_IN'&&ses)onSignedIn(ses);else if(ev=='SIGNED_OUT'&&SESS)forget();else if(ev=='TOKEN_REFRESHED'&&ses){SESS=ses;keepTok()}},0)});
   let ses=null;try{ses=(await sb.auth.getSession()).data.session}catch(e){}
+  if(!ses&&isC(USER)){try{const t=JSON.parse(localStorage.getItem('ef_tok')||sessionStorage.getItem('ef_tok')||'null');if(t&&t.r){const r=await sb.auth.setSession({access_token:t.a,refresh_token:t.r});ses=(r&&r.data&&r.data.session)||null}}catch(e){}}
   if(ses)await onSignedIn(ses);
   else if(isC(USER)&&!navigator.onLine&&REM){EMAIL=localStorage.getItem('ef_email_'+USER)||'';loadS();setSync('off')}
   else if(isG(USER))loadS();

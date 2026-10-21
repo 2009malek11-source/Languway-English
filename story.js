@@ -18,8 +18,16 @@ const CAST={
  Mariam:{g:'f',c:'#556b2f',h:'#3b4a1d',p:1.15,s:.97},
  Sara:{g:'f',c:'#2a7f8e',h:'#1b4d57',p:1.5,s:.86},
  Nadia:{g:'f',c:'#8a5a44',h:'#4a2f22',p:1.25},
- Samir:{g:'m',c:'#c06b2b',h:'#2b2118',p:1.7,s:.7}
+ Samir:{g:'m',c:'#c06b2b',h:'#2b2118',p:1.7,s:.7,k:'c'},
+ Zaid:{g:'m',c:'#d98324',h:'#2b2118',p:1.75,s:.66,k:'c'},
+ Lina:{g:'f',c:'#d6578f',h:'#5a2b44',p:1.85,s:.66,k:'c'},
+ Tariq:{g:'m',c:'#1f8a70',h:'#2b2118',p:1.1,s:.88,k:'t'},
+ Nour:{g:'f',c:'#3c6fd1',h:'#25356b',p:1.3,s:.92},
+ 'Hajj Salem':{g:'m',c:'#e8e4d8',h:'#f2f2f2',p:.55,s:.96,o:1,k:'o'}
 };
+/* Voice kinds: man = low and steady, woman = higher, child = very high and quick, elder = very low and slow */
+const VK={m:{p:.78,r:1},f:{p:1.3,r:1},c:{p:1.85,r:1.08},t:{p:1.1,r:1.04},o:{p:.6,r:.88}};
+function vKind(c){return c.k||c.g}
 const SKIN=['#f1c9a5','#e0ac82','#c68e63','#a8714a'];
 
 /* One avatar, drawn with its feet at (x, ground). sp = this person is speaking now: it bounces, one arm gestures
@@ -82,7 +90,7 @@ function stSpeak(who,text,done,onword){let fin=0,gotB=0,tick=null;const words=te
  end=()=>{if(fin)return;fin=1;clearTimeout(tm);clearInterval(tick);done()},tm=setTimeout(end,ms*2.2);
  if(onword){let k=0;onword(0);tick=setInterval(()=>{if(gotB||fin)return clearInterval(tick);k++;if(k<words.length)onword(k)},per)}
  try{if(!window.speechSynthesis||typeof SpeechSynthesisUtterance=='undefined'){clearTimeout(tm);setTimeout(end,ms);return}
-  speechSynthesis.cancel();const sp2=(typeof ttsText=='function'?ttsText(text):text),same=sp2.split(' ').length==words.length,u=new SpeechSynthesisUtterance(sp2),c=CAST[who]||CAST.Omar,v=stVoice(c.g);if(v)u.voice=v;u.lang=S.set.acc;u.pitch=Math.max(.8,Math.min(1.4,c.p));u.rate=stRate();if(/!$/.test(text.trim())){u.pitch=Math.min(1.6,u.pitch+.15);u.rate=Math.min(1.2,u.rate*1.06)}else if(/\?$/.test(text.trim()))u.pitch=Math.min(1.6,u.pitch+.1);
+  speechSynthesis.cancel();const sp2=(typeof ttsText=='function'?ttsText(text):text),same=sp2.split(' ').length==words.length,u=new SpeechSynthesisUtterance(sp2),c=CAST[who]||CAST.Omar,v=stVoice(c.g);if(v)u.voice=v;u.lang=S.set.acc;const vk=VK[vKind(c)]||VK.m,base=c.g=='f'?1.25:.8;u.pitch=Math.max(.5,Math.min(2,c.k=='c'||c.k=='o'?c.p:vk.p+(c.p-base)*.3));u.rate=Math.max(.5,Math.min(1.3,stRate()*vk.r));if(/!$/.test(text.trim())){u.pitch=Math.min(2,u.pitch+.15);u.rate=Math.min(1.3,u.rate*1.06)}else if(/\?$/.test(text.trim()))u.pitch=Math.min(2,u.pitch+.1);
   u.onboundary=e=>{if(!same||(e.name&&e.name!='word'))return;gotB=1;if(onword)onword(Math.max(0,sp2.slice(0,e.charIndex).split(' ').length-1))};
   const t0=Date.now(),slow=()=>{const el=Date.now()-t0;el<500?setTimeout(end,ms-el):end()};u.onend=slow;u.onerror=slow;speechSynthesis.speak(u)}catch(e){clearTimeout(tm);setTimeout(end,ms)}}
 function stHalt(){SYK++;try{speechSynthesis.cancel()}catch(e){}if(SY)SY.pl=0}
