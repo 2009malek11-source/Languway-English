@@ -308,3 +308,32 @@ html.cmp .card{padding:12px;margin:10px 0}html.cmp h1{font-size:24px}html.cmp .h
 .wd{transition:color .15s,background .15s}
 @media(prefers-reduced-motion:reduce){.stg .avo,.stg.enter,.sub,.tcard .tc{animation:none!important}}
 .calm .stg .avo,.calm .sub,.calm .tcard .tc{animation:none!important}
+
+.au__rm{display:flex;align-items:center;gap:10px;margin:8px 2px 2px;font-weight:600;color:var(--ink);cursor:pointer}.au__rm input{width:20px;height:20px;accent-color:var(--ac);margin:0}
+.cpx input{width:100%;margin:6px 0}
+
+/* ===== anime-style story player ===== */
+.stg.cine::before,.stg.cine::after{content:"";position:absolute;left:0;right:0;height:7%;background:#000;z-index:3;animation:bars .7s ease-out both}.stg.cine::before{top:0}.stg.cine::after{bottom:0}
+@keyframes bars{from{height:0}}
+.shk{transform-box:view-box;transform-origin:50% 50%}.shk.shout{animation:shk2 .55s cubic-bezier(.3,.7,.4,1)}
+@keyframes shk2{0%{transform:translate(0,0) scale(1.07)}15%{transform:translate(-5px,3px) scale(1.07)}30%{transform:translate(5px,-3px) scale(1.06)}45%{transform:translate(-3px,-2px)}60%{transform:translate(3px,2px)}100%{transform:none}}
+.spd{animation:spd .5s steps(2) 2;transform-box:view-box;transform-origin:50% 50%}@keyframes spd{50%{opacity:.35;transform:rotate(3deg)}}
+.bang{animation:bng .6s cubic-bezier(.2,1.6,.4,1) both}.qm{animation:qmk .9s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes bng{from{opacity:0;transform:scale(.2)}}@keyframes qmk{from{opacity:0;transform:translateY(14px) scale(.3)}}
+.bang,.qm{transform-box:fill-box;transform-origin:50% 100%}
+.aura{animation:aur 1.1s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}@keyframes aur{50%{transform:scale(1.14);opacity:.12}}
+.spk{animation:spk .5s steps(2) infinite;transform-box:fill-box}@keyframes spk{50%{opacity:.2}}
+.slam{position:absolute;left:0;top:30%;z-index:4;padding:4px 18px 4px 14px;background:#0b4aa8;color:#fff;font-weight:900;letter-spacing:.12em;font-size:20px;transform:skewX(-14deg);animation:slam 1.6s cubic-bezier(.2,.9,.2,1) both;pointer-events:none}
+@keyframes slam{0%{transform:translateX(-120%) skewX(-14deg)}18%,70%{transform:translateX(-8px) skewX(-14deg)}100%{transform:translateX(-130%) skewX(-14deg)}}
+.slash{position:absolute;inset:0;z-index:5;background:linear-gradient(105deg,transparent 40%,#fff 48%,#8ec5ff 52%,transparent 60%);transform:translateX(-120%);animation:slsh .7s ease-out both;pointer-events:none}
+@keyframes slsh{to{transform:translateX(120%)}}
+.sub.shout b{color:#ff8a7a}.sub.shout .en{font-size:1.18em;font-weight:800;animation:pun .4s cubic-bezier(.2,1.6,.4,1)}@keyframes pun{from{transform:scale(.85)}}
+.tcard{position:relative;overflow:hidden}.tcard .rays{position:absolute;inset:-60%;background:repeating-conic-gradient(from 0deg,rgba(142,197,255,.22) 0 6deg,transparent 6deg 14deg);animation:rot 24s linear infinite}@keyframes rot{to{transform:rotate(360deg)}}
+.tcard .tc{position:relative;z-index:1}.tcard .tc h2{font-size:38px;font-weight:900;letter-spacing:.06em;transform:skewX(-8deg);text-shadow:0 4px 0 #0b3a85,0 0 24px rgba(142,197,255,.7)}
+.tcard .tc .cut{display:block;height:3px;width:60%;margin:6px auto;background:linear-gradient(90deg,transparent,#8ec5ff,transparent);animation:cut 1s .3s ease-out both}@keyframes cut{from{transform:scaleX(0)}}
+.tbc{display:flex;align-items:center;justify-content:center;gap:10px;margin:14px 0 4px;padding:10px;background:#0b4aa8;color:#fff;font-weight:900;letter-spacing:.16em;transform:skewX(-8deg);animation:tbc 1s ease-out both}.tbc b{color:#8ec5ff;animation:blinkk 1s steps(1) infinite}
+@keyframes tbc{from{opacity:0;transform:translateX(-40px) skewX(-8deg)}}@keyframes blinkk{50%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.shk.shout,.spd,.bang,.qm,.aura,.spk,.slam,.slash,.tcard .rays,.tbc{animation:none!important}.slam,.slash{display:none}}
+.calm .shk.shout,.calm .spd,.calm .aura,.calm .spk,.calm .tcard .rays{animation:none!important}.calm .slam,.calm .slash{display:none}
+
+.au .au__rm input[type=checkbox]{width:22px;height:22px;min-height:0;flex:none;padding:0;margin:0;border-radius:6px}

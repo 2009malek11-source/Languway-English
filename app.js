@@ -78,42 +78,41 @@ const CFG=window.SUPABASE_CONFIG||{};
 const CFGOK=!!(CFG.url&&CFG.anonKey&&!/YOUR-/i.test(CFG.url+CFG.anonKey));
 const isC=u=>/^c_/.test(u||''),isG=u=>u==='guest';let AUTHV=0;
 if(isC(USER)&&!CFGOK)USER='';if(CFGOK&&!isC(USER)&&USER!=='guest')USER='';
+let REM=true;try{REM=localStorage.getItem('ef_rem')!=='0'}catch(e){}
+const STG={getItem:k=>{try{const v=localStorage.getItem(k);return v!=null?v:sessionStorage.getItem(k)}catch(e){return null}},setItem:(k,v)=>{try{(REM?localStorage:sessionStorage).setItem(k,v);(REM?sessionStorage:localStorage).removeItem(k)}catch(e){}},removeItem:k=>{try{localStorage.removeItem(k);sessionStorage.removeItem(k)}catch(e){}}};
 let sb=null,SESS=null,EMAIL='',PROV='',SYNC=CFGOK?'idle':'local',SERR='',REC=0,AM='in',AMSG='',pushT=0;
-if(CFGOK&&window.supabase){try{sb=window.supabase.createClient(CFG.url,CFG.anonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}})}catch(e){sb=null}}
+if(CFGOK&&window.supabase){try{sb=window.supabase.createClient(CFG.url,CFG.anonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storage:STG}})}catch(e){sb=null}}
 const KEY=()=>'ef2_'+USER;
 const RED=()=>location.origin+location.pathname;
 const ACC=()=>{try{return JSON.parse(localStorage.getItem('ef_acc')||'{}')}catch(e){return{}}};
 function loadS(){try{let raw=localStorage.getItem(KEY());if(!raw)raw=localStorage.getItem('ef_bak_'+USER);S=clean(JSON.parse(raw||'null'))}catch(e){S=DEF()}}
 function persist(){if(USER)try{localStorage.setItem(KEY(),JSON.stringify(S))}catch(e){}}
-function save(){if(!USER)return;S.upd=Date.now();persist();if(sb&&SESS){clearTimeout(pushT);pushT=setTimeout(push,1500);setSync('wait')}}
+function save(){if(!USER)return;S.upd=Date.now();persist();if(sb&&SESS){clearTimeout(pushT);pushT=setTimeout(push,3500);setSync('wait')}}
 const SIC={ok:'cloud',busy:'refresh',wait:'cloud',off:'cloudoff',err:'alert',local:'device',idle:'cloud'};const SIH=s=>ic(SIC[s]||'cloud');const SI={ok:'☁️',busy:'🔄',wait:'☁️',off:'📴',err:'⚠️',local:'💾',idle:'☁️'};
 const SL={ok:'Synced',busy:'Syncing…',wait:'Changes waiting to sync',off:'Offline. Changes will sync when you are back online',err:'Sync problem',local:'Saved on this device only',idle:'Not signed in'};
 let LSY=+(localStorage.getItem('ef_lsy_'+USER)||0);
 function setSync(s,e){if(s=='ok'){LSY=Date.now();try{localStorage.setItem('ef_lsy_'+USER,LSY)}catch(x){}}SYNC=s;SERR=e?friendly(e):'';const a=$('#syn');if(a){a.innerHTML=SIH(s);a.title=SL[s]}const b=$('#sst');if(b)b.textContent=SL[s]+(SERR?': '+SERR:'')}
 function friendly(e){const m=String((e&&e.message)||e||''),c=String((e&&(e.code||e.error_code))||''),st=e&&e.status;
- if(c=='over_email_send_rate_limit'||/email rate limit/i.test(m))return'The free email service has reached its hourly limit. If you already created the account, tap Sign in. Otherwise wait a while and try again.';
- if(c=='over_request_rate_limit'||c=='over_sms_send_rate_limit'||st==429||/rate limit|too many/i.test(m))return'Too many attempts from this network. Wait a few minutes and try again.';
- if(c=='invalid_credentials'||/invalid login/i.test(m))return'The email or password is not correct. Check the spelling, or tap “Forgot password?”. If you have no account yet, tap “Create account”: it signs you in straight away.';
- if(c=='email_not_confirmed'||/not confirmed/i.test(m))return'Please confirm your email first. Open the link we sent to your inbox (also check Spam), or resend it below.';
- if(c=='user_already_exists'||c=='email_exists'||/already registered|already been registered|already exists/i.test(m))return'This email already has an account. Tap Sign in and enter its password, or use “Forgot password?”.';
- if(c=='weak_password'||(/password/i.test(m)&&/(weak|at least|short|characters)/i.test(m)))return'Choose a stronger password: 8 or more characters with letters and numbers.';
- if(c=='email_address_invalid'||/email address.*invalid|invalid.*email/i.test(m))return'This email address is not accepted. Check it for typing mistakes.';
+  if(c=='over_request_rate_limit'||c=='over_sms_send_rate_limit'||st==429||/rate limit|too many/i.test(m))return'Too many attempts in a short time. Wait a minute and try again.';
+ if(c=='invalid_credentials'||/invalid login/i.test(m))return'The username or password is not correct. Check the spelling. If you have no account yet, tap “Create an account”.';
+  if(c=='user_already_exists'||c=='email_exists'||/already registered|already been registered|already exists/i.test(m))return'This username is already taken. Choose another one, or sign in if it is yours.';
+ if(c=='weak_password'||(/password/i.test(m)&&/(weak|at least|short|characters)/i.test(m)))return'Choose a longer password: at least 6 characters.';
+ if(c=='email_address_invalid'||/email address.*invalid|invalid.*email/i.test(m))return'This username is not accepted. Use 3 to 20 letters, numbers or _.';
  if(c=='signup_disabled'||/signups? (not allowed|disabled)/i.test(m))return'New sign-ups are switched off in the cloud settings.';
  if(/failed to fetch|network|load failed/i.test(m))return'No connection. Check your internet and try again.';
- if(c=='otp_expired'||/token has expired|otp.*(expired|invalid)|invalid.*(otp|token)/i.test(m))return'That code is wrong or has expired. Check it, or ask for a new code.';
- if(c=='same_password'||/different from the old password/i.test(m))return'Choose a password that is different from your current one.';
- if(/provider is not enabled|unsupported provider/i.test(m))return'Google sign-in is not switched on in the cloud settings yet. Please use your email for now.';
+  if(c=='same_password'||/different from the old password/i.test(m))return'Choose a password that is different from your current one.';
+ if(c=='email_not_confirmed'||/not confirmed/i.test(m))return'Sign-up is not available right now. Please try again in a few minutes.';
+ if(c=='unavailable'||st>=500)return'The server is busy right now. Wait a few seconds and try again.';
  if(/delete_my_account/i.test(m))return'Account deletion is not set up. Run the latest SUPABASE_SETUP.sql.';
  if(/progress/i.test(m)&&/(schema cache|exist|find)/i.test(m))return'Cloud saving is not switched on for this project yet, so your progress stays on this device for now.';
  return 'Something went wrong. Please try again.'}
-let RS='';
-async function resendMail(){if(!RS)return;try{const r=await sb.auth.resend({type:'signup',email:RS,options:{emailRedirectTo:RED()}});if(r.error)throw r.error;msg('Confirmation email sent again. Check your inbox and Spam.',1)}catch(e){msg(friendly(e))}}
-async function push(){if(!sb||!SESS)return;if(!navigator.onLine){setSync('off');return}setSync('busy');
- try{const r=await sb.from('progress').upsert({user_id:SESS.user.id,data:S,updated_at:new Date().toISOString()});if(r.error)throw r.error;setSync('ok')}catch(e){setSync(navigator.onLine?'err':'off',e);if(!/switched on/i.test(SERR)){clearTimeout(pushT);pushT=setTimeout(push,navigator.onLine?20000:60000)}}}
+let LASTP='',PBK=0,PBUSY=0;
+async function push(){if(!sb||!SESS)return;if(!navigator.onLine){setSync('off');return}const j=jx(S);if(j===LASTP&&SYNC=='ok')return;if(PBUSY){clearTimeout(pushT);pushT=setTimeout(push,1500);return}PBUSY=1;setSync('busy');
+ try{const r=await sb.from('progress').upsert({user_id:SESS.user.id,data:S,updated_at:new Date().toISOString()});if(r.error)throw r.error;LASTP=j;PBK=0;setSync('ok')}catch(e){setSync(navigator.onLine?'err':'off',e);if(!/switched on/i.test(SERR)){PBK=Math.min(PBK?PBK*2:15000,300000);clearTimeout(pushT);pushT=setTimeout(push,navigator.onLine?PBK+Math.random()*PBK*.4:60000)}}finally{PBUSY=0}}
 async function pull(){if(!sb||!SESS)return false;setSync('busy');
  const r=await sb.from('progress').select('data').eq('user_id',SESS.user.id).maybeSingle();if(r.error)throw r.error;
  const rc=clean(r.data&&r.data.data),m=mergeS(S,rc),chL=jx(m)!==jx(S),chR=!r.data||jx(m)!==jx(rc);S=m;persist();
- if(chR)await push();else setSync('ok');return chL}
+ if(chR)await push();else{LASTP=jx(S);setSync('ok')}return chL}
 async function syncNow(){if(!sb||!SESS)return;try{if(await pull()&&!INQ)draw()}catch(e){setSync(navigator.onLine?'err':'off',e)}}
 function mergeGuest(){try{const g=localStorage.getItem('ef2_guest');if(!g)return;S=mergeS(S,clean(JSON.parse(g)));persist();localStorage.removeItem('ef2_guest');localStorage.removeItem('ef_bak_guest')}catch(e){}}
 function guestGo(){AUTHV=0;USER='guest';EMAIL='';SESS=null;try{localStorage.setItem('ef_cur','guest')}catch(e){}loadS();setSync('local');theme();applyPrefs();go('home')}
@@ -122,7 +121,7 @@ function backGuest(){AUTHV=0;go('home')}
 const GBTN=()=>`<div class=sep>or</div><button class=btn2 type=button onclick="${AUTHV?'backGuest()':'guestGo()'}">${AUTHV?'← Back to the app':'Continue as guest'}</button><p class=mut>${AUTHV?'':'No account needed. Your progress stays on this device. You can sign in later from Settings or the top bar.'}</p>`;
 function forget(){clearTimeout(pushT);SESS=null;USER='';EMAIL='';S=DEF();localStorage.removeItem('ef_cur');AM='in';AMSG='';INQ=0;draw()}
 async function onSignedIn(ses){if(SESS&&SESS.user.id===ses.user.id){SESS=ses;return}
- SESS=ses;const u=ses.user;USER='c_'+u.id;EMAIL=u.email||'';PROV=(u.app_metadata&&u.app_metadata.provider)||'email';
+ SESS=ses;const u=ses.user;USER='c_'+u.id;EMAIL=u.email||'';PROV='username';
  localStorage.setItem('ef_cur',USER);localStorage.setItem('ef_email_'+USER,EMAIL);AMSG='';
  loadS();mergeGuest();AUTHV=0;const nm=u.user_metadata&&(u.user_metadata.name||u.user_metadata.full_name);if(nm&&!S.set.name){S.set.name=String(nm).slice(0,30);persist()}
  try{await pull()}catch(e){setSync(navigator.onLine?'err':'off',e)}
@@ -135,74 +134,46 @@ async function delAcct(){if(!sb||!SESS)return alert('Connect to the internet and
 function msg(t,ok){AMSG=t;const e=$('#ae');if(e){e.textContent=t;e.className='msg '+(ok?'ok':'bad')}if(t&&!ok)try{const c=$('#auc');if(c&&c.classList){c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake')}}catch(x){}}
 function busy(on){const b=$('#ago');if(b){b.disabled=on;if(b.classList)b.classList.toggle('is-busy',on)}}
 /* Sign in, retrying a few times right after sign-up (the new account can take a moment to be readable everywhere). */
-async function signInRetry(em,pw,n){let r;for(let i=0;i<n;i++){r=await sb.auth.signInWithPassword({email:em,password:pw});if(!r.error||r.error.code!='invalid_credentials')return r;if(i<n-1)await new Promise(z=>setTimeout(z,600))}return r}
-async function cauth(){const g=id=>($(id)||{}).value||'',em=g('#au').trim(),pw=g('#ap'),nm=g('#an').trim();
- if(!/^\S+@\S+\.\S+$/.test(em))return msg('Enter a valid email address.');
+const UEM=u=>u+'@languway.app',UNAME=()=>((EMAIL||'').split('@')[0]||'');
+/* Sign in / sign up with a username and a password. The site keeps all progress in the account, so it follows the learner to any device. */
+async function signInRetry(em,pw,n){let r;for(let i=0;i<n;i++){r=await sb.auth.signInWithPassword({email:em,password:pw});if(!r.error)return r;const er=r.error,retry=er.code=='invalid_credentials'?i<2:(er.status>=500||er.status===0||/fetch|network|timeout|retryable/i.test((er.name||'')+(er.message||'')));if(!retry||i>=n-1)break;await new Promise(z=>setTimeout(z,600+Math.random()*900+i*700))}return r}
+async function cauth(){const g=id=>($(id)||{}).value||'',un=g('#au').trim().toLowerCase(),pw=g('#ap'),pw2=g('#ap2'),nm=g('#an').trim();
+ if(!/^[a-z0-9_]{3,20}$/.test(un))return msg('Username: 3 to 20 letters, numbers or underscore (_). No spaces.');
+ if(AM=='up'){if(!nm)return msg('Enter your name.');if(pw.length<6)return msg('Password must have at least 6 characters.');if(pw!==pw2)return msg('The two passwords do not match.')}
+ else if(!pw)return msg('Enter your password.');
+ const rm=$('#arm');if(AM=='in'&&rm){REM=!!rm.checked;try{localStorage.setItem('ef_rem',REM?'1':'0')}catch(e){}}
+ else if(AM=='up'){REM=true;try{localStorage.setItem('ef_rem','1')}catch(e){}}
  busy(true);try{
-  if(AM=='fg'){const r=await sb.auth.resetPasswordForEmail(em,{redirectTo:RED()});if(r.error)throw r.error;const re=$('#rce');if(re)re.textContent=em;auGo('rc');rsStart();return msg('If this email has an account, a 6-digit code is on its way. Check Spam too.',1)}
-  if(AM=='rc'){const code=g('#acd').replace(/\D/g,'');if(code.length!=6)return msg('Enter the 6-digit code from the email.');
-   PWF=1;const v=await sb.auth.verifyOtp({email:em.toLowerCase(),token:code,type:'recovery'});if(v.error){PWF=0;throw v.error}RCS=(v.data&&v.data.session)||null;auGo('rc2');return msg('Code accepted. Now choose a new password.',1)}
-  if(AM=='rc2'){if(pw.length<8)return msg('Password must have at least 8 characters.');const u=await sb.auth.updateUser({password:pw});if(u.error)throw u.error;const ses=RCS;RCS=null;setTimeout(()=>{PWF=0},1500);await onSignedIn(ses);return}
-  if(pw.length<8)return msg('Password must have at least 8 characters.');
-  const em2=em.toLowerCase();let r;
+  const em=UEM(un);let r;
   if(AM=='up'){
-   /* 1) Instant sign-up through our cloud function (no email, no rate limit). */
    let code='';
-   try{const fr=await sb.functions.invoke('signup',{body:{email:em2,password:pw,name:nm.slice(0,30)}});
+   try{const fr=await sb.functions.invoke('signup',{body:{username:un,password:pw,name:nm.slice(0,30)}});
     if(fr&&fr.error){const rs=fr.error.context;if(rs&&typeof rs.json=='function'){try{code=(await rs.json()).error||'failed'}catch(x){code='failed'}}else code='unavailable'}}catch(x){code='unavailable'}
-   if(code=='invalid_email')throw{code:'email_address_invalid'};
-   if(code=='weak_password')throw{code:'weak_password'};
-   if(!code||code=='exists'){
-    r=await signInRetry(em2,pw,code=='exists'?1:4);
-    if(r.error){if(code=='exists'){auGo('in');const pe=$('#ap');if(pe)pe.value='';auHint();return msg('This email already has an account, and this is not its password. Enter the password you chose when you created it, or tap “Forgot password?”.')}throw r.error}
-   }else{
-    /* 2) Fallback: normal sign-up (needs “Confirm email” to be off in the cloud settings). */
-    r=await sb.auth.signUp({email:em2,password:pw,options:{data:{name:nm.slice(0,30)},emailRedirectTo:RED()}});
-    const dup=r.data&&r.data.user&&r.data.user.identities&&r.data.user.identities.length==0;
-    if(r.error||dup||!r.data||!r.data.session){
-     const t=await sb.auth.signInWithPassword({email:em2,password:pw});
-     if(!t.error&&t.data&&t.data.session)r=t;
-     else if(dup){auGo('in');auHint();return msg('This email already has an account. Sign in with your password, or use “Forgot password?”.')}
-     else if(r.error)throw r.error;
-     else{auGo('in');showResend(em2);return msg('Account created. Please confirm your email: open the link we sent (check Spam), then sign in.',1)}}}
-  }
-  else{r=await sb.auth.signInWithPassword({email:em2,password:pw});if(r.error){if(r.error.code=='email_not_confirmed'||/not confirmed/i.test(r.error.message||''))showResend(em2);throw r.error}}
+   if(code=='exists')return msg('This username is already taken. Choose another one.');
+   if(code=='invalid_username')return msg('Username: 3 to 20 letters, numbers or underscore (_). No spaces.');
+   if(code=='weak_password')return msg('Password must have at least 6 characters.');
+   if(code){/* fallback: ordinary sign-up (works when “Confirm email” is off) */
+    const s=await sb.auth.signUp({email:em,password:pw,options:{data:{name:nm.slice(0,30),username:un}}});
+    if(s.error&&!/already|exists/i.test(s.error.message||''))throw s.error;
+    if(s.data&&s.data.user&&s.data.user.identities&&s.data.user.identities.length==0)return msg('This username is already taken. Choose another one.')}
+   r=await signInRetry(em,pw,4);if(r.error)throw r.error}
+  else{r=await signInRetry(em,pw,3);if(r.error)throw r.error}
   await onSignedIn(r.data.session)
- }catch(e){msg(friendly(e));if(AM=='rc')otpClear('acd')}finally{busy(false)}}
-async function resendCode(){const em=((($('#au')||{}).value)||'').trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(em))return msg('Enter your email first.');try{const r=await sb.auth.resetPasswordForEmail(em,{redirectTo:RED()});if(r.error)throw r.error;rsStart();msg('A new code is on its way. Check Spam too.',1)}catch(e){msg(friendly(e))}}
-/* ---------- One-time code boxes (6 digits). The real input is invisible and sits on top of the boxes, so typing, paste and phone auto-fill all work. ---------- */
-function otpHtml(id,cb){return`<div class=otp id=${id}w><input class=otp__in id=${id} inputmode=numeric pattern="[0-9]*" autocomplete=one-time-code maxlength=6 aria-label="6-digit code" oninput="otpIn(this,'${cb}')" onfocus="this.parentNode.classList.add('foc')" onblur="this.parentNode.classList.remove('foc')"><i class="otp__b on"><span></span></i>${'<i class=otp__b><span></span></i>'.repeat(5)}</div>`}
-function otpIn(el,cb){const v=el.value.replace(/\D/g,'').slice(0,6);if(el.value!==v)el.value=v;const p=el.parentNode;if(!p||!p.querySelectorAll)return;
- p.querySelectorAll('.otp__b').forEach((b,i)=>{b.firstChild.textContent=v[i]||'';b.classList.toggle('f',i<v.length);b.classList.toggle('on',i==v.length&&v.length<6)});if(v.length==6&&cb&&window[cb])window[cb]()}
-function otpClear(id){const e=$('#'+id);if(e){e.value='';otpIn(e,'')}}
-let RSAT=0;
-function rsStart(){RSAT=Date.now()+30000;rsTick()}
-function rsTick(){const b=$('#rsb');if(!b||!b.getBoundingClientRect)return;const s=Math.ceil((RSAT-Date.now())/1000);if(s>0){b.disabled=true;b.textContent='Resend in '+s+'s';setTimeout(rsTick,1000)}else{b.disabled=false;b.textContent='Resend'}}
-function otpAuto(){if(AM=='rc')cauth()}
-async function rcCancel(){PWF=0;RCS=null;try{if(sb)await sb.auth.signOut()}catch(e){}auGo('in',1)}
-/* Password reset (login page) and password change (Settings): 1) email a code, 2) the code is checked as soon as 6 digits are typed, 3) choose the new password. */
-let PWF=0,RCS=null,CP=0,CPM='',CPK=0,CPS=null,SO={};
+ }catch(e){msg(friendly(e))}finally{busy(false)}}
+/* Password change in Settings: current password, then the new one (typed twice). */
+let CPM='',CPK=0,SO={},PWF=0;
 function cpSet(m,k){CPM=m;CPK=k;const e=$('#cpm');if(e){e.textContent=m;e.className='msg '+(k?'ok':'bad')}}
-async function cpSend(){if(!sb||!SESS||!EMAIL)return;CPM='';try{const r=await sb.auth.resetPasswordForEmail(EMAIL,{redirectTo:RED()});if(r.error)throw r.error;CP=1;CPK=1;CPM='Code sent. Check your inbox and Spam.'}catch(e){CPK=0;CPM=friendly(e)}SO.acct=true;draw.force=1;draw();draw.force=0;setTimeout(()=>{const e=$('#cpc');if(e&&e.focus)e.focus();rsStart()},60)}
-async function cpVerify(){const c=((($('#cpc')||{}).value)||'').replace(/\D/g,'');if(c.length!=6)return;cpSet('Checking the code…',1);PWF=1;
- try{const v=await sb.auth.verifyOtp({email:EMAIL,token:c,type:'recovery'});if(v.error)throw v.error;CPS=(v.data&&v.data.session)||SESS;CP=2;CPM='Code accepted. Choose a new password.';CPK=1}catch(e){PWF=0;CPM=friendly(e);CPK=0;otpClear('cpc')}
- draw.force=1;draw();draw.force=0}
-async function cpDone(){if(CP!==2)return;const pw=($('#cpn')||{}).value||'';if(pw.length<8)return cpSet('Password must have at least 8 characters.',0);cpSet('Saving…',1);
- try{const u=await sb.auth.updateUser({password:pw});if(u.error)throw u.error;if(CPS)SESS=CPS;CPS=null;CP=0;CPM='Password changed.';CPK=1;setTimeout(()=>{PWF=0},1500);draw.force=1;draw();draw.force=0}catch(e){cpSet(friendly(e),0)}}
-function cpCancel(){PWF=0;CPS=null;CP=0;CPM='';draw()}
-function cpHtml(){const m=`<p id=cpm class="msg ${CPK?'ok':'bad'}" role=alert>${esc(CPM)}</p>`;
- return`<div class=cpx><h3>Password</h3>${CP==1?`<p class=mut>We sent a 6-digit code to <b>${esc(EMAIL)}</b>. It is checked as soon as you type the last digit.</p>${otpHtml('cpc','cpVerify')}${m}<p class=otp__rs>Didn't receive the code? <button type=button class=lnk id=rsb onclick="cpSend()">Resend</button> · <button class=lnk type=button onclick="cpCancel()">Cancel</button></p>`:CP==2?`<p class=mut>Choose your new password.</p><input id=cpn type=password autocomplete=new-password placeholder="8+ characters">${m}<button class=btn type=button onclick="cpDone()">Save new password</button> <button class=lnk type=button onclick="cpCancel()">Cancel</button>`:`<p class=mut>We will email you a 6-digit code first.</p>${m}<button class=btn2 type=button onclick="cpSend()">Change password</button>`}</div>`}
-async function mlink(){const em=(($('#au')||{}).value||'').trim();if(!/^\S+@\S+\.\S+$/.test(em))return msg('Enter your email first.');
- try{const r=await sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:RED()}});if(r.error)throw r.error;msg('Sign-in link sent. Check your email.',1)}catch(e){msg(friendly(e))}}
-async function oauth(p){if(location.protocol=='file:')return msg('Social sign-in needs the site to be hosted on https.');
- try{const r=await sb.auth.signInWithOAuth({provider:p,options:{redirectTo:RED(),queryParams:{prompt:'select_account'}}});if(r.error)throw r.error}catch(e){msg(friendly(e))}}
-async function newPass(){const pw=(($('#ap')||{}).value)||'';if(pw.length<8)return msg('Password must have at least 8 characters.');
- try{const r=await sb.auth.updateUser({password:pw});if(r.error)throw r.error;REC=0;AMSG='';if(SESS)await onSignedIn(SESS);else draw()}catch(e){msg(friendly(e))}}
+async function cpDone(){const o=g=>(($(g)||{}).value)||'',cur=o('#cpo'),pw=o('#cpn'),pw2=o('#cpn2');
+ if(!cur)return cpSet('Enter your current password.',0);if(pw.length<6)return cpSet('The new password must have at least 6 characters.',0);if(pw!==pw2)return cpSet('The two new passwords do not match.',0);if(pw===cur)return cpSet('Choose a password that is different from your current one.',0);
+ cpSet('Saving…',1);PWF=1;
+ try{const v=await sb.auth.signInWithPassword({email:EMAIL,password:cur});if(v.error)throw v.error;const u=await sb.auth.updateUser({password:pw});if(u.error)throw u.error;
+  ['#cpo','#cpn','#cpn2'].forEach(x=>{const e=$(x);if(e)e.value=''});cpSet('Password changed.',1)}catch(e){cpSet(e&&e.code=='invalid_credentials'?'Your current password is not correct.':friendly(e),0)}finally{setTimeout(()=>{PWF=0},1500)}}
+function cpHtml(){return`<div class=cpx><h3>Change password</h3><input id=cpo type=password autocomplete=current-password placeholder="Current password"><input id=cpn type=password autocomplete=new-password placeholder="New password (6+ characters)"><input id=cpn2 type=password autocomplete=new-password placeholder="New password again"><p id=cpm class="msg ${CPK?'ok':'bad'}" role=alert>${esc(CPM)}</p><button class=btn2 type=button onclick="cpDone()">Save new password</button></div>`}
 /* ---------- Auth page: ONE form with three modes (in / up / fg). Changing mode sweeps a blade across the card and swaps the mode while the blade covers it. ---------- */
-const AUT={in:['Welcome <em>back.</em>','Sign in to keep learning.'],up:['Start <em>learning.</em>','Create your free account in a few seconds.'],fg:['Reset <em>password.</em>','Enter your email and we will email you a 6-digit code.'],rc:['Enter the <em>code.</em>','Type the 6-digit code we emailed you.'],rc2:['New <em>password.</em>','Code accepted. Choose a new password.']};
+const AUT={in:['Welcome <em>back.</em>','Sign in with your username.'],up:['Start <em>learning.</em>','Create your free account in a few seconds.']};
 let AUB=0;
 function auSet(m){AM=m;const r=$('#authx');if(!r||!r.dataset)return;r.dataset.mode=m;const t=AUT[m]||AUT.in,h=$('#aut'),s=$('#aus2');if(h)h.innerHTML=t[0];if(s)s.textContent=t[1];
- const p=$('#ap');if(p){p.setAttribute('autocomplete',m=='up'||m=='rc'?'new-password':'current-password');p.type='password';const e=$('#aey');if(e){e.textContent='Show';e.setAttribute('aria-pressed','false')}auStr(p.value)}}
+ const p=$('#ap');if(p){p.setAttribute('autocomplete',m=='up'?'new-password':'current-password');p.type='password';const e=$('#aey');if(e){e.textContent='Show';e.setAttribute('aria-pressed','false')}auStr(p.value)}}
 const noFx=()=>document.documentElement.classList.contains('calm')||(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 /* bladeRun(): one skewed band sweeps across an area of width W; swap() runs while it covers the area completely; done() runs at the end. */
 function bladeRun(b,W,swap,done,D){
@@ -217,7 +188,7 @@ function auGo(m,clr){if(AUB||m==AM)return;if(clr)msg('');
  if(!r||!st||!st.getBoundingClientRect||!b||!window.requestAnimationFrame||noFx()){auSet(m);return}
  const t=AUT[m];$('#abt').innerHTML=t[0];$('#abs').textContent=t[1];AUB=1;
  bladeRun(b,st.getBoundingClientRect().width,()=>auSet(m),()=>{AUB=0;
-  try{if(matchMedia('(pointer:fine)').matches){const f=m=='up'?'#an':m=='rc'?'#acd':'#au';const e=$(f);if(e&&!e.value)e.focus();else if(m!='fg'&&$('#ap'))$('#ap').focus()}}catch(x){}},950)}
+  try{if(matchMedia('(pointer:fine)').matches){const f=m=='up'?'#an':'#au';const e=$(f);if(e&&!e.value)e.focus();else if($('#ap'))$('#ap').focus()}}catch(x){}},950)}
 /* Page changes use the same blade over the whole screen. */
 let NAVB=0,FXOFF=1;
 const VT={home:'Welcome <em>home.</em>',learn:'Let’s <em>learn.</em>',lesson:'Lesson <em>time.</em>',gram:'Grammar <em>rules.</em>',review:'Review <em>words.</em>',progress:'Your <em>progress.</em>',settings:'Your <em>settings.</em>',test:'Take the <em>test.</em>',cert:'Your <em>certificate.</em>',search:'Find <em>anything.</em>',help:'Need <em>help?</em>',share:'Share <em>LanguWay.</em>',stories:'Story <em>time.</em>',story:'Story <em>time.</em>'};
@@ -231,7 +202,7 @@ const DT=()=>!!(window.matchMedia&&matchMedia('(min-width:900px)').matches);
 const MG=[[['home','home','Home'],['learn','learn','Learn'],['stories','stories','Stories'],['review','review','Review']],[['progress','progress','Progress'],['test','pen','Placement test'],['cert','cert','Certificates'],['search','search','Search']],[['share','share','Install and share'],['help','help','Help'],['settings','gear','Settings']]];
 function srch(id,val,ph,fn,cls){return`<form class="srch ${cls||''}" onsubmit="${fn};return false"><input id=${id} type=search value="${String(val||'').replace(/"/g,'')}" placeholder="${ph}" aria-label="${ph}" autocomplete=off enterkeyhint=search><button type=submit aria-label=Search>${ic('search')}</button></form>`}
 function mnHtml(){const on=v=>V==v||((V=='lesson'||V=='gram')&&v=='learn')||(V=='story'&&v=='stories'),C=isC(USER),d=dueN(),dk=DT();
- const nm=esc(S.set.name||(C?EMAIL:isG(USER)?'Guest':USER)||'Learner'),who=C?esc(SL[SYNC]):isG(USER)?'Saved on this device only':'Saved on this device';
+ const nm=esc(S.set.name||(C?UNAME():isG(USER)?'Guest':USER)||'Learner'),who=C?esc(SL[SYNC]):isG(USER)?'Saved on this device only':'Saved on this device';
  const act=C?`<button class=sb__a type=button onclick="mnDo(signOut,'See you <em>soon.</em>')" title="Sign out">${ic('out')}<span class=sb__t>Sign out</span></button>`:isG(USER)?`<button class=sb__a type=button onclick="mnDo(wantAuth,'Welcome <em>back.</em>')" title="Sign in">${ic('user')}<span class=sb__t>Sign in or create account</span></button>`:`<button class=sb__a type=button onclick="localStorage.removeItem('ef_cur');location.reload()" title="Log out">${ic('out')}<span class=sb__t>Log out</span></button>`;
  const item=x=>`<button type=button class="sb__i ${on(x[0])?'on':''}" title="${x[2]}" onclick="go('${x[0]}')">${ic(x[1])}<span class=sb__t>${x[2]}</span>${x[0]=='review'&&d?`<b>${d}</b>`:''}</button>`;
  return`<div class=sb__bd onclick="mnToggle()"></div><aside class=side aria-label="Menu"><div class=sb__hd><img class=sb__lg src=logo-light.png alt="" width=40 height=40><b class=sb__t>LanguWay</b>${dk?'':`<button class=sb__x type=button onclick="mnToggle()" aria-label="Close menu">✕</button>`}</div>
@@ -249,34 +220,27 @@ function mnToggle(){if(DT()&&!MN){SBC=SBC?0:1;try{localStorage.setItem('ef_sbc',
 function mnDo(fn,title){navFx(()=>{mnHide();fn()},title)}
 function mnSearch(){SQ=(($('#msq')||{}).value||'');go('search')}
 function auEye(){const p=$('#ap'),b=$('#aey');if(!p)return;const s=p.type=='password';p.type=s?'text':'password';if(b){b.textContent=s?'Hide':'Show';b.setAttribute('aria-pressed',s?'true':'false')}}
-function auStr(v){const m=$('#aum');if(!m||!m.dataset)return;v=v||'';let n=0;if(v.length>=8)n++;if(v.length>=12)n++;if(/[a-z]/i.test(v)&&/\d/.test(v))n++;if((/[A-Z]/.test(v)&&/[a-z]/.test(v))||/[^A-Za-z0-9]/.test(v))n++;
- m.dataset.s=!v?'':v.length<8?'0':String(Math.max(1,n));const h=$('#auh');if(h)h.textContent=!v?'Use 8 or more characters, with letters and numbers.':v.length<8?'Use at least 8 characters ('+v.length+'/8).':['','Weak. Add letters and numbers.','Okay. Add letters and numbers.','Good.','Strong.'][Math.max(1,n)]}
+function auStr(v){const m=$('#aum');if(!m||!m.dataset)return;v=v||'';let n=0;if(v.length>=6)n++;if(v.length>=10)n++;if(/[a-z]/i.test(v)&&/\d/.test(v))n++;if((/[A-Z]/.test(v)&&/[a-z]/.test(v))||/[^A-Za-z0-9]/.test(v))n++;
+ m.dataset.s=!v?'':v.length<6?'0':String(Math.max(1,n));const h=$('#auh');if(h)h.textContent=!v?'Use 6 or more characters. Letters and numbers make it stronger.':v.length<6?'Use at least 6 characters ('+v.length+'/6).':['','Weak. Add letters and numbers.','Okay. Add letters and numbers.','Good.','Strong.'][Math.max(1,n)]}
 function auHint(){try{const f=$('#afg');if(f&&f.classList){f.classList.remove('pulse');void f.offsetWidth;f.classList.add('pulse')}}catch(e){}}
-function showResend(em){RS=em;const x=$('#ars');if(x)x.hidden=false}
 function authView(L){
- if(REC&&!L)return`<div class="auth au" id=authx data-mode=in><div class=au__card id=auc><div class=au__stage><div class=au__head><img class=au__logo src=logo-light.png alt="" width=46 height=46><h3 class=au__title>New <em>password.</em></h3><p class=au__sub>Choose a new password for your account.</p></div><form class=au__form onsubmit="newPass();return false" novalidate><div class=au__row><label for=ap>New password</label><input id=ap type=password autocomplete=new-password enterkeyhint=go placeholder="8+ characters"></div><p id=ae class="msg bad" role=alert>${esc(AMSG)}</p><button class=au__go id=ago type=submit>Save password<i class=au__spin></i></button></form></div></div></div>`;
- const Pv=CFG.providers||{},bt=(p,l)=>!L&&Pv[p]?`<button type=button class=au__soc onclick="oauth('${p}')">Continue with ${l}</button>`:'';
- const soc=bt('apple','Apple (iCloud)'),m=L?(AM=='up'?'up':'in'):(AM=='up'||AM=='fg'?AM:'in'),t=AUT[m];
+ const m=AM=='up'?'up':'in',t=AUT[m];
  return`<div class="auth au" id=authx data-mode="${m}"><div class=au__card id=auc><div class=au__stage id=auss>
  <div class=au__head><img class=au__logo src=logo-light.png alt="" width=46 height=46><h3 class=au__title id=aut>${t[0]}</h3><p class=au__sub id=aus2>${t[1]}</p></div>
- ${!L&&location.protocol=='file:'?'<p class="msg bad au__pad">Cloud sign-in works only when the site is hosted on https.</p>':''}
- ${L?'':`<div class=au__choose data-m="in up"><button type=button class="au__soc au__g" onclick="oauth('google')"><svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg><span data-m=in>Sign in with Google</span><span data-m=up>Sign up with Google</span></button><div class=au__or><span>or use your email</span></div></div>`}
  <form class=au__form onsubmit="${L?'localAuth':'cauth'}();return false" novalidate>
   <div class=au__row data-m=up><label for=an>Your name</label><input id=an maxlength=30 autocomplete=name enterkeyhint=next placeholder="What should we call you?"></div>
-  <div class=au__row><label for=au>${L?'Username':'Email'}</label><input id=au ${L?'maxlength=20':'type=email inputmode=email'} autocomplete=${L?'username':'email'} autocapitalize=none autocorrect=off spellcheck=false enterkeyhint=next placeholder="${L?'letters, numbers, _':'you@example.com'}"></div>
-  <div class=au__row data-m=rc><p class=au__hint style="margin:0">We sent a 6-digit code to <b id=rce></b>.</p>${otpHtml('acd','otpAuto')}<p class=otp__rs>Didn't receive the code? <button type=button class=lnk id=rsb onclick="resendCode()">Resend</button></p></div>
-  <div class=au__row data-m="in up rc2"><label for=ap><span data-m="in up">Password</span><span data-m=rc2>New password</span></label><div class=au__pw><input id=ap type=password ${L?'':'oninput="auStr(this.value)"'} autocomplete="${m=='up'||m=='rc2'?'new-password':'current-password'}" enterkeyhint=go placeholder="${L?'6+':'8+'} characters"><button type=button class=au__eye id=aey onclick="auEye()" aria-pressed=false aria-label="Show or hide password">Show</button></div>
-   ${L?'':'<div class=au__meter id=aum data-m="up rc2"><i></i><i></i><i></i><i></i></div><p class="au__hint" id=auh data-m="up rc2">Use 8 or more characters, with letters and numbers.</p>'}</div>
+  <div class=au__row><label for=au>Username</label><input id=au maxlength=20 autocomplete=username autocapitalize=none autocorrect=off spellcheck=false enterkeyhint=next placeholder="letters, numbers, _"></div>
+  <div class=au__row><label for=ap>Password</label><div class=au__pw><input id=ap type=password ${L?'':'oninput="auStr(this.value)"'} autocomplete="${m=='up'?'new-password':'current-password'}" enterkeyhint=${m=='up'?'next':'go'} placeholder="${m=='up'?'Create a password (6+)':'Your password'}"><button type=button class=au__eye id=aey onclick="auEye()" aria-pressed=false aria-label="Show or hide password">Show</button></div>
+   <div class=au__meter id=aum data-m=up><i></i><i></i><i></i><i></i></div><p class=au__hint id=auh data-m=up>Use 6 or more characters. Letters and numbers make it stronger.</p></div>
+  <div class=au__row data-m=up><label for=ap2>Confirm password</label><input id=ap2 type=password autocomplete=new-password enterkeyhint=go placeholder="Type the password again"></div>
+  <label class=au__rm data-m=in><input type=checkbox id=arm checked><span>Remember me</span></label>
   <p id=ae class="msg bad" role=alert aria-live=polite>${esc(AMSG)}</p>
-  <button class=au__go id=ago type=submit><span data-m=in>Sign in</span><span data-m=up>Create account</span><span data-m=fg>Send me a code</span><span data-m=rc>Verify code</span><span data-m=rc2>Save new password</span><i class=au__spin></i></button>
-  ${L?'':`<div class=au__links data-m=in><button type=button class=lnk id=afg onclick="auGo('fg',1)">Forgot password?</button><button type=button class=lnk onclick="mlink()">Email me a sign-in link</button><button type=button class=lnk id=ars onclick="resendMail()" ${RS?'':'hidden'}>Resend confirmation email</button></div>`}
-  <p class=au__sw data-m=in>${L?'':'New here? '}<button type=button class=lnk onclick="auGo('up',1)">Create an account</button></p>
+  <button class=au__go id=ago type=submit><span data-m=in>Sign in</span><span data-m=up>Create account</span><i class=au__spin></i></button>
+  <p class=au__sw data-m=in>New here? <button type=button class=lnk onclick="auGo('up',1)">Create an account</button></p>
   <p class=au__sw data-m=up>Already have an account? <button type=button class=lnk onclick="auGo('in',1)">Sign in</button></p>
-  <p class=au__sw data-m=fg><button type=button class=lnk onclick="auGo('in',1)">← Back to sign in</button></p>
-  <p class=au__sw data-m=rc><button type=button class=lnk onclick="auGo('in',1)">← Back to sign in</button></p>
-  <p class=au__sw data-m=rc2><button type=button class=lnk onclick="rcCancel()">Cancel</button></p>
+  <p class="au__hint" data-m=up>There is no email, so keep your username and password safe: they cannot be reset.</p>
  </form>
- <div class=au__foot data-m="in up">${soc}${GBTN()}${L?'<p class=mut>Cloud sign-in is not set up, so accounts are stored on this device only.</p>':''}</div>
+ <div class=au__foot data-m="in up">${GBTN()}${L?'<p class=mut>Cloud sign-in is not set up, so accounts are stored on this device only.</p>':''}</div>
  <div class=au__band id=aub aria-hidden=true><span class="band__edge band__edge--trail"></span><div class=band__inner><div class=band__page><div class="au__head au__head--band"><img class=au__logo src=logo-light.png alt="" width=46 height=46><h3 class=au__title id=abt></h3><p class=au__sub id=abs></p></div></div></div><span class="band__edge band__edge--lead"></span></div>
  </div></div></div>`}
 function vCloudAuth(){return authView(0)}
@@ -284,7 +248,7 @@ async function hash(p,s){try{const b=await crypto.subtle.digest('SHA-256',new Te
 function vLocalAuth(){return authView(1)}
 async function localAuth(){const u=$('#au').value.trim().toLowerCase(),p=$('#ap').value,L=ACC(),e=m=>msg(m),nm=AM=='up'?$('#an').value.trim():'';
  if(!/^[a-z0-9_]{3,20}$/.test(u))return e('Username: 3 to 20 letters, numbers or _');if(p.length<6)return e('Password must have at least 6 characters.');
- if(AM=='up'){if(L[u])return e('This username is taken.');const s=Math.random().toString(36).slice(2);L[u]={s,h:await hash(p,s)};localStorage.setItem('ef_acc',JSON.stringify(L))}
+ if(AM=='up'){if($('#ap2')&&$('#ap2').value!==p)return e('The two passwords do not match.');if(L[u])return e('This username is taken.');const s=Math.random().toString(36).slice(2);L[u]={s,h:await hash(p,s)};localStorage.setItem('ef_acc',JSON.stringify(L))}
  else{const a=L[u];if(!a||a.h!=await hash(p,a.s))return e('Wrong username or password.')}
  USER=u;localStorage.setItem('ef_cur',u);loadS();mergeGuest();AUTHV=0;if(nm)S.set.name=nm.slice(0,30);save();theme();applyPrefs();go('home')}
 function vAuth(){if(CFGOK&&!sb)return`<div class="card auth"><h1>LanguWay English</h1><p>Cloud sign-in needs an internet connection. Check your connection and try again.</p><button class=btn onclick="location.reload()">Try again</button>${GBTN()}</div>`;return sb?vCloudAuth():vLocalAuth()}
@@ -731,7 +695,7 @@ async function chkUpd(){const m=$('#updm');if(m)m.textContent='Checking…';try{
 const acc=(k,t,ico,body)=>`<details class="acc card" ${SO[k]?'open':''} ontoggle="SO['${k}']=this.open"><summary><span>${ic(ico)}${t}</span><i class=acc__c></i></summary><div class=acc__b>${body}</div></details>`;
 function vSet(){const s=S.set,C=isC(USER);
  const ago=t=>{if(!t)return'not yet';const m=Math.round((Date.now()-t)/6e4);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' days ago'};
- const acct=C?`<div class=set><span>Signed in as<br><b>${esc(EMAIL||'—')}</b><br><span class=mut>${esc(PROV||'email')}</span></span></div><div class=set><span>Cloud saving<br><span class=mut id=sst>${SL[SYNC]}${SERR?': '+esc(SERR):''}</span><br><span class=mut>Last saved to your account: ${ago(LSY)}</span></span><button class=btn2 onclick="syncNow().then(draw)">Save now</button></div>${cpHtml()}<button class=btn2 onclick="signOut()">Sign out</button> <button class=btn2 style="border-color:var(--bad);color:var(--bad)" onclick="delAcct()">Delete account</button>`
+ const acct=C?`<div class=set><span>Signed in as<br><b>@${esc(UNAME()||'—')}</b></span></div><div class=set><span>Cloud saving<br><span class=mut id=sst>${SL[SYNC]}${SERR?': '+esc(SERR):''}</span><br><span class=mut>Last saved to your account: ${ago(LSY)}</span></span><button class=btn2 onclick="syncNow().then(draw)">Save now</button></div>${cpHtml()}<button class=btn2 onclick="signOut()">Sign out</button> <button class=btn2 style="border-color:var(--bad);color:var(--bad)" onclick="delAcct()">Delete account</button>`
  :isG(USER)?`<p>You are using the app as a <b>guest</b>. Your progress is saved on this device only.</p><button class=btn type=button onclick="wantAuth()">Sign in or create an account</button><p class=mut>Your guest progress will be added to your account.</p>`
  :`<p>Signed in as <b>${esc(USER)}</b> on this device.</p><p class=mut>${CFGOK?'Cloud sign-in is unavailable right now.':'Cloud sync is not set up, so your progress stays on this device only.'}</p><button class=btn2 onclick="localStorage.removeItem('ef_cur');location.reload()">Log out</button>`;
  const chk=(k,l)=>`<div class=set>${l}<input type=checkbox ${s[k]?'checked':''} onchange="S.set.${k}=this.checked;save();applyPrefs()"></div>`;
@@ -771,10 +735,10 @@ function vHelp(){const q=[['How do I start?','Create an account, take the placem
 (async function boot(){
  if(sb){
   $('#app').innerHTML='<div class="card auth"><p class=mut>Loading…</p></div>';
-  sb.auth.onAuthStateChange((ev,ses)=>{setTimeout(()=>{if(PWF)return;if(ev=='PASSWORD_RECOVERY'){REC=1;if(ses)SESS=ses;draw()}else if(ev=='SIGNED_IN'&&ses)onSignedIn(ses);else if(ev=='SIGNED_OUT'&&SESS)forget();else if(ev=='TOKEN_REFRESHED'&&ses)SESS=ses},0)});
+  sb.auth.onAuthStateChange((ev,ses)=>{setTimeout(()=>{if(PWF)return;if(ev=='SIGNED_IN'&&ses)onSignedIn(ses);else if(ev=='SIGNED_OUT'&&SESS)forget();else if(ev=='TOKEN_REFRESHED'&&ses)SESS=ses},0)});
   let ses=null;try{ses=(await sb.auth.getSession()).data.session}catch(e){}
   if(ses)await onSignedIn(ses);
-  else if(isC(USER)&&!navigator.onLine){EMAIL=localStorage.getItem('ef_email_'+USER)||'';loadS();setSync('off')}
+  else if(isC(USER)&&!navigator.onLine&&REM){EMAIL=localStorage.getItem('ef_email_'+USER)||'';loadS();setSync('off')}
   else if(isG(USER))loadS();
   else USER='';
  }else if(isC(USER)){EMAIL=localStorage.getItem('ef_email_'+USER)||'';loadS();setSync('off')}
