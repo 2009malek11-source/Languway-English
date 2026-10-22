@@ -361,3 +361,29 @@ html.cmp .card{padding:12px;margin:10px 0}html.cmp h1{font-size:24px}html.cmp .h
 .xw{border-width:2px;border-color:var(--ac)}
 #app textarea,#app select,#app input[type=search],#app details input{width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--tx);font:inherit}
 @media(max-width:420px){.xirr{grid-template-columns:1fr 1fr}}
+
+/* Remember me: a visible custom check box */
+.au .au__rm input[type=checkbox]{-webkit-appearance:none;appearance:none;width:24px;height:24px;border:2px solid var(--ac);border-radius:7px;background:var(--bg,#fff);display:inline-grid;place-content:center;cursor:pointer;transition:background .15s,transform .15s}
+.au .au__rm input[type=checkbox]::after{content:"";width:12px;height:7px;border-left:3px solid #fff;border-bottom:3px solid #fff;transform:rotate(-45deg) scale(0);margin-top:-3px;transition:transform .15s}
+.au .au__rm input[type=checkbox]:checked{background:var(--ac)}
+.au .au__rm input[type=checkbox]:checked::after{transform:rotate(-45deg) scale(1)}
+.au .au__rm input[type=checkbox]:focus-visible{outline:3px solid rgba(47,128,237,.5);outline-offset:2px}
+.au__rmh{font-size:13px;color:var(--mut);margin:2px 2px 6px}
+
+/* Anime faces and effects */
+.blk{transform-box:fill-box;transform-origin:50% 50%;animation:blnk 4.6s infinite}
+@keyframes blnk{0%,91%,100%{transform:scaleY(1)}94.5%{transform:scaleY(.08)}}
+.mth{transform-box:fill-box;transform-origin:50% 25%;animation:talk .28s ease-in-out infinite alternate}
+@keyframes talk{from{transform:scaleY(.3)}to{transform:scaleY(1)}}
+.hair{transform-box:fill-box;transform-origin:50% 100%;animation:hsw 3.4s ease-in-out infinite alternate}
+@keyframes hsw{from{transform:rotate(-.9deg)}to{transform:rotate(.9deg)}}
+.twk{animation:twk .7s steps(2) infinite;transform-box:fill-box}@keyframes twk{50%{opacity:.35;transform:scale(.8)}}
+.swt{animation:swt 1.2s ease-in infinite}@keyframes swt{from{transform:translateY(-4px);opacity:0}30%{opacity:1}to{transform:translateY(8px);opacity:0}}
+.gl{animation:gl 1.4s ease-in-out infinite alternate}@keyframes gl{from{opacity:.2}}
+.ptl{animation:ptl 9s linear infinite;transform-box:fill-box}
+@keyframes ptl{from{transform:translate(0,0) rotate(0)}to{transform:translate(-50px,240px) rotate(300deg)}}
+.rays2{animation:ry2 6s ease-in-out infinite alternate}@keyframes ry2{from{opacity:.08}to{opacity:.22}}
+.calm .blk,.calm .mth,.calm .hair,.calm .twk,.calm .swt,.calm .gl,.calm .ptl,.calm .rays2{animation:none!important}
+@media(prefers-reduced-motion:reduce){.blk,.mth,.hair,.twk,.swt,.gl,.ptl,.rays2{animation:none!important}}
+
+.bok circle{animation:bk 5s ease-in-out infinite alternate}@keyframes bk{to{opacity:.04;transform:translateY(6px)}}.calm .bok circle{animation:none!important}.hd{transform-box:fill-box}

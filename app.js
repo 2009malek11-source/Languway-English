@@ -254,7 +254,7 @@ function authView(L){
   <div class=au__row><label for=ap>Password</label><div class=au__pw><input id=ap type=password ${L?'':'oninput="auStr(this.value)"'} autocomplete="${m=='up'?'new-password':'current-password'}" enterkeyhint=${m=='up'?'next':'go'} placeholder="${m=='up'?'Create a password (6+)':'Your password'}"><button type=button class=au__eye id=aey onclick="auEye()" aria-pressed=false aria-label="Show or hide password">Show</button></div>
    <div class=au__meter id=aum data-m=up><i></i><i></i><i></i><i></i></div><p class=au__hint id=auh data-m=up>Use 6 or more characters. Letters and numbers make it stronger.</p></div>
   <div class=au__row data-m=up><label for=ap2>Confirm password</label><input id=ap2 type=password autocomplete=new-password enterkeyhint=go placeholder="Type the password again"></div>
-  <label class=au__rm data-m=in><input type=checkbox id=arm checked><span>Remember me</span></label>
+  <label class=au__rm data-m=in><input type=checkbox id=arm ${REM?'checked':''} onchange="$('#armh').textContent=this.checked?'You will stay signed in on this device.':'You will be signed out when you close the browser.'"><span>Remember me</span></label><p class="au__rmh" data-m=in id=armh role=status>${REM?'You will stay signed in on this device.':'You will be signed out when you close the browser.'}</p>
   <p id=ae class="msg bad" role=alert aria-live=polite>${esc(AMSG)}</p>
   <button class=au__go id=ago type=submit><span data-m=in>Sign in</span><span data-m=up>Create account</span><i class=au__spin></i></button>
   <p class=au__sw data-m=in>New here? <button type=button class=lnk onclick="auGo('up',1)">Create an account</button></p>
