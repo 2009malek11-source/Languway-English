@@ -96,6 +96,16 @@ const PRAISE=['Excellent!','Great listening!','Well done!','You understood it!',
 const stRate=()=>{const lv=SY?SY.n:15,f=.6+.4*Math.min(1,(lv-1)/24);return Math.max(.5,Math.min(1.15,S.set.rate*f*(SYslow?.8:1)))};
 
 /* Voice: pick an English voice that matches the accent, prefer male/female names, then shift pitch per character */
+/* Every character gets its own voice: men, women and children are spread over the different English voices of the device (so two men never share one voice when the device has several). Pitch and speed add a second difference. */
+const STF=/female|samantha|zira|susan|hazel|karen|moira|tessa|fiona|victoria|aria|jenny|libby|sonia|ava\b|allison|serena|emma|amy|joanna|kendra|kimberly|salli|ivy|nicole|olivia|natasha|clara|mia\b|heather|catherine|jane|linda|sara|lucy|zoe|eva|ellen|aditi|raveena/i,STM=/(^|[^a-z])male|david|mark\b|daniel|alex\b|george|guy\b|ryan|james|thomas|oliver|arthur|aaron|fred\b|brian|matthew|justin|joey|russell|liam|william|eric|davis|andrew|christopher|roger|steffan|ronnie|rishi|gordon|lee\b/i;
+let STV={},STVK='';
+function stVoiceMap(){let vs=[];try{vs=(typeof VOICES!='undefined'&&VOICES.length?VOICES:speechSynthesis.getVoices()).filter(v=>/^en/i.test(v.lang))}catch(e){}
+ const key=vs.map(v=>v.name).join('|')+S.set.acc;if(key==STVK)return;STVK=key;STV={};if(!vs.length)return;
+ const acc=vs.filter(v=>String(v.lang).replace('_','-')==S.set.acc),pool=(acc.length>=3?acc:vs.slice().sort((a,b)=>(String(b.lang).replace('_','-')==S.set.acc)-(String(a.lang).replace('_','-')==S.set.acc))),q=v=>typeof VQ=='function'?VQ(v):0,srt=a=>a.slice().sort((x,y)=>q(y)-q(x));
+ const fem=srt(pool.filter(v=>STF.test(v.name))),mal=srt(pool.filter(v=>STM.test(v.name)&&!STF.test(v.name))),oth=srt(pool.filter(v=>!STF.test(v.name)&&!STM.test(v.name)));
+ const cnt={m:0,f:0};
+ Object.keys(CAST).forEach(n=>{const c=CAST[n],kind=c.g=='f'?'f':'m',L=kind=='f'?(fem.length?fem:oth.length?oth:pool):(mal.length?mal:oth.length?oth:pool),i=cnt[kind]++;STV[n]=L[i%L.length]||null})}
+function stVoiceFor(who,c){try{stVoiceMap();return STV[who]||stVoice(c.g)}catch(e){return stVoice(c.g)}}
 function stVoice(g){try{if(typeof pickVoice=='function')return pickVoice(g)}catch(e){}try{const vs=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));if(!vs.length)return null;
  const acc=vs.filter(v=>v.lang.replace('_','-')==S.set.acc),pool=acc.length?acc:vs,
   f=/female|samantha|zira|susan|hazel|karen|moira|tessa|fiona|victoria|aria|jenny|libby|sonia/i,m=/(^|[^a-z])male|david|mark|daniel|alex|fred|george|guy|ryan|james|thomas|oliver|arthur/i,
@@ -105,7 +115,7 @@ function stSpeak(who,text,done,onword){let fin=0,gotB=0,tick=null;const words=te
  end=()=>{if(fin)return;fin=1;clearTimeout(tm);clearInterval(tick);done()},tm=setTimeout(end,ms*2.2);
  if(onword){let k=0;onword(0);tick=setInterval(()=>{if(gotB||fin)return clearInterval(tick);k++;if(k<words.length)onword(k)},per)}
  try{if(!window.speechSynthesis||typeof SpeechSynthesisUtterance=='undefined'){clearTimeout(tm);setTimeout(end,ms);return}
-  speechSynthesis.cancel();const sp2=(typeof ttsText=='function'?ttsText(text):text),same=sp2.split(' ').length==words.length,u=new SpeechSynthesisUtterance(sp2),c=CAST[who]||CAST.Omar,v=stVoice(c.g);if(v)u.voice=v;u.lang=S.set.acc;const vk=VK[vKind(c)]||VK.m,base=c.g=='f'?1.25:.8;u.pitch=Math.max(.5,Math.min(2,c.k=='c'||c.k=='o'?c.p:vk.p+(c.p-base)*.3));u.rate=Math.max(.5,Math.min(1.3,stRate()*vk.r));if(/!$/.test(text.trim())){u.pitch=Math.min(2,u.pitch+.15);u.rate=Math.min(1.3,u.rate*1.06)}else if(/\?$/.test(text.trim()))u.pitch=Math.min(2,u.pitch+.1);
+  speechSynthesis.cancel();const sp2=(typeof ttsText=='function'?ttsText(text):text),same=sp2.split(' ').length==words.length,u=new SpeechSynthesisUtterance(sp2),c=CAST[who]||CAST.Omar,v=stVoiceFor(who,c);if(v)u.voice=v;u.lang=S.set.acc;const vk=VK[vKind(c)]||VK.m,base=c.g=='f'?1.25:.8;u.pitch=Math.max(.5,Math.min(2,c.k=='c'||c.k=='o'?c.p:vk.p+(c.p-base)*.3));const hh=[...who].reduce((a,ch)=>a+ch.charCodeAt(0),0);u.pitch=Math.max(.5,Math.min(2,u.pitch+((hh%7)-3)*.035));u.rate=Math.max(.5,Math.min(1.3,stRate()*vk.r*(1+((hh%5)-2)*.025)));if(/!$/.test(text.trim())){u.pitch=Math.min(2,u.pitch+.15);u.rate=Math.min(1.3,u.rate*1.06)}else if(/\?$/.test(text.trim()))u.pitch=Math.min(2,u.pitch+.1);
   u.onboundary=e=>{if(!same||(e.name&&e.name!='word'))return;gotB=1;if(onword)onword(Math.max(0,sp2.slice(0,e.charIndex).split(' ').length-1))};
   const t0=Date.now(),slow=()=>{const el=Date.now()-t0;el<500?setTimeout(end,ms-el):end()};u.onend=slow;u.onerror=slow;speechSynthesis.speak(u)}catch(e){clearTimeout(tm);setTimeout(end,ms)}}
 function stHalt(){SYK++;try{speechSynthesis.cancel()}catch(e){}if(SY)SY.pl=0}

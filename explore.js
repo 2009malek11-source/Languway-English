@@ -21,7 +21,8 @@ function xHome(){const e=XS(),wk=xWeek(),done=popc(wk.st.d&63);
  ${xTile('rp','🗣️','Speak with a partner','Role-play, no shyness')}
  ${xTile('fast','⚡','Fast speech','How people really talk')}
  ${xTile('uk','🇺🇸🇬🇧','US or UK English','Spelling and words')}
- ${xTile('esp','💼','Career English','Interview, clinic, IT')}</div>
+ ${xTile('esp','💼','Career English','Interview, clinic, IT')}
+ ${xTile('pic','🖼️','Picture questions','Look at the picture and answer',e.xl.pic!=null?e.xl.pic+'%':'')}</div>
  <div class=card><b>Need a word or a sentence translated?</b><p class=mut>Open the Translator for Arabic ⇄ English, all meanings, examples and word forms.</p><button class=btn type=button onclick="go('translate')">Open the Translator</button></div>`}
 
 /* ---------- Word of the day ---------- */
@@ -44,11 +45,16 @@ function xRun(items,title,back,done){XR={items,i:0,ok:0,sel:null,title,back,done
 function xrHtml(){const r=XR;if(!r)return xHome();
  if(r.fin){const n=r.items.length,p=xPct(r.ok,n),good=p>=75;return`<div class=card style="text-align:center">${cele(good?'Well done'+nmS()+'!':'Good try!',esc(r.title)+': '+r.ok+' of '+n+' correct ('+p+'%)')}<p class=mut>${good?'You passed.':'You need 75% to pass. Look again and retry.'}</p><button class=btn type=button onclick="xRun(XR.items.map(xFresh),XR.title,XR.back,XR.done)">Try again</button> <button class=btn2 type=button onclick="xGo('${r.back}')">Back</button></div>`}
  const it=r.items[r.i],n=r.items.length,hd=`<p class=mut>${esc(r.title)} · ${r.i+1} of ${n}</p><div class=bar><i style="width:${Math.round(r.i/n*100)}%"></i></div>`;let b='';
- if(it.t=='mc'){b=`<h2>${esc(it.q)}</h2>${it.say?xBtnSay(it.say,'▶ Listen'):''}<div>${it.o.map((o,j)=>`<button type=button class="chip xo ${r.sel!=null?(o==it.a?'xok':(j==r.sel?'xno':'')):''}" ${r.sel!=null?'disabled':''} onclick="xrAns(${j})">${esc(o)}</button>`).join('')}</div>`}
+ if(it.t=='mc'){b=`${it.img?`<div class=xpic>${it.img}</div>`:''}<h2>${esc(it.q)}</h2>${it.say?xBtnSay(it.say,'▶ Listen'):''}<div>${it.o.map((o,j)=>`<button type=button class="chip xo ${it.img?'xrad ':''}${r.sel!=null?(o==it.a?'xok':(j==r.sel?'xno':'')):''}" ${r.sel!=null?'disabled':''} onclick="xrAns(${j})">${esc(o)}</button>`).join('')}</div>`}
  else if(it.t=='lis'){b=`<h2>Listen and choose the sentence you hear</h2><button type=button class=btn onclick="say(XR.items[XR.i].s)">▶ Play</button> <button type=button class=btn2 onclick="say(XR.items[XR.i].s,.6)">🐢 Slowly</button><div>${it.o.map((o,j)=>`<button type=button class="chip xo ${r.sel!=null?(o==it.a?'xok':(j==r.sel?'xno':'')):''}" ${r.sel!=null?'disabled':''} onclick="xrAns(${j})">${esc(o)}</button>`).join('')}</div>`}
  else if(it.t=='ord'){const used=r.ord;b=`<h2>Put the words in the right order</h2><p class=mut>${esc(it.ar||'')}</p><div class=xline>${used.map(j=>`<span class=chip>${esc(it.w[j])}</span>`).join('')||'<span class=mut>Tap the words below</span>'}</div><div>${it.w.map((w,j)=>used.includes(j)?'':`<button type=button class="chip xo" ${r.sel!=null?'disabled':''} onclick="xrTap(${j})">${esc(w)}</button>`).join('')}</div>${r.sel==null?`<button type=button class=btn2 onclick="XR.ord.pop();draw()">↩ Undo</button> <button type=button class=btn ${used.length==it.w.length?'':'disabled'} onclick="xrCheck()">Check</button>`:`<p><b>${r.sel==1?'✔':'✘ Right answer:'}</b> ${esc(it.a)}</p>`}`}
  else if(it.t=='spk'){const q=r.res;b=`<h2>Read aloud</h2><p style="font-size:21px;line-height:1.7">${q?q.html:esc(it.s)}</p>${xBtnSay(it.s,'▶ Listen first')} ${SRC?`<button type=button class=btn id=xmic onclick="xrMic()" ${r.busy?'disabled':''}>${r.busy?'🎤 Listening…':'🎤 Tap and read'}</button>`:`<button type=button class=btn onclick="xrSelf()">✔ I read it aloud</button>`}<p id=xsm class=msg>${q?(q.acc>=60?`<b style="color:var(--ok)">${q.acc}% correct. Well done!</b>`:`<b style="color:var(--bad)">${q.acc}% correct.</b> Red words need practice.`):''}</p>${q&&r.sel==null?'<button type=button class=btn2 onclick="xrSelf()">Continue</button>':''}`}
  return`<div class=card>${hd}${b}${r.sel!=null&&it.t!='spk'?`<p class=msg role=status><b style="color:var(--${r.sel==1||(it.t!='ord'&&it.o[r.sel]==it.a)?'ok':'bad'})">${r.sel==1||(it.t!='ord'&&it.o[r.sel]==it.a)?'Correct!':'Not quite.'}</b>${it.why?' '+esc(it.why):''}</p><button type=button class=btn onclick="xrNext()">${r.i+1>=n?'Finish':'Next'}</button>`:''}${it.t=='spk'&&r.sel!=null?'<button type=button class=btn onclick="xrNext()">'+(r.i+1>=n?'Finish':'Next')+'</button>':''}</div><button class=btn2 type=button onclick="try{speechSynthesis.cancel()}catch(e){}xGo('${r.back}')">✕ Leave</button>`}
+function xPicPg(){const e=XS(),n=curLevel(),av=(window.PICQ||[]).filter(q=>q.lv<=n+6).length;
+ return`${xBack()}<h1>PICTURE QUESTIONS</h1><p class=mut>Look carefully at each picture, then choose the best answer. Your questions match your level.</p><div class=card><p>${av} pictures are ready for your level.</p><button class=btn type=button onclick="xPicGo()">Start 6 questions</button>${e.xl.pic!=null?`<p class=mut>Best score: ${e.xl.pic}%</p>`:''}</div>`}
+function xPicGo(){const n=curLevel(),pool=(window.PICQ||[]).filter(q=>q.lv<=n+6);const near=sh(pool.filter(q=>q.lv>n-6)),rest=sh(pool.filter(q=>q.lv<=n-6)),pick=near.concat(rest).slice(0,6);
+ const it=pick.map(q=>({t:'mc',img:picSvg(q.d),q:q.q,o:sh([q.a].concat(q.w)),a:q.a,why:'Look at the picture again: '+q.d.alt,sk:'Reading'}));
+ xRun(it,'Picture questions','pic',p=>{const e=XS();e.xl.pic=Math.max(e.xl.pic||0,p);save()})}
 function xFresh(it){const c=Object.assign({},it);if(c.t=='ord')c.w=sh(c.w);if(c.t=='mc'||c.t=='lis')c.o=sh(c.o);return c}
 function xrAns(j){const r=XR,it=r.items[r.i];if(r.sel!=null)return;r.sel=j;if(it.o[j]==it.a)r.ok++;const t=S.sk[it.sk||'Grammar']=S.sk[it.sk||'Grammar']||[0,0];t[1]++;if(it.o[j]==it.a)t[0]++;save();draw()}
 function xrTap(j){if(XR.sel!=null)return;XR.ord.push(j);draw()}
@@ -232,4 +238,4 @@ function xESPQuiz(i){const c=XESP[i],ar=c.w.map(w=>w[1]),en=c.w.map(w=>w[0]),it=
 /* ---------- View entry ---------- */
 function vExplore(){const p=X.p;
  if(p=='run')return xrHtml();
- return({home:xHome,wod:xWod,xl:xXL,xlp:xLP,write:xWritePg,week:xWeekPg,wk:xWkPart,rp:xRPList,rps:xRPPg,fast:xFastPg,uk:xUKPg,esp:xESPList,espc:xESPPg})[p]()}
+ return({home:xHome,wod:xWod,xl:xXL,xlp:xLP,write:xWritePg,week:xWeekPg,wk:xWkPart,rp:xRPList,rps:xRPPg,fast:xFastPg,uk:xUKPg,esp:xESPList,espc:xESPPg,pic:xPicPg})[p]()}

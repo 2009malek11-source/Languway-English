@@ -38,7 +38,7 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const isO=o=>o&&typeof o=='object'&&!Array.isArray(o);
 const num=(v,d)=>typeof v=='number'&&isFinite(v)?v:d;
 const jx=o=>JSON.stringify(o,(k,v)=>isO(v)?Object.keys(v).sort().reduce((r,x)=>(r[x]=v[x],r),{}):v);
-const LEX={};ALL.forEach(w=>LEX[w.en]=w.ar);
+const LEX={};ALL.forEach(w=>LEX[w.en]=w.ar);try{if(window.MINI)for(const k in MINI)if(LEX[k]===undefined)LEX[k]=MINI[k]}catch(e){}
 /* clean(): keep only known keys with the right types (protects against bad imports and tampered cloud data) */
 function clean(o){const d=DEF();if(!isO(o))return d;
  const nm=(m,re,lo,hi)=>{const r={};if(isO(m))for(const k in m)if(re.test(k)){const v=num(m[k],null);if(v!==null)r[k]=Math.max(lo,Math.min(hi,v))}return r};
@@ -134,7 +134,7 @@ async function pull(){if(!sb||!SESS)return false;setSync('busy');
  const r=await sb.from('progress').select('data').eq('user_id',SESS.user.id).maybeSingle();if(r.error){if(r.status)r.error.status=r.status;AUTHBAD=(r.error.status===401||r.error.code=='42501')?1:0;throw r.error}AUTHBAD=0;PULLOK=1;
  const rc=clean(r.data&&r.data.data),m=mergeS(S,rc),chL=jx(m)!==jx(S),chR=!r.data||jx(m)!==jx(rc);S=m;persist();
  if(chR)await push();else{LASTP=jx(S);setSync('ok')}return chL}
-async function syncNow(){if(!sb||!SESS)return;try{if(await pull()&&!INQ)draw()}catch(e){setSync(navigator.onLine?'err':'off',e)}}
+async function syncNow(){if(!sb||!SESS)return;try{if(await pull()&&!INQ&&!(V=='explore'&&X&&X.p=='run')&&V!='story'&&V!='test')draw()}catch(e){setSync(navigator.onLine?'err':'off',e)}}
 function mergeGuest(){try{const g=localStorage.getItem('ef2_guest');if(!g)return;S=mergeS(S,clean(JSON.parse(g)));persist();localStorage.removeItem('ef2_guest');localStorage.removeItem('ef_bak_guest')}catch(e){}}
 function guestGo(){AUTHV=0;USER='guest';EMAIL='';SESS=null;try{localStorage.setItem('ef_cur','guest')}catch(e){}loadS();setSync('local');theme();applyPrefs();go('home')}
 function wantAuth(){AUTHV=1;AM='in';AMSG='';draw.force=1;draw();draw.force=0}
@@ -147,7 +147,7 @@ async function onSignedIn(ses){if(SESS&&SESS.user.id===ses.user.id){SESS=ses;ret
  loadS();mergeGuest();AUTHV=0;const nm=u.user_metadata&&(u.user_metadata.name||u.user_metadata.full_name);if(nm&&!S.set.name){S.set.name=String(nm).slice(0,30);persist()}
  try{await pull()}catch(e){setSync(navigator.onLine?'err':'off',e);setTimeout(()=>{if(SESS&&!PULLOK)syncNow()},4000)}
  INQ=0;V='home';theme();applyPrefs();navFx(draw,VT.home)}
-async function signOut(){if(sb&&SESS){clearTimeout(pushT);await push();if(SYNC!='ok'&&!confirm('Your latest progress has not synced yet. A copy stays on this device until you sign in again. Sign out anyway?'))return;if(SYNC=='ok')localStorage.removeItem(KEY())}
+async function signOut(){if(sb&&SESS){clearTimeout(pushT);await push();if(SYNC!='ok'&&!confirm('Your latest progress has not synced yet. A copy stays on this device until you sign in again. Sign out anyway?'))return;}
  try{if(sb)await sb.auth.signOut()}catch(e){}forget()}
 async function delAcct(){if(!sb||!SESS)return alert('Connect to the internet and sign in first.');
  if(!confirm('Delete your account and all cloud data? This cannot be undone.')||!confirm('Are you sure? Your progress will be lost.'))return;
@@ -555,7 +555,7 @@ function tutor(q,ok,g){
 function fin1(ok,q,g){Q.last=ok;buzz(ok);const k=q.k||'Other',t=S.sk[k]=S.sk[k]||[0,0];t[1]++;if(ok)t[0]++;if(ok)Q.s++;else if(q.w){const w=q.w;S.mist=[w,...S.mist.filter(m=>m.en!=w.en)].slice(0,50);if(S.vocab[w.en]){S.vocab[w.en].box=0;S.vocab[w.en].due=Date.now();S.vocab[w.en].t=Date.now()}}save();
  $('#fb').innerHTML=`<p style="color:var(--${ok?'ok':'bad'})"><b>${ok?'Correct!':'Not quite.'}</b></p>${ok?'':q.diff?`<p>The correct answer, with your mistakes marked:<br><span style="font-size:19px">${q.diff}</span></p>`:`<p>Answer: <b>${esc(q.a)}</b></p>`}${tutor(q,ok,g)}<button class=btn onclick="nextQ()">${Q.i+1==Q.qs.length?'Finish':'Next'}</button>`;const n=$('#fb .btn');if(n)n.focus()}
 const ST=[5,4,4,3,3,2,2,2,1,1,1,1,1,1];
-function nextQ(){if(Q.ad){const a=Q.ad,i=Q.i,b=a.h[i],ty=a.k[i]==0;a.r.push([b,Q.last]);a.post=a.post.map((v,j)=>{const p=pLike(PTH[j],b,ty);return v*(Q.last?p:1-p)});const z=Math.max(...a.post);a.post=a.post.map(v=>v/z);if(i+1<a.n)Q.qs.push(pickQ(a))}
+function nextQ(){if(Q.ad){const a=Q.ad,i=Q.i,b=a.h[i],ty=a.k[i]==0;a.r.push([b,Q.last]);a.post=a.post.map((v,j)=>{const p=pLike(PTH[j],b,ty);return v*(Q.last?p:1-p)});const z=Math.max(...a.post);a.post=a.post.map(v=>v/z);if(i+1<a.n&&!(i+1>=a.min&&pSd(a.post)<.9))Q.qs.push(pickQ(a))}
  Q.i++;if(Q.i>=Q.qs.length){const p=Math.round(Q.s/Q.qs.length*100);INQ=0;$('#app').innerHTML=Q.fin(p);scrollTo(0,0)}else showQ()}
 const wrap=(msg,ok,nx)=>`<p>${ok?'Passed! ':'You need 75% to pass. '}${msg}</p>${nx}`;
 const pbQ=c=>c[2]?{q:c[1],k:c[4]?'Reading':c[5]?'Listening':'Grammar',r:c[4]||'',p:c[4]?esc(c[4]):'',say:c[5]||'',o:sh(c[2].split('|')),a:c[3]}:{q:c[1],k:'Writing',type:1,a:c[3]};
@@ -692,17 +692,49 @@ const PB2=[
 [19,'Rarely ___ such a complete failure.','has anyone witnessed|anyone has witnessed|did anyone witnessed|anyone witnessed','has anyone witnessed'],
 [20,'The argument is persuasive but ultimately ___ on a false premise.','predicated|prevailing|presumed|pervaded','predicated'],
 [20,'Write the verb related to “simple”.','','simplify']];
-PB.push(...PB2);PB.forEach(c=>{c[0]=c[0]<=10?2*c[0]-.5:c[0]+10});/* bank levels were written for 20 levels: map them onto the 30-level scale */
+const PB3=[
+[1,'Which word means “a place where you sleep”?','bed|chair|door|pen','bed'],
+[1,'She ___ a teacher.','is|am|are|do','is'],
+[1,'They ___ at home.','are|is|am|be','are'],
+[1,'What is the opposite of “big”?','small|tall|long|fast','small'],
+[2,'I have two ___.','brothers|brother|brothers’|a brother','brothers'],
+[2,'What time ___ you get up?','do|does|are|is','do'],
+[2,'“Thank you.” — “___.”','You are welcome|Good night|See you|I am sorry','You are welcome'],
+[2,'There ___ a book on the table.','is|are|am|be','is'],
+[3,'He ___ to school by bus every day.','goes|go|going|gone','goes'],
+[3,'This is ___ than that one.','cheaper|cheap|cheapest|more cheap','cheaper'],
+[3,'Choose the correct sentence.','She does not like tea.|She not like tea.|She do not like tea.|She does not likes tea.','She does not like tea.'],
+[3,'I ___ my homework now.','am doing|do|did|have done','am doing'],
+[4,'We ___ to the park yesterday.','went|go|goes|going','went'],
+[4,'How ___ water do you drink a day?','much|many|few|a lot','much'],
+[4,'She is the ___ girl in the class.','tallest|taller|most tall|tall','tallest'],
+[4,'Write the past of “buy”.','','bought'],
+[5,'If it rains, we ___ at home.','will stay|stay would|stayed|are staying to','will stay'],
+[5,'I have lived here ___ 2015.','since|for|from|during','since'],
+[5,'He asked me ___ I was from.','where|what|which|who','where'],
+[5,'You ___ smoke here. It is not allowed.','must not|do not have to|need not to|can to','must not'],
+[6,'The book ___ by millions of people.','was read|read|has read|is reading','was read'],
+[6,'I wish I ___ more time.','had|have|will have|would have','had'],
+[6,'Choose the best word: She is very ___ about her exam. She cannot sleep.','nervous|boring|careful|lazy','nervous'],
+[6,'By the time we arrived, the film ___.','had started|has started|started already|was start','had started'],
+[7,'The manager suggested ___ the meeting.','postponing|to postpone|postpone|postponed','postponing'],
+[7,'Not only ___ late, but he also forgot the documents.','was he|he was|did he|he is','was he'],
+[8,'Despite ___ hard, he failed the test.','studying|he studied|to study|studied','studying'],
+[8,'The report, ___ was long, was easy to read.','which|who|whose|what','which'],
+[9,'Had I known, I ___ you.','would have told|will tell|told|would tell','would have told'],
+[9,'The decision was made ___ consideration of all the evidence.','after careful|with careless|by careful|in careful','after careful']];
+PB.push(...PB2,...PB3);PB.push(...PB2,...PB3);PB.forEach(c=>{c[0]=c[0]<=10?2*c[0]-.5:c[0]+10});/* bank levels were written for 20 levels: map them onto the 30-level scale */
 const PTH=Array.from({length:59},(_,i)=>1+i*.5);
 function pLike(th,b,typed){const g=typed?.03:.25;return g+(1-g)/(1+Math.exp(-.7*(th-b)))}
 const pMean=p=>{let s=0,z=0;p.forEach((v,i)=>{s+=v*PTH[i];z+=v});return s/z};
+const pSd=p=>{const m=pMean(p);let s=0,z=0;p.forEach((v,i)=>{s+=v*(PTH[i]-m)**2;z+=v});return Math.sqrt(s/z)};
 const pMed=p=>{let z=p.reduce((a,b)=>a+b,0),c=0;for(let i=0;i<p.length;i++){c+=p[i];if(c>=z/2)return PTH[i]}return 30};
 function pickQ(a){const th=pMean(a.post),free=PB.filter(x=>!a.u[x[1]]);free.sort((x,y)=>Math.abs(x[0]-th)-Math.abs(y[0]-th));
- const c=rnd(free.slice(0,Math.min(4,free.length)));a.u[c[1]]=1;a.h.push(c[0]);a.k.push(c[2]?1:0);return pbQ(c)}
-function vTest(){const t=S.test;return`<h1>PLACEMENT TEST</h1>${S.placed?'':GATE?'<div class=card style="border-color:var(--ac2)"><b>Take the placement test first</b><p>To start studying we need to know your level. It takes a few minutes. After it, the levels below yours open for study.</p></div>':'<p>Welcome'+nmS()+'! Take this test first so we can find your exact level.</p>'}<div class=card><p>24 adaptive questions across 30 levels: grammar, vocabulary, reading, listening and writing. A correct answer makes the next question harder. A wrong answer makes it easier. The questions are different for every learner. At the end you get your exact level and every level up to it opens. Take your time and do not guess. It is an estimate, not an official exam, and it does not test speaking.</p>
+ const c=rnd(free.slice(0,Math.min(3,free.length)));a.u[c[1]]=1;a.h.push(c[0]);a.k.push(c[2]?1:0);return pbQ(c)}
+function vTest(){const t=S.test;return`<h1>PLACEMENT TEST</h1>${S.placed?'':GATE?'<div class=card style="border-color:var(--ac2)"><b>Take the placement test first</b><p>To start studying we need to know your level. It takes a few minutes. After it, the levels below yours open for study.</p></div>':'<p>Welcome'+nmS()+'! Take this test first so we can find your exact level.</p>'}<div class=card><p>20 to 30 adaptive questions across 30 levels (the test stops early when your level is clear): grammar, vocabulary, reading, listening and writing. A correct answer makes the next question harder. A wrong answer makes it easier. The questions are different for every learner. At the end you get your exact level and every level up to it opens. Take your time and do not guess. It is an estimate, not an official exam, and it does not test speaking.</p>
 ${t?`<p class=mut>Last result: Level ${t.lvl||'?'} (${CEFR(t.lvl||1)}) on ${t.date}</p>`:''}<button class=btn onclick="startTest()">${S.placed?'Retake the test':'Start the test'}</button></div>`}
-function placeLevel(a){const med=pMed(a.post),hc=Math.max(0,...a.r.filter(x=>x[1]).map(x=>x[0]));let lvl=Math.round(med-.25);lvl=Math.max(1,Math.min(NLV,Math.min(lvl,hc+3)));if(!hc)lvl=1;return lvl}
-function startTest(){const a={h:[],k:[],u:{},r:[],n:24,post:PTH.map(()=>1)};const first=pickQ(a);
+function placeLevel(a){const med=pMean(a.post),hc=Math.max(0,...a.r.filter(x=>x[1]).map(x=>x[0]));let lvl=Math.round(med);lvl=Math.max(1,Math.min(NLV,Math.min(lvl,hc+3)));if(!hc)lvl=1;return lvl}
+function startTest(){const a={h:[],k:[],u:{},r:[],n:30,min:20,post:PTH.map(()=>1)};const first=pickQ(a);
  runQuiz([first],'Placement',pct=>{const lvl=placeLevel(a),old=S.start||0;S.test={pct,lvl,date:today()};S.start=lvl;S.placed=1;save();
   const gc=lvFirst(lvl);
   return`${cele('Well done'+nmS()+'!','You moved to Level '+lvl+' now')}<h1>Level ${lvl}</h1><p>You are in <b>Level ${lvl} · ${LV[lvl-1]}</b> (about ${CEFR(lvl)}). Levels 1 to ${lvl} are now open.</p>${gc?`<p class=mut>Grammar rules from the earlier levels are not skipped: ${gc} short grammar lessons wait for you in your to-do list, so no rule is missed.</p>`:''}<p class=mut>${CT[lvl]?'Your lessons are ready.':'Lessons for this level are still being written. You can review Level '+Math.max(...Object.keys(CT).map(Number))+' meanwhile.'}</p><button class=btn onclick="go('home')">Go to Home</button> <button class=btn2 onclick="go('learn')">Open learning map</button>`});Q.ad=a;
@@ -801,6 +833,7 @@ addEventListener('load',regSW);
 addEventListener('keydown',e=>{if(e.key=='Escape'){if($('#zm'))$('#zm').remove();else if(MN)mnToggle();else hClose()}});
 addEventListener('pagehide',()=>{if(sb&&SESS){clearTimeout(pushT);push()}});
 try{matchMedia('(min-width:900px)').addEventListener('change',()=>{MN=0;draw()})}catch(e){}
+(function liveLoop(){const t=setTimeout(liveLoop,40000);if(t&&t.unref)t.unref();try{if(sb&&SESS&&PULLOK&&navigator.onLine&&!document.hidden&&SYNC=='ok'&&!PBUSY)syncNow()}catch(e){}})();
 (function syncLoop(){if(sb&&SESS&&(SYNC=='wait'||SYNC=='err')&&navigator.onLine&&!/switched on/i.test(SERR))push();const t=setTimeout(syncLoop,60000);if(t&&t.unref)t.unref()})();
 document.addEventListener('focusin',e=>{const t=e.target;if(t&&/INPUT|TEXTAREA/.test(t.tagName))setTimeout(()=>{try{t.scrollIntoView({block:'center',behavior:'smooth'})}catch(x){}},320)});
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
