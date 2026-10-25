@@ -392,3 +392,54 @@ html.cmp .card{padding:12px;margin:10px 0}html.cmp h1{font-size:24px}html.cmp .h
 .xrad{display:block;width:100%;text-align:left;margin:8px 0}
 .xrad::before{content:"";display:inline-block;width:16px;height:16px;border-radius:50%;border:2px solid currentColor;margin-right:10px;vertical-align:-3px}
 .xrad.xok::before{background:currentColor;box-shadow:inset 0 0 0 3px var(--card,#fff)}
+
+/* ===== Hub: practice page, wordbook, quick access, bottom tabs, grouped menu ===== */
+.ara{display:block;direction:rtl;text-align:right;font-size:13px;line-height:1.5;color:var(--mut);font-weight:400}
+.xt .ara{width:100%}
+.mut+.ara,h1+.mut+.ara{margin-top:-6px;margin-bottom:10px}
+.card .ara{font-size:14px}
+.qa{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.qa__i{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:78px;padding:10px 6px;border-radius:18px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 10px rgba(11,74,168,.08);transition:transform .15s,box-shadow .15s}
+.qa__i span{font-size:24px;line-height:1}
+.qa__i:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(11,74,168,.18)}
+.qa__i b{position:absolute;top:6px;right:8px;background:var(--ac);color:#fff;border-radius:999px;padding:1px 8px;font-size:11px}
+@media(min-width:700px){.qa{grid-template-columns:repeat(6,1fr)}}
+h2{margin-top:18px}
+.pairs{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px 10px;margin:8px 0 12px}
+.pair{display:flex;align-items:center;gap:2px}
+.gl2 summary{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:44px}
+.gl2[open] summary{margin-bottom:6px}
+.wtabs{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0}
+.wtabs .chip{margin:0;min-height:44px}
+.wtabs .chip.on{background:var(--ac);color:#fff}
+.wtabs .chip b{background:rgba(127,127,127,.25);border-radius:999px;padding:0 7px;margin-left:4px;font-size:12px}
+.wsp{min-height:40px;min-width:40px;padding:6px 10px;margin:0 2px}
+.wfl{width:100%;box-sizing:border-box;margin:0 0 6px;border-radius:14px;padding:12px 14px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit}
+.boxes{font-size:11px;letter-spacing:1px;color:var(--ac2);white-space:nowrap}
+.sb__lb{margin:10px 14px 2px;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+#mn.col .sb__lb{display:none}
+.sb__l{overflow-y:auto}
+/* bottom tab bar */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:2px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--card) 94%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line);box-shadow:0 -6px 22px rgba(11,74,168,.1)}
+.tabs button{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:54px;padding:4px 2px;border:0;border-radius:14px;background:none;color:var(--mut);font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.tabs button .ic{width:24px;height:24px;margin:0}
+.tabs button.on{color:var(--ac);background:var(--tint)}
+.tabs button b{position:absolute;top:2px;left:calc(50% + 6px);background:var(--bad);color:#fff;border-radius:999px;padding:0 6px;font-size:10px;line-height:16px}
+body.tb .app{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+body.sbd .tabs{display:none}
+body.sbd.tb .app{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+@media(min-width:900px){.tabs{display:none}}
+@media(max-height:420px){.tabs{display:none}body.tb .app{padding-bottom:40px}}
+@media print{.tabs{display:none}}
+/* inputs at 16px on touch screens: no zoom jump on focus now that pinch zoom is allowed */
+@media(pointer:coarse){input,textarea,select{font-size:max(16px,1em)}}
+
+/* crawlable intro inside #app: shown only until the app starts */
+.seo{max-width:760px;margin:0 auto;padding:28px 4px;line-height:1.65}.seo h1{font-size:28px}.seo ul{padding-left:1.2em}.seo a{color:var(--ac)}
+
+/* menu: compact items; on phones the first group is the bottom tab bar, so it is not repeated */
+.side .sb__i{min-height:42px;font-size:.97rem}
+.sb__lb{margin:8px 14px 0}
+body:not(.sbd) .sb__g[data-g="0"]{display:none}
+body:not(.sbd) .sb__g[data-g="1"]>.sb__dv{display:none}
+.seo h1{text-transform:none}.seo h1::first-letter{text-transform:none}.seo h1::after{display:none}
