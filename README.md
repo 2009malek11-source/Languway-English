@@ -16,19 +16,15 @@ A free, offline-capable English course (A1 to C1) built as a flat-folder PWA. No
 | `defs.js` | English definitions for all 1101 vocabulary words |
 | `levels.js`, `lv01.js`...`lv20.js` | Lesson content |
 | `grammar.js`, `grammar2.js` | 80 grammar rules |
+| `scenes.js` | Anime-style story backgrounds (8 places x 4 times of day, hand-coded SVG) |
+| `coach.js` | Smart coach (bilingual EN/AR reminders from your progress and what you use), bilingual helper brain, quick-access tiles, bottom bar. Usage memory lives in its own key `ef_use_<user>`; it never touches saved progress |
 | `videos.js` | Optional YouTube ids per lesson |
-| `hub.js` | Practice page, Listening lab, Grammar library, Wordbook, quick access, bottom tab bar, learning plan, placement "can do" text. Adds no saved data |
-| `course.html`, `sitemap.xml`, `robots.txt`, `og-image.png` | SEO: static course outline, sitemap, crawler rules, share image |
-| `SEO-GUIDE-AR.md`, `set-domain.sh` | Arabic SEO and Google Search Console guide; script that sets your real domain |
 | `supabase-config.js` | Supabase URL and publishable key |
 | `sw.js`, `manifest.json` | Offline cache and install manifest (bump `CACHE` in `sw.js` every release) |
 | `SUPABASE_SETUP.sql` | Run once in Supabase SQL Editor (progress table, RLS, delete-account function) |
 
 ## Course layout
 30 levels. Levels 1-20 have 2 units, levels 21-30 have 4 units; every unit has 3 lessons, a grammar rule and a 15-question test. Every level ends with a 30-question test (pass mark 75%). Plan: about 14 days per level. Level 21 opens with an optional review of levels 1-20.
-
-## Navigation
-Phones: bottom tab bar (Home, Learn, Practice, Words, Menu). The Menu groups everything else. Wide screens: docked sidebar with the same groups. Practice gathers the six skills (listening, speaking, reading, writing, grammar, vocabulary) and recommends the weakest one.
 
 ## Data and updates
 Progress lives in `localStorage` (key `ef2_<user>`) and, when signed in, in Supabase. `clean()` validates and migrates saved data (old 20-level saves are converted automatically); `mergeS()` merges two copies without losing progress. Updates are installed only when the learner agrees.

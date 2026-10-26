@@ -1,12 +1,2 @@
-# LanguWay English: all pages and assets may be crawled (Google needs the .js and .css files to render the app)
 User-agent: *
 Allow: /
-# Developer files that have no value in search results
-Disallow: /supabase-function/
-Disallow: /SUPABASE_SETUP.sql
-Disallow: /SETUP-CLOUD.md
-Disallow: /README.md
-Disallow: /SEO-GUIDE-AR.md
-Disallow: /netlify.toml
-
-Sitemap: https://REPLACE-WITH-YOUR-DOMAIN/sitemap.xml

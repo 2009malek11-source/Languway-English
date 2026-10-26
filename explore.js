@@ -1,7 +1,7 @@
 /* LanguWay English: Explore (side learning). Loaded before app.js; it only uses app.js globals when a function is called. */
 const XS=()=>{const e=S.ex=S.ex||{};e.xl=e.xl||{};e.wk=e.wk||{};e.wr=e.wr||[];e.sv=e.sv||{};e.wd=e.wd||{};return e};
 let X={p:'home'},XR=null;
-function xGo(p,o){try{speechSynthesis.cancel()}catch(e){}if(typeof p=='string'&&p.charAt(0)=='@'){go(p.slice(1));return}X=Object.assign({p},o||{});draw();try{window.scrollTo(0,0)}catch(e){}}
+function xGo(p,o){try{speechSynthesis.cancel()}catch(e){}X=Object.assign({p},o||{});draw();try{window.scrollTo(0,0)}catch(e){}}
 const xTier=()=>{const c=curLevel();return c<=10?1:c<=20?2:3};
 const xDay=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5);
 const xAtt=s=>esc(s);
