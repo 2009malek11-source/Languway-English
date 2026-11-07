@@ -1,4 +1,4 @@
--- English First: cloud progress storage.
+-- LanguWay English: cloud progress storage.
 -- Run this once in Supabase: SQL Editor > New query > paste > Run.
 
 create table if not exists public.progress (
