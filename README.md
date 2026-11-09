@@ -9,7 +9,7 @@ A free, offline-capable English course (A1 to C1) built as a flat-folder PWA. No
 | `style.css` | All styles (colour tokens in `:root`, dark mode via `[data-d]`) |
 | `app.js` | Application logic (see the section index at the top of the file) |
 | `story.js` | Story player: SVG scenes, text-to-speech voices, subtitles, questions |
-| `stories.js` | 30 "Cedar City" episodes (4 scenes each, English + optional Arabic subtitles) |
+| `stories.js` | 30 "Cedar City" episodes (4 scenes each, English subtitles) |
 | `dict.js`, `dict2.js` | Translator data: dictionary, phrases, idioms, phrasal verbs, synonyms, irregular verbs |
 | `explore.js`, `translate.js` | Explore section (word of the day, extra lessons, writing, weekly rule, role-play, career English, picture questions) and the Translator |
 | `pics.js` | 24 illustrated picture questions |
@@ -17,7 +17,7 @@ A free, offline-capable English course (A1 to C1) built as a flat-folder PWA. No
 | `levels.js`, `lv01.js`...`lv20.js` | Lesson content |
 | `grammar.js`, `grammar2.js` | 80 grammar rules |
 | `scenes.js` | Anime-style story backgrounds (8 places x 4 times of day, hand-coded SVG) |
-| `coach.js` | Smart coach (bilingual EN/AR reminders from your progress and what you use), bilingual helper brain, quick-access tiles, bottom bar. Usage memory lives in its own key `ef_use_<user>`; it never touches saved progress |
+| `coach.js` | Smart coach (English reminders from your progress and what you use), helper brain with quick questions, quick-access tiles, bottom bar. Usage memory lives in its own key `ef_use_<user>`; it never touches saved progress |
 | `videos.js` | Optional YouTube ids per lesson |
 | `supabase-config.js` | Supabase URL and publishable key |
 | `sw.js`, `manifest.json` | Offline cache and install manifest (bump `CACHE` in `sw.js` every release) |
@@ -41,3 +41,11 @@ The "Tutor" notes after each answer are rule-based (definitions, the evidence se
 3. **Hosting:** upload the whole flat folder to GitHub Pages or Netlify. Bump `CACHE` in `sw.js` on every release.
 4. Cloud sign-in needs internet. Guests and signed-in learners can study offline; progress syncs when the connection returns.
 5. Sign-out keeps your progress in your account. Only "Delete account" removes it.
+
+
+## v23 (English-only)
+- The whole site is in English. Only the **Translator** uses another language: the learner picks it (Arabic, French, Spanish, Turkish, Urdu and more) at the top of the Translator page; the choice is remembered on the device.
+- `phrases.js`: Phrases and Idioms (idioms, everyday expressions, phrasal verbs, quiz).
+- The placement test is asked only when opening Learn (or Grammar lessons). Home, Settings, Translator, Explore, Stories and Phrases open without it. A complete beginner can start at Level 1.
+- Learn shows CEFR bands (A1, A2, B1, B2, C1).
+- The opening splash lasts 3 seconds (tap to skip).

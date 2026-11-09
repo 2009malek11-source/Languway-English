@@ -221,7 +221,7 @@ function navFx(swap,title){const bl=$('#bl'),b=$('#blb');
 /* ---------- Sidebar: slides over the page on phones, docked (and collapsible to icons) on wide screens ---------- */
 let MN=0,SBC=0;try{SBC=+localStorage.getItem('ef_sbc')||0}catch(e){}
 const DT=()=>!!(window.matchMedia&&matchMedia('(min-width:900px)').matches);
-const MG0=[[['home','home','Home'],['learn','learn','Learn'],['review','review','Review'],['stories','stories','Stories'],['translate','chat','Translator']],[['explore','cert','Explore'],['progress','progress','Progress'],['search','search','Search'],['test','pen','Placement test'],['cert','cert','Certificates']],[['share','share','Install and share'],['help','help','Help'],['settings','gear','Settings']]];
+const MG0=[[['home','home','Home'],['learn','learn','Learn'],['review','review','Review'],['stories','stories','Stories'],['translate','chat','Translator']],[['phrases','chat','Phrases and idioms'],['explore','cert','Explore'],['progress','progress','Progress'],['search','search','Search'],['test','pen','Placement test'],['cert','cert','Certificates']],[['share','share','Install and share'],['help','help','Help'],['settings','gear','Settings']]];
 /* the middle group is ordered by what the learner opens most (stable when there is no history) */
 const MG=()=>{const g=MG0.map(x=>x.slice());try{g[1]=g[1].map((x,i)=>[x,i,uCount(x[0])]).sort((a,b)=>b[2]-a[2]||a[1]-b[1]).map(x=>x[0])}catch(e){}return g};
 function srch(id,val,ph,fn,cls){return`<form class="srch ${cls||''}" onsubmit="${fn};return false"><input id=${id} type=search value="${String(val||'').replace(/"/g,'')}" placeholder="${ph}" aria-label="${ph}" autocomplete=off enterkeyhint=search><button type=submit aria-label=Search>${ic('search')}</button></form>`}
@@ -320,7 +320,7 @@ function curLevel(){let n=Math.max(1,S.start||1);while(n<NLV&&S.lt[n]>=75)n++;re
 let V='home',A=0,P=0;
 function needTest(){if(S.placed)return false;GATE=1;INQ=0;V='test';A=0;scrollTo(0,0);draw();return true}
 let GATE=0;
-function go(v,a){try{uTrack(v)}catch(e){}if(v=='explore'&&V!='explore'){X={p:'home'};XR=null}if((v=='lesson'||v=='gram')&&needTest())return;if(V=='story'&&v!='story'&&typeof stLeave=='function')stLeave();const ch=v!=V||MN;INQ=0;V=v;A=a||0;P=0;
+function go(v,a){try{uTrack(v)}catch(e){}if(v=='explore'&&V!='explore'){X={p:'home'};XR=null}if((v=='lesson'||v=='gram'||v=='learn')&&needTest())return;if(V=='story'&&v!='story'&&typeof stLeave=='function')stLeave();const ch=v!=V||MN;INQ=0;V=v;A=a||0;P=0;
  if(ch)navFx(()=>{mnHide();scrollTo(0,0);draw()},VT[v]);else{scrollTo(0,0);draw()}}
 let SQ='',TD='Lessons';
 function tgl(){S.set.theme=document.documentElement.hasAttribute('data-d')?'light':'dark';save();theme()}
@@ -350,7 +350,7 @@ function draw(){
  if(V=='settings'&&ae&&ae.closest&&ae.closest('.cpx')&&/INPUT/.test(ae.tagName)&&!draw.force)return;
  const night=document.documentElement.hasAttribute('data-d'),
  top=`<div class=top><button class=ib id=mnb type=button aria-label="Open menu" aria-haspopup=dialog onclick="mnToggle()">${ic('menu')}</button><button class="dn ${night?'night':''}" type=button role=switch aria-checked="${night}" aria-label="Day or night mode" onclick="tgl()"><i class=dn__st></i><i class=dn__cl></i><i class=dn__k></i></button></div>`;
- $('#app').innerHTML=top+({home:vHome,learn:vLearn,lesson:vLesson,gram:vGram,review:vReview,progress:vProgress,settings:vSet,test:vTest,cert:vCert,search:vSearch,help:vHelp,share:vShare,stories:vStories,story:vStory,explore:vExplore,translate:vTranslate})[V]();
+ $('#app').innerHTML=top+({home:vHome,learn:vLearn,lesson:vLesson,gram:vGram,review:vReview,progress:vProgress,settings:vSet,test:vTest,cert:vCert,search:vSearch,help:vHelp,share:vShare,stories:vStories,story:vStory,explore:vExplore,translate:vTranslate,phrases:vPhrases})[V]();
  mnSync();wlSync();qnSync();try{uSession();setTimeout(coachToast,1800)}catch(e){}
 }
 
@@ -383,7 +383,7 @@ function hRule(gu){const g=GR[gu];if(!g)return hBot('I could not find that rule.
  h+=`<div class=hpat><b>Pattern</b><br>${pos?pat.map(x=>`<button type=button class=chip onclick='say(${JSON.stringify(x).replace(/'/g,"&#39;")})'>${esc(x)}</button>`).join(''):`<span class=hfm>${esc(g.f)}</span>`}</div>`;
  h+='<div class=hx><b>Examples. Tap to listen</b>'+g.x.map(x=>`<button type=button class="chip hxi" onclick='say(${JSON.stringify(x).replace(/'/g,"&#39;")})'>▶ ${esc(x)}</button>`).join('')+'</div>';
  h+=`<div class=hmis><span style="color:var(--bad)">✘ ${esc(g.m[0])}</span><br><span style="color:var(--ok)">✔ ${esc(g.m[1])}</span></div>`;
- if(g.a)h+=`<p dir=rtl lang=ar class=mut style="text-align:right">${esc(g.a)}</p>`;
+ 
  if(GP[gu])h+=pImg(gu);
  hBot(h,[['🔊 Listen to the explanation','rsay:'+gu],['Practice: question 1 of '+g.q.length,'rq:'+gu+':0'],['Open the full lesson','gram:'+gu]]);try{say(g.t+'! '+g.e)}catch(e){}}
 function hRQ(gu,qi){const g=GR[gu];if(!g||!g.q[qi])return;const q=g.q[qi],o=q.slice(1),r=(gu+qi)%o.length,ar=o.slice(r).concat(o.slice(0,r));
@@ -411,7 +411,7 @@ function hAns(q){const t=q.toLowerCase();let tx=t;
  if(wd){const ls=LS.filter(l=>l.w.some(x=>x.en==wd));return hBot(`<b>${esc(wd)}</b> means “${esc(DEFS[wd]||'')}”${ls[0]?`<br>Found in: ${esc(ls[0].t)} (Level ${ls[0].lv})`:''}`,[['Listen','say:'+wd],...(ls[0]?[['Open the lesson','lesson:'+ls[0].id]]:[])])}
  const lz=LS.filter(l=>tok.some(w=>l.t.toLowerCase().includes(w)||l.ut.toLowerCase().includes(w))).slice(0,3);
  if(lz.length)return hBot('I found these lessons:',lz.map(l=>[l.t+' · L'+l.lv,'lesson:'+l.id]));
- hBot(BI('I did not find that. I can explain a grammar rule (for example “explain passive”), find a lesson or word, tell you what to study, or show your weak points.','لم أجد ذلك. أستطيع شرح قاعدة (مثل «اشرح المبني للمجهول»)، أو إيجاد درس أو كلمة، أو اقتراح ما تدرسه، أو كشف نقاط ضعفك.'),[['What should I study? · ماذا أدرس؟','adv'],['Next lesson','next'],['Grammar to do','gram']])}
+ hBot('I did not find that. I can explain a grammar rule (for example “explain passive”), find a lesson or word, tell you what to study, or show your weak points.',[['What should I study?','adv'],['Next lesson','next'],['Grammar to do','gram']])}
 /* ---------- Updates only with your permission; progress is kept ---------- */
 let UPD=null;
 function showUpd(){if($('#upd'))return;const d=document.createElement('div');d.id='upd';d.setAttribute('role','alertdialog');d.innerHTML='<b>A new version is ready</b><p>Your progress is saved and will not be lost. Update now?</p><button class=btn onclick="doUpd()">Update now</button> <button class=btn2 onclick="this.parentNode.remove()">Later</button>';document.body.appendChild(d)}
@@ -429,10 +429,9 @@ function vHome(){const cl=curLevel(),nm=S.set.name?', '+esc(S.set.name):'',rv=Ma
  rem=S.set.rem!='off'&&!(S.days[today()]>0)&&new Date().getHours()>=(S.set.rem=='morning'?8:18);
  const bad=AUTHBAD?`<div class="card note" role=alert><b>Your progress is not reaching your account.</b><p>The server did not accept this device. Tap below, then sign in again. Nothing is lost: a copy stays on this device and is uploaded after you sign in.</p><button class=btn type=button onclick="signOut()">Sign out and sign in again</button></div>`:'';
  const pf=(isC(USER)&&SESS&&!PULLOK&&!AUTHBAD)?`<div class="card note" role=status><b>Loading your saved progress…</b><p class=mut>Your account is signed in, but the progress could not be loaded yet. Nothing is overwritten. It will retry by itself.</p><button class=btn2 type=button onclick="syncNow().then(()=>draw())">Try now</button></div>`:'';
- return bad+pf+`<section class=hero><div class=hero__t><p class=hero__k>${greet()}${nm}</p><h2 class=hero__h>Level ${cl} · ${LV[cl-1]}</h2><p class=hero__s>About ${CEFR(cl)} · ${doneN()} of ${LS.length} lessons finished${S.ls[cl]&&!(S.lt[cl]>=75)?' · '+dayLbl(cl):''}</p><button class=hero__b type=button onclick="${S.placed?'hNext()':"go('test')"}">${S.placed?'Continue learning':'Take the placement test'}</button></div><div class=hero__r style="--p:${gp}" title="Daily goal"><i>${gp}%</i><small>today</small></div></section>
- ${S.placed?quickHtml():''}${coachCard(2)}
- ${S.placed?todo():''}
- ${S.placed?'':`<div class="card note"><b>Take the placement test to start studying</b><p class=mut>You can look around the app now. To study lessons you first need your level.</p></div>`}
+ return bad+pf+`<section class=hero><div class=hero__t><p class=hero__k>${greet()}${nm}</p><h2 class=hero__h>Level ${cl} · ${LV[cl-1]}</h2><p class=hero__s>About ${CEFR(cl)} · ${doneN()} of ${LS.length} lessons finished${S.ls[cl]&&!(S.lt[cl]>=75)?' · '+dayLbl(cl):''}</p><button class=hero__b type=button onclick="hNext()">Continue learning</button></div><div class=hero__r style="--p:${gp}" title="Daily goal"><i>${gp}%</i><small>today</small></div></section>
+ ${quickHtml()}${coachCard(2)}
+ ${todo()}
  ${rem?`<div class="card note"><b>Time to study</b><p class=mut>You have not studied yet today. One quiz keeps your ${streak()}-day streak alive.</p><button class=btn type=button onclick="hNext()">Start now</button></div>`:''}
  ${CT[cl]?'':`<div class=card><b>Lessons for Level ${cl} are still being written.</b><p class=mut>Your level is saved and open. Until the lessons arrive you can review Level ${rv}.</p><button class=btn2 onclick="OL=${rv};go('learn')">Open Level ${rv}</button></div>`}
  <div class=grid><div class=stat><b>${streak()}</b>Day streak</div><div class=stat><b>${Object.keys(S.vocab).length}</b>Words learned</div><div class=stat><b>${doneN()}</b>Lessons done</div><div class=stat><b>${wn}</b>Quizzes this week</div></div>
@@ -449,9 +448,11 @@ function lvBody(n){let h='';const ct=CT[n];
   const ok=utOpen(gu);h+=`<button class="row ${ok?'':'lock'}" ${ok?'':'disabled'} onclick="startUT(${gu})"><span>${S.ut[gu]>=75?'✔':ok?'📝':'🔒'} Unit ${ui+1} test · 15 questions</span><b>${S.ut[gu]!=null?S.ut[gu]+'%':''}</b></button>`}
  if(ct){const ok=ltOpen(n);h+=`<button class="row ${ok?'':'lock'}" ${ok?'':'disabled'} onclick="startLT(${n})"><span>${S.lt[n]>=75?'✔':ok?'🏁':'🔒'} Level ${n} test · 30 questions</span><b>${S.lt[n]!=null?S.lt[n]+'%':''}</b></button>`}
  return h}
+const BANDS={1:['A1','Beginner','You can understand and use very simple everyday phrases.',1,4],5:['A2','Elementary','You can talk about daily life, family, shopping and places.',5,10],11:['B1','Intermediate','You can handle most situations and explain your opinions.',11,18],19:['B2','Upper-Intermediate','You can speak fluently and understand complex texts.',19,25],26:['C1','Advanced','You can use English flexibly for study and work.',26,30]};
+function BANDH(n){const b=BANDS[n];if(!b)return'';const mine=curLevel()>=b[3]&&curLevel()<=b[4];return`<div class="cefr ${mine?'me':''}"><b class=cefr__c>${b[0]}</b><span><b>${b[1]}</b><br><span class=mut>${b[2]}</span></span><small>Levels ${b[3]}–${b[4]}${mine?' · you are here':''}</small></div>`}
 function vLearn(){OL=OL||curLevel();let h='<h1>LEARN</h1><p class=mut>30 levels · each level takes about 2 weeks · 3 lessons per unit. Tap a level to open it.</p>';
  LV.forEach((nm,i)=>{const n=i+1,op=lvOpen(n),ct=!!CT[n],pc=ct?Math.round(LS.filter(l=>l.lv==n&&S.done[l.id]!=null).length/(lvCnt(n)*3)*100):0;
-  h+=`<div class="card ${op?'':'dim'}"><button class=row style="border:0;padding:0" ${op?'':'disabled'} onclick="OL=${OL==n?-1:n};draw()"><span><b>${op?'🔓':'🔒'} Level ${n} · ${nm}</b>${n==S.start?' · your level':''}${S.lt[n]>=75?' ✔':''}</span><b>${ct?pc+'%':'soon'}</b></button>${ct&&op?`<div class=bar><i style="width:${pc}%"></i></div>`:''}${OL==n?lvBody(n):''}</div>`});return h}
+  h+=BANDH(n)+`<div class="card ${op?'':'dim'}"><button class=row style="border:0;padding:0" ${op?'':'disabled'} onclick="OL=${OL==n?-1:n};draw()"><span><b>${op?'🔓':'🔒'} Level ${n} · ${nm}</b>${n==S.start?' · your level':''}${S.lt[n]>=75?' ✔':''}</span><b>${ct?pc+'%':'soon'}</b></button>${ct&&op?`<div class=bar><i style="width:${pc}%"></i></div>`:''}${OL==n?lvBody(n):''}</div>`});return h}
 function vid(id,k){const v=((window.VIDEOS||{})[id]||[])[k]||{};return`<div class=vid>${v.yt?`<iframe src="https://www.youtube-nocookie.com/embed/${v.yt}?rel=0" title="${v.t||'Lesson video'}" allowfullscreen loading=lazy></iframe>`:v.src?`<video controls preload=none src="${v.src}"></video>`:`<span>Video ${k+1} for this lesson has not been added yet.</span>`}</div>${v.t?`<p class=mut>${v.t}</p>`:''}`}
 
 /* ---------- Lesson: 4 sections, then the quiz ---------- */
@@ -736,9 +737,10 @@ const pSd=p=>{const m=pMean(p);let s=0,z=0;p.forEach((v,i)=>{s+=v*(PTH[i]-m)**2;
 const pMed=p=>{let z=p.reduce((a,b)=>a+b,0),c=0;for(let i=0;i<p.length;i++){c+=p[i];if(c>=z/2)return PTH[i]}return 30};
 function pickQ(a){const th=pMean(a.post),free=PB.filter(x=>!a.u[x[1]]);free.sort((x,y)=>Math.abs(x[0]-th)-Math.abs(y[0]-th));
  const c=rnd(free.slice(0,Math.min(3,free.length)));a.u[c[1]]=1;a.h.push(c[0]);a.k.push(c[2]?1:0);return pbQ(c)}
-function vTest(){const t=S.test;return`<h1>PLACEMENT TEST</h1>${S.placed?'':GATE?'<div class=card style="border-color:var(--ac2)"><b>Take the placement test first</b><p>To start studying we need to know your level. It takes a few minutes. After it, the levels below yours open for study.</p></div>':'<p>Welcome'+nmS()+'! Take this test first so we can find your exact level.</p>'}<div class=card><p>20 to 30 adaptive questions across 30 levels (the test stops early when your level is clear): grammar, vocabulary, reading, listening and writing. A correct answer makes the next question harder. A wrong answer makes it easier. The questions are different for every learner. At the end you get your exact level and every level up to it opens. Take your time and do not guess. It is an estimate, not an official exam, and it does not test speaking.</p>
+function vTest(){const t=S.test;return`<h1>PLACEMENT TEST</h1>${S.placed?'':GATE?'<div class=card style="border-color:var(--ac2)"><b>Take the placement test first</b><p>To start studying we need to know your level. It takes a few minutes. After it, the levels below yours open for study.</p><button class=btn2 type=button onclick="startL1()">I am a complete beginner: start at Level 1</button></div>':'<p>Welcome'+nmS()+'! Take this test first so we can find your exact level.</p>'}<div class=card><p>20 to 30 adaptive questions across 30 levels (the test stops early when your level is clear): grammar, vocabulary, reading, listening and writing. A correct answer makes the next question harder. A wrong answer makes it easier. The questions are different for every learner. At the end you get your exact level and every level up to it opens. Take your time and do not guess. It is an estimate, not an official exam, and it does not test speaking.</p>
 ${t?`<p class=mut>Last result: Level ${t.lvl||'?'} (${CEFR(t.lvl||1)}) on ${t.date}</p>`:''}<button class=btn onclick="startTest()">${S.placed?'Retake the test':'Start the test'}</button></div>`}
 function placeLevel(a){const med=pMean(a.post),hc=Math.max(0,...a.r.filter(x=>x[1]).map(x=>x[0]));let lvl=Math.round(med);lvl=Math.max(1,Math.min(NLV,Math.min(lvl,hc+3)));if(!hc)lvl=1;return lvl}
+function startL1(){S.start=1;S.placed=1;save();go('learn')}
 function startTest(){const a={h:[],k:[],u:{},r:[],n:30,min:20,post:PTH.map(()=>1)};const first=pickQ(a);
  runQuiz([first],'Placement',pct=>{const lvl=placeLevel(a),old=S.start||0;S.test={pct,lvl,date:today()};S.start=lvl;S.placed=1;save();
   const gc=lvFirst(lvl);
@@ -790,7 +792,6 @@ function vSet(){const s=S.set,C=isC(USER);
  ${sel('Voice',[['','Automatic (best available)']].concat(VOICES.map(v=>[v.name,v.name.replace(/^(Microsoft|Google)\s+/,'$1 ').slice(0,38)+' ('+v.lang+')'])),s.vo,'S.set.vo=this.value;save()')}<div class=set>Hear the voice<button class=btn2 type=button onclick="say('Hello! I am your English voice. Listen to how I say: thirteen, thirty, and three.')">▶ Test</button></div>
  ${chk('auto','Play audio automatically')}
  ${sel('Speech speed',[['.6','Slow'],['.9','Normal'],['1.15','Fast']],s.rate,'S.set.rate=+this.value;save()')}
- ${chk('sa','Arabic subtitles in stories')}
  ${sel('Story scene plays',[[1,'Once'],[2,'Twice'],[3,'3 times']],s.rp,'S.set.rp=+this.value;save()')}
  <p class=mut>Pronunciation uses your browser's voices, which differ by device.</p>`;
  const tools=`${sel('Weekly goal',[[3,'3 quizzes'],[5,'5 quizzes'],[7,'7 quizzes'],[10,'10 quizzes'],[14,'14 quizzes']],s.wk,'S.set.wk=+this.value;save()')}
@@ -842,4 +843,4 @@ try{matchMedia('(min-width:900px)').addEventListener('change',()=>{MN=0;draw()})
 (function syncLoop(){if(sb&&SESS&&(SYNC=='wait'||SYNC=='err')&&navigator.onLine&&!/switched on/i.test(SERR))push();const t=setTimeout(syncLoop,60000);if(t&&t.unref)t.unref()})();
 document.addEventListener('focusin',e=>{const t=e.target;if(t&&/INPUT|TEXTAREA/.test(t.tagName))setTimeout(()=>{try{t.scrollIntoView({block:'center',behavior:'smooth'})}catch(x){}},320)});
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
-(function(){const sp=$('#splash');if(!sp)return;let seen=0;try{seen=sessionStorage.getItem('ef_sp')}catch(e){}const end=()=>{sp.classList.add('out');setTimeout(()=>sp.remove(),600)};if(seen){sp.remove();return}try{sessionStorage.setItem('ef_sp','1')}catch(e){}sp.onclick=end;sp.addEventListener('touchstart',end,{passive:true});setTimeout(end,matchMedia('(prefers-reduced-motion:reduce)').matches||S.set.calm?1200:3900)})();
+(function(){const sp=$('#splash');if(!sp)return;let seen=0;try{seen=sessionStorage.getItem('ef_sp')}catch(e){}const end=()=>{sp.classList.add('out');setTimeout(()=>sp.remove(),420)};if(seen){sp.remove();return}try{sessionStorage.setItem('ef_sp','1')}catch(e){}sp.onclick=end;sp.addEventListener('touchstart',end,{passive:true});setTimeout(end,matchMedia('(prefers-reduced-motion:reduce)').matches||S.set.calm?1200:Math.max(400,2600-(window.performance?performance.now():0)))})();

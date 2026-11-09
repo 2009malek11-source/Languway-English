@@ -1,5 +1,8 @@
 /* LanguWay English: Translator (Arabic <-> English). Works offline with the built-in dictionary; online services only add extra help. */
-let T={p:'main',q:'',ctx:'',mode:'',on:null,busy:0};
+let T={p:'main',q:'',ctx:'',mode:'',on:null,busy:0,lang:(function(){try{return localStorage.getItem('ef_tl')||'ar'}catch(e){return'ar'}})()};
+const TLANGS=[['ar','Arabic · العربية'],['fr','French · Français'],['es','Spanish · Español'],['de','German · Deutsch'],['it','Italian · Italiano'],['pt','Portuguese · Português'],['tr','Turkish · Türkçe'],['ur','Urdu · اردو'],['fa','Persian · فارسی'],['hi','Hindi · हिन्दी'],['bn','Bengali · বাংলা'],['ru','Russian · Русский'],['zh-CN','Chinese · 中文'],['ja','Japanese · 日本語'],['ko','Korean · 한국어'],['id','Indonesian · Bahasa Indonesia'],['sw','Swahili · Kiswahili'],['nl','Dutch · Nederlands'],['pl','Polish · Polski'],['uk','Ukrainian · Українська']];
+const tLangName=c=>(TLANGS.find(x=>x[0]==c)||[c,c])[0]==c?(TLANGS.find(x=>x[0]==c)||[c,c])[1].split(' · ')[0]:c;
+function tSetLang(c){T.lang=c;try{localStorage.setItem('ef_tl',c)}catch(e){}T.on=null;draw()}
 const tAr=s=>String(s||'').replace(/[ً-ٰٟـ]/g,'').replace(/[إأآ]/g,'ا').replace(/ى/g,'ي').replace(/ؤ/g,'و').replace(/ئ/g,'ي').replace(/ة/g,'ه').trim();
 const tIsAr=s=>/[؀-ۿ]/.test(s);
 let TI=null;
@@ -25,8 +28,8 @@ const tSay=(t,l)=>`<button type=button class=btn2 style="padding:6px 10px" data-
 
 function vTranslate(){const p=T.p;
  if(p=='pairs')return tPairs();if(p=='saved')return tSaved();if(p=='irr')return tIrr();
- return`<h1>TRANSLATOR</h1><p class=mut>Arabic ⇄ English. Type a word or a sentence. Every meaning, with examples and how to choose the right one.</p>
- <div class=card><form onsubmit="tGo();return false"><textarea id=tq rows=3 maxlength=400 dir=auto aria-label="Type a word or a sentence" oninput="tSug()" placeholder="Type English or Arabic here… (for example: run, ركض, I want to learn English)">${esc(T.q)}</textarea>
+ return`<h1>TRANSLATOR</h1><label class=set style="display:block;margin:6px 0">My language<select onchange="tSetLang(this.value)" aria-label="My language">${TLANGS.map(x=>`<option value="${x[0]}" ${x[0]==T.lang?'selected':''}>${x[1]}</option>`).join('')}</select></label><p class=mut>${T.lang=='ar'?'Arabic ⇄ English. Type a word or a sentence. Every meaning, with examples and how to choose the right one.':'English ⇄ '+tLangName(T.lang)+'. Type a word or a sentence in either language.'}</p>
+ <div class=card><form onsubmit="tGo();return false"><textarea id=tq rows=3 maxlength=400 dir=auto aria-label="Type a word or a sentence" oninput="tSug()" placeholder="${T.lang=='ar'?'Type English or Arabic here… (for example: run, ركض, I want to learn English)':'Type English or '+tLangName(T.lang)+' here…'}">${esc(T.q)}</textarea>
  <div id=tsug></div><details style="margin:6px 0"><summary class=mut>Optional: the sentence where you saw the word (helps me pick the meaning)</summary><input id=tc dir=auto value="${esc(T.ctx)}" maxlength=200 placeholder="He runs a small shop." aria-label="Context sentence"></details>
  <button class=btn type=submit>Translate</button> <button type=button class=btn2 onclick="T.q='';T.ctx='';T.on=null;draw()">Clear</button></form></div>
  <div id=tout>${T.on?T.on:tHome()}</div>
@@ -35,7 +38,7 @@ function tHome(){const ex=['run','light','kind','ركض','بنك','I want to lea
 function tGo(){const q=$('#tq'),c=$('#tc');T.q=q?q.value.trim():T.q;T.ctx=c?c.value.trim():T.ctx;tGoQ()}
 function tHist(q){try{let h=JSON.parse(localStorage.getItem('ef_th')||'[]');h=[q].concat(h.filter(x=>x!=q)).slice(0,12);localStorage.setItem('ef_th',JSON.stringify(h))}catch(e){}}
 function tHistGet(){try{return JSON.parse(localStorage.getItem('ef_th')||'[]')}catch(e){return[]}}
-function tCopy(){const o=$('#tout');if(!o)return;const t=o.innerText.replace(/\n{2,}/g,'\n').slice(0,1500);try{navigator.clipboard.writeText(t).then(()=>{const b=$('#tcp');if(b)b.textContent='✔ Copied'})}catch(e){}}
+function tCopy(){const o=$('#tout');if(!o)return;const t=o.innerText.replace(/\n{2,}/g,'\n').slice(0,1500);try{navigator.clipboard.writeText(t).then(()=>{const b=$('#tcp');if(b)b.textContent='✔ Copied'},()=>{})}catch(e){}}
 function tSug(){const i=$('#tq'),o=$('#tsug');if(!i||!o)return;const v=i.value.trim().toLowerCase();if(v.length<2||/\s/.test(v)||tIsAr(v)){o.innerHTML='';return}const I=tIndex(),out=[];for(const k in I.en){if(k.indexOf(v)==0&&out.length<6)out.push(k)}o.innerHTML=out.map(k=>`<button type=button class=chip onclick="T.q='${k.replace(/'/g,'')}';tGoQ()">${esc(k)}</button>`).join('')}
 function tExtra(q){const n=q.toLowerCase().replace(/[’]/g,"'").replace(/[.!?؟,،]/g,'').trim();if(!n)return'';let h='';
  const isAr=tIsAr(q),na=isAr?tAr(q):'';
@@ -46,7 +49,7 @@ function tExtra(q){const n=q.toLowerCase().replace(/[’]/g,"'").replace(/[.!?؟
  if(!isAr&&!/\s/.test(n)){const sy=(window.SYN||[]).filter(x=>x[0]==n);if(sy.length)h+=`<div class=card><h3 style="margin-top:0">Similar and opposite</h3>${sy.map(x=>`<p><b>Similar:</b> ${esc(x[1])}<br><b>Opposite:</b> ${esc(x[2])}</p>`).join('')}</div>`}
  if(!isAr&&n.split(/\s+/).length>=3){const w=new Set(n.split(/\s+/)),ph=window.PHRASES||[];let best=null,bs=0;ph.forEach(p=>{const pw=p[0].toLowerCase().replace(/[’]/g,"'").replace(/[.!?,]/g,'').split(/\s+/),c=pw.filter(x=>w.has(x)).length,sc=c/Math.max(pw.length,w.size);if(sc>bs&&sc<1){bs=sc;best=p}});if(best&&bs>=.5)h+=`<div class=card><h3 style="margin-top:0">Similar phrase from the phrase book</h3><p><b>${esc(best[0])}</b> ${tSay(best[0])}<br><span dir=rtl lang=ar>${esc(best[1])}</span></p></div>`}
  return h}
-function tGoQ(){const q=T.q.trim();if(!q){T.on=null;return draw()}tHist(q);
+function tGoQ(){const q=T.q.trim();if(!q){T.on=null;return draw()}tHist(q);if(T.lang&&T.lang!='ar')return tOther(q);
  const words=q.split(/\s+/).filter(Boolean),isAr=tIsAr(q);
  if(words.length<=2&&!/[.!?؟]$/.test(q)){T.on=isAr?tArWord(q):tEnWord(q.toLowerCase().replace(/[^a-z' -]/g,'').trim())}
  else T.on=tSentence(q,isAr);
@@ -124,3 +127,14 @@ function tPairs(){return`<button class=btn2 type=button onclick="T.p='main';draw
 function tIrr(){const q=(T.iq||'').toLowerCase();const L=(window.IRR||[]).filter(r=>!q||r.join(' ').toLowerCase().includes(q)||r[3].includes(q));return`<button class=btn2 type=button onclick="T.p='main';draw()">← Translator</button><h1>IRREGULAR VERBS</h1><div class=card><input id=tiq type=search value="${esc(T.iq||'')}" placeholder="Search a verb (English or Arabic)" oninput="T.iq=this.value;tIrrDraw()" aria-label="Search irregular verbs"></div><div id=tirr>${tIrrRows(L)}</div>`}
 function tIrrRows(L){return`<div class=card><div class=xirr><b>Base</b><b>Past</b><b>Participle</b><b>Arabic</b>${L.map(r=>`<span>${esc(r[0])} ${tSay(r[0],'▶')}</span><span>${esc(r[1])}</span><span>${esc(r[2])}</span><span dir=rtl lang=ar>${esc(r[3])}</span>`).join('')}</div></div>`}
 function tIrrDraw(){const q=(T.iq||'').toLowerCase(),L=(window.IRR||[]).filter(r=>!q||r.join(' ').toLowerCase().includes(q)),e=$('#tirr');if(e)e.innerHTML=tIrrRows(L)}
+
+/* Translator for languages other than Arabic: online translation + English dictionary help */
+function tOther(q){const en=/^[\x00-\x7F’‘“”–—…]+$/.test(q)||(q.match(/[A-Za-z]/g)||[]).length>=q.replace(/\s/g,'').length*0.6,L=T.lang,dir=en?'en|'+L:L+'|en',w=q.toLowerCase().replace(/[^a-z' -]/g,'').trim();
+ let def='';try{const d=(window.DICT||[]).find(x=>x[0]==w||(' '+x[1]+' ').indexOf(' '+w+' ')>=0);if(en&&d&&q.split(/\s+/).length<=2)def='<div class=card><h3 style="margin-top:0">'+esc(d[0])+' '+tSay(d[0])+'</h3>'+d[2].map(m=>'<p><b>'+esc(tPos[m[0]]||m[0])+'</b>: '+esc(m[2])+'<br><i>'+esc(m[3])+'</i> '+tSay(m[3])+'</p>').join('')+'</div>'}catch(e){}
+ T.on='<div class=card><p class=mut id=tst>Translating…</p><div id=tsr></div></div>'+def;draw();tOtherGo(q,dir,en)}
+async function tOtherGo(q,dir,en){const el=$('#tsr'),st=$('#tst');if(!el)return;
+ try{const ct=new AbortController(),tm=setTimeout(()=>ct.abort(),10000),r=await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(q.slice(0,300))+'&langpair='+encodeURIComponent(dir),{signal:ct.signal});clearTimeout(tm);if(!r.ok)throw 0;const j=await r.json(),t=j.responseData&&j.responseData.translatedText;if(!t||/MYMEMORY WARNING|QUERY LENGTH|INVALID/i.test(t))throw 0;
+  const alt=[...new Set((j.matches||[]).map(m=>m.translation).filter(x=>x&&x!=t))].slice(0,3);
+  if(st)st.textContent=(en?'English → ':tLangName(T.lang)+' → ')+(en?tLangName(T.lang):'English');
+  el.innerHTML='<p style="font-size:21px;margin:6px 0"><b>'+esc(t)+'</b> '+(en?'':tSay(t))+'</p>'+(alt.length?'<p class=mut>Other versions:</p>'+alt.map(a=>'<p class=mut>'+esc(a)+'</p>').join(''):'')+'<p class=mut>Machine translation (MyMemory). Check important sentences with a teacher.</p>'}
+ catch(e){if(st)st.textContent='The online translation is not available now. Check your connection and try again.'}}
