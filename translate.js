@@ -34,12 +34,12 @@ function vTranslate(){const p=T.p;
  <button class=btn type=submit>Translate</button> <button type=button class=btn2 onclick="T.q='';T.ctx='';T.on=null;draw()">Clear</button></form></div>
  <div id=tout>${T.on?T.on:tHome()}</div>
  <div class=card><h3 style="margin-top:0">More tools</h3><button type=button class=chip onclick="T.p='saved';draw()">⭐ My saved words (${Object.keys(XS().sv).length})</button><button type=button class=chip onclick="T.p='pairs';draw()">🔀 Confusing words</button><button type=button class=chip onclick="T.p='irr';draw()">📋 Irregular verbs</button></div>`}
-function tHome(){const ex=['run','light','kind','ركض','بنك','I want to learn English.','piece of cake','give up'],hs=tHistGet();return`${hs.length?`<div class=card><b>Recent searches</b><br>${hs.map(x=>`<button type=button class=chip data-q="${esc(x)}" onclick="T.q=this.dataset.q;T.ctx='';tGoQ()">${esc(x)}</button>`).join('')} <button type=button class=btn2 style="padding:4px 10px" onclick="try{localStorage.removeItem('ef_th')}catch(e){}draw()">Clear</button></div>`:''}<div class=card><b>Try one:</b><br>${ex.map(x=>`<button type=button class=chip onclick="T.q='${x.replace(/'/g,'')}';T.ctx='';tGoQ()">${esc(x)}</button>`).join('')}<p class=mut>Works without internet for the built-in words and phrases. With internet, I can also translate any sentence and find extra meanings.</p></div>`}
+function tHome(){const ex=['run','light','kind','ركض','بنك','I want to learn English.','piece of cake','give up'],hs=tHistGet();return`${hs.length?`<div class=card><b>Recent searches</b><br>${hs.map(x=>`<button type=button class=chip data-q="${esc(x)}" onclick="T.q=this.dataset.q;T.ctx='';tGoQ()">${esc(x)}</button>`).join('')} <button type=button class=btn2 style="padding:4px 10px" onclick="try{localStorage.removeItem('ef_th')}catch(e){}draw()">Clear</button></div>`:''}<div class=card><b>Try one:</b><br>${ex.map(x=>`<button type=button class=chip onclick="T.q=${jq(x)};T.ctx='';tGoQ()">${esc(x)}</button>`).join('')}<p class=mut>Works without internet for the built-in words and phrases. With internet, I can also translate any sentence and find extra meanings.</p></div>`}
 function tGo(){const q=$('#tq'),c=$('#tc');T.q=q?q.value.trim():T.q;T.ctx=c?c.value.trim():T.ctx;tGoQ()}
 function tHist(q){try{let h=JSON.parse(localStorage.getItem('ef_th')||'[]');h=[q].concat(h.filter(x=>x!=q)).slice(0,12);localStorage.setItem('ef_th',JSON.stringify(h))}catch(e){}}
 function tHistGet(){try{return JSON.parse(localStorage.getItem('ef_th')||'[]')}catch(e){return[]}}
 function tCopy(){const o=$('#tout');if(!o)return;const t=o.innerText.replace(/\n{2,}/g,'\n').slice(0,1500);try{navigator.clipboard.writeText(t).then(()=>{const b=$('#tcp');if(b)b.textContent='✔ Copied'},()=>{})}catch(e){}}
-function tSug(){const i=$('#tq'),o=$('#tsug');if(!i||!o)return;const v=i.value.trim().toLowerCase();if(v.length<2||/\s/.test(v)||tIsAr(v)){o.innerHTML='';return}const I=tIndex(),out=[];for(const k in I.en){if(k.indexOf(v)==0&&out.length<6)out.push(k)}o.innerHTML=out.map(k=>`<button type=button class=chip onclick="T.q='${k.replace(/'/g,'')}';tGoQ()">${esc(k)}</button>`).join('')}
+function tSug(){const i=$('#tq'),o=$('#tsug');if(!i||!o)return;const v=i.value.trim().toLowerCase();if(v.length<2||/\s/.test(v)||tIsAr(v)){o.innerHTML='';return}const I=tIndex(),out=[];for(const k in I.en){if(k.indexOf(v)==0&&out.length<6)out.push(k)}o.innerHTML=out.map(k=>`<button type=button class=chip onclick="T.q=${jq(k)};tGoQ()">${esc(k)}</button>`).join('')}
 function tExtra(q){const n=q.toLowerCase().replace(/[’]/g,"'").replace(/[.!?؟,،]/g,'').trim();if(!n)return'';let h='';
  const isAr=tIsAr(q),na=isAr?tAr(q):'';
  const id=(window.IDIOMS||[]).filter(x=>isAr?tAr(x[1]).includes(na)&&na.length>2:(n.length>2&&(x[0].replace(/[’]/g,"'")==n||n.includes(x[0].replace(/[’]/g,"'")))));
@@ -65,7 +65,7 @@ function tSense(s,i,hit){return`<div class=xfx style="${hit?'border-color:var(--
  <p class=mut style="margin:4px 0">🔎 How to know: ${esc(s[5])}</p></div>`}
 function tEnWord(w){if(!w)return'';const I=tIndex(),l=tLemma(w),e=I.en[l],sv=XS().sv,ctxPick=e?tPick(e,T.ctx):-1;let h='';
  const uk=(typeof XUK!='undefined'?XUK:[]).find(r=>r[0].replace(/ \(.*\)/,'')==l||r[1]==l);
- h+=`<div class=card><h2 style="margin:0">${esc(w)} ${tSay(w,'🔊')}</h2>${l!=w?`<p class=mut>Base form: <b>${esc(l)}</b></p>`:''}`;
+ h+=`<div class=card><div style="text-align:center">${wpic(w,1)}</div><h2 style="margin:0">${esc(w)} ${tSay(w,'🔊')}</h2>${l!=w?`<p class=mut>Base form: <b>${esc(l)}</b></p>`:''}`;
  if(e){h+=`<p class=mut>${e[2].length} meaning${e[2].length>1?'s':''} found</p></div>`;e[2].forEach((s,i)=>h+=tSense(s,i,i==ctxPick));
   if(e[2].length>1)h+=`<div class=card><b>Which meaning?</b><p class=mut>Look at the words around it. Each meaning above has a “How to know” clue. You can also type the sentence in the optional box and translate again.</p></div>`}
  else{const ar=LEX[l],df=(typeof DEFS!='undefined'&&DEFS[l])||'';
@@ -78,7 +78,7 @@ function tEnWord(w){if(!w)return'';const I=tIndex(),l=tLemma(w),e=I.en[l],sv=XS(
  else if(!e&&!(window.MINI&&MINI[l]!==undefined)&&/^[a-z]+$/.test(l)){h+=`<div class=card><h3 style="margin-top:0">Possible forms</h3><p class=mut>If it is a verb: ${esc(l)}, ${esc(tS3(l))}, ${esc(tEd(l))}, ${esc(tIng(l))}. If it is a noun: ${esc(l)}, ${esc(/(s|x|z|ch|sh)$/.test(l)?l+'es':/[^aeiou]y$/.test(l)?l.slice(0,-1)+'ies':l+'s')}.</p></div>`}
  if(uk)h+=`<div class=card><b>US ⇄ UK:</b> American <b>${esc(uk[0])}</b> · British <b>${esc(uk[1])}</b></div>`;
  const pr=(window.PAIRS||[]).filter(p=>p[0].toLowerCase().split(/[ \/’']+/).includes(l));pr.forEach(p=>h+=`<div class=card><b>⚠️ Often confused: ${esc(p[0])}</b><p style="margin:4px 0">${esc(p[1])}</p><p dir=rtl lang=ar class=mut>${esc(p[2])}</p><p class=mut>${esc(p[3])}</p></div>`);
- h+=`<div class=card><button type=button class="${sv[l]?'btn2':'btn'}" onclick="tSave('${esc(l).replace(/'/g,'')}')">${sv[l]?'✔ Saved':'⭐ Save this word'}</button> <button type=button class=btn2 onclick="tOnline('${esc(l).replace(/'/g,'')}')">🌐 More meanings online</button><div id=tmore></div></div>`;
+ h+=`<div class=card><button type=button class="${sv[l]?'btn2':'btn'}" onclick="tSave(${jq(l)})">${sv[l]?'✔ Saved':'⭐ Save this word'}</button> <button type=button class=btn2 onclick="tOnline(${jq(l)})">🌐 More meanings online</button><div id=tmore></div></div>`;
  return h}
 function tSave(w){const e=XS(),I=tIndex(),en=I.en[w],ar=en?String(en[2][0][1]).split(/\s*\/\s*/)[0]:(LEX[w]||'');if(e.sv[w])delete e.sv[w];else if(Object.keys(e.sv).length<300)e.sv[w]=ar||'—';save();T.on=tEnWord(w);draw()}
 function tArWord(q){const I=tIndex(),k=tAr(q).replace(/^ال/,''),keys=[k,'ي'+k,k.replace(/^ي/,''),'ال'+k,tAr(q)];const hits=[],seen={};
@@ -87,9 +87,9 @@ function tArWord(q){const I=tIndex(),k=tAr(q).replace(/^ال/,''),keys=[k,'ي'+k
  let h=`<div class=card><h2 style="margin:0" dir=rtl lang=ar>${esc(q)}</h2>`;
  if(!hits.length)return h+`<p>I could not find this Arabic word in the offline dictionary.</p><p class=mut>Tap the button to look for English equivalents online.</p><button type=button class=btn onclick="tOnlineAr()">🌐 Find English online</button><div id=tmore></div></div>`;
  for(let i=hits.length-1;i>=0;i--)if(hits[i][1]<0&&I.en[hits[i][0]])hits.splice(i,1);
- const words=[...new Set(hits.map(x=>x[0]))];h+=`<p class=mut>${words.length} English equivalent${words.length>1?'s':''}:</p><p>${words.map(w=>`<button type=button class=chip onclick="T.q='${esc(w).replace(/'/g,'')}';T.ctx='';tGoQ()">${esc(w)}</button>`).join('')}</p></div>`;
- hits.slice(0,10).forEach(([w,i])=>{const e=I.en[w];if(e&&i>=0){const s=e[2][i];h+=`<div class=card><h3 style="margin:0">${esc(w)} ${tSay(w,'🔊')} <span class=mut>(${tPos[s[0]]})</span></h3><p style="margin:4px 0"><b>Definition:</b> ${esc(s[2])}</p><p style="margin:4px 0">“${esc(s[3])}” ${tSay(s[3])}<br><span dir=rtl lang=ar class=mut>${esc(s[4])}</span></p><p class=mut>🔎 Use it when: ${esc(s[5])}</p></div>`}
-  else{h+=`<div class=card><h3 style="margin:0">${esc(w)} ${tSay(w,'🔊')}</h3><p style="margin:4px 0"><b>Definition:</b> ${esc((typeof DEFS!='undefined'&&DEFS[w])||'In your lessons.')}</p></div>`}});
+ const words=[...new Set(hits.map(x=>x[0]))];h+=`<p class=mut>${words.length} English equivalent${words.length>1?'s':''}:</p><p>${words.map(w=>`<button type=button class=chip onclick="T.q=${jq(w)};T.ctx='';tGoQ()">${wpic(w)} ${esc(w)}</button>`).join('')}</p></div>`;
+ hits.slice(0,10).forEach(([w,i])=>{const e=I.en[w];if(e&&i>=0){const s=e[2][i];h+=`<div class=card><h3 style="margin:0">${wpic(w)} ${esc(w)} ${tSay(w,'🔊')} <span class=mut>(${tPos[s[0]]})</span></h3><p style="margin:4px 0"><b>Definition:</b> ${esc(s[2])}</p><p style="margin:4px 0">“${esc(s[3])}” ${tSay(s[3])}<br><span dir=rtl lang=ar class=mut>${esc(s[4])}</span></p><p class=mut>🔎 Use it when: ${esc(s[5])}</p></div>`}
+  else{h+=`<div class=card><h3 style="margin:0">${wpic(w)} ${esc(w)} ${tSay(w,'🔊')}</h3><p style="margin:4px 0"><b>Definition:</b> ${esc((typeof DEFS!='undefined'&&DEFS[w])||'In your lessons.')}</p></div>`}});
  return h}
 function tSentence(q,isAr){const ph=(window.PHRASES||[]),norm=s=>s.toLowerCase().replace(/[’]/g,"'").replace(/[.!?؟,،]/g,'').trim(),n=isAr?tAr(q).replace(/[.!?؟,،]/g,''):norm(q);
  let hit=null;ph.forEach(p=>{const k=isAr?tAr(p[1]).replace(/[.!?؟,،]/g,''):norm(p[0]);if(k==n)hit=p});
@@ -102,7 +102,7 @@ function tSentence(q,isAr){const ph=(window.PHRASES||[]),norm=s=>s.toLowerCase()
   else{const l=tLemma(t),e=I.en[l];let ar=e?String(e[2][0][1]).split(/\s*\/\s*/)[0]:(LEX[l]||'?');rows.push([t,ar]);if(e&&e[2].length>1)multi.push([t,l,e])}});
  h+=`<div class=card><h3 style="margin-top:0">Word by word</h3><div class=xtab>${rows.map(r=>`<span><b ${isAr?'':'dir=rtl lang=ar'}>${esc(r[1])}</b><small>${esc(r[0])}</small></span>`).join('')}</div><p class=mut>This is a simple help. The order of words in the real translation can be different.</p></div>`;
  if(multi.length){h+=`<div class=card><h3 style="margin-top:0">🔎 Meaning detective</h3><p class=mut>These words have several meanings. Here is the most likely one in your sentence:</p>`;
-  multi.slice(0,6).forEach(([t,l,e])=>{const i=tPick(e,q),s=e[2][i>=0?i:0];h+=`<p><b>${esc(t)}</b> → <b dir=rtl lang=ar>${esc(s[1])}</b> <small class=mut>(${i>=0?esc(s[2]):'not sure. First meaning shown: '+esc(s[2])})</small> <button type=button class=chip onclick="T.q='${esc(l).replace(/'/g,'')}';T.ctx=T.q0||'';tGoQ()">all meanings</button></p>`});T.q0=q;h+='</div>'}
+  multi.slice(0,6).forEach(([t,l,e])=>{const i=tPick(e,q),s=e[2][i>=0?i:0];h+=`<p><b>${esc(t)}</b> → <b dir=rtl lang=ar>${esc(s[1])}</b> <small class=mut>(${i>=0?esc(s[2]):'not sure. First meaning shown: '+esc(s[2])})</small> <button type=button class=chip onclick="T.q=${jq(l)};T.ctx=T.q0||'';tGoQ()">all meanings</button></p>`});T.q0=q;h+='</div>'}
  if(!hit&&navigator.onLine!==false)setTimeout(()=>tMM(q,isAr),30);
  return h}
 async function tMM(q,isAr){const el=$('#tsr'),st=$('#tst');if(!el)return;
@@ -119,9 +119,9 @@ async function tOnline(w){const el=$('#tmore');if(!el)return;el.innerHTML='<p cl
  catch(e){el.innerHTML='<p class="msg bad">Online search is not available now (no internet, or the word was not found).</p>'}}
 async function tOnlineAr(){const el=$('#tmore'),q=T.q;if(!el)return;el.innerHTML='<p class=mut>Searching online…</p>';
  try{const r=await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(q)+'&langpair=ar|en'),j=await r.json(),a=[...new Set([j.responseData&&j.responseData.translatedText,...(j.matches||[]).map(m=>m.translation)].filter(x=>x&&!/MYMEMORY/i.test(x)))].slice(0,6);
-  el.innerHTML=a.length?`<p>English equivalents:</p><p>${a.map(x=>`<button type=button class=chip onclick="T.q='${esc(String(x).toLowerCase()).replace(/'/g,'')}';T.ctx='';tGoQ()">${esc(x)}</button>`).join('')}</p><p class=mut>Tap a word to see its meanings, examples and forms.</p>`:'<p class=mut>Nothing found.</p>'}
+  el.innerHTML=a.length?`<p>English equivalents:</p><p>${a.map(x=>`<button type=button class=chip onclick="T.q=${jq(String(x).toLowerCase())};T.ctx='';tGoQ()">${esc(x)}</button>`).join('')}</p><p class=mut>Tap a word to see its meanings, examples and forms.</p>`:'<p class=mut>Nothing found.</p>'}
  catch(e){el.innerHTML='<p class="msg bad">Online search is not available now.</p>'}}
-function tSaved(){const e=XS(),ks=Object.keys(e.sv);return`<button class=btn2 type=button onclick="T.p='main';draw()">← Translator</button><h1>MY SAVED WORDS</h1>${ks.length?ks.map(k=>`<div class=card style="margin:8px 0"><b>${esc(k)}</b> ${tSay(k)} · <span dir=rtl lang=ar>${esc(e.sv[k])}</span> <button type=button class=chip onclick="T.q='${esc(k).replace(/'/g,'')}';T.ctx='';T.p='main';tGoQ()">open</button> <button type=button class=chip onclick="delete XS().sv['${esc(k).replace(/'/g,'')}'];save();draw()">remove</button></div>`).join('')+(ks.length>=4?'<button type=button class=btn onclick="tSavedQuiz()">Quiz me on my saved words</button>':'<p class=mut>Save 4 words to unlock the quiz.</p>'):'<div class=card><p>No saved words yet. Open a word and tap “Save this word”, or save the word of the day.</p></div>'}`}
+function tSaved(){const e=XS(),ks=Object.keys(e.sv);return`<button class=btn2 type=button onclick="T.p='main';draw()">← Translator</button><h1>MY SAVED WORDS</h1>${ks.length?ks.map(k=>`<div class=card style="margin:8px 0"><b>${esc(k)}</b> ${tSay(k)} · <span dir=rtl lang=ar>${esc(e.sv[k])}</span> <button type=button class=chip onclick="T.q=${jq(k)};T.ctx='';T.p='main';tGoQ()">open</button> <button type=button class=chip onclick="delete XS().sv[${jq(k)}];save();draw()">remove</button></div>`).join('')+(ks.length>=4?'<button type=button class=btn onclick="tSavedQuiz()">Quiz me on my saved words</button>':'<p class=mut>Save 4 words to unlock the quiz.</p>'):'<div class=card><p>No saved words yet. Open a word and tap “Save this word”, or save the word of the day.</p></div>'}`}
 function tSavedQuiz(){const e=XS(),ks=Object.keys(e.sv),ar=ks.map(k=>e.sv[k]);const it=sh(ks).slice(0,8).map(k=>({t:'mc',q:'What does “'+k+'” mean?',say:k,o:xDistract(e.sv[k],ar,4),a:e.sv[k],sk:'Vocabulary'}));V='explore';xRun(it,'My saved words','home')}
 function tPairs(){return`<button class=btn2 type=button onclick="T.p='main';draw()">← Translator</button><h1>CONFUSING WORDS</h1>${(window.PAIRS||[]).map(p=>`<div class=card style="margin:8px 0"><h3 style="margin:0">${esc(p[0])}</h3><p style="margin:6px 0">${esc(p[1])}</p><p dir=rtl lang=ar class=mut>${esc(p[2])}</p><p>${esc(p[3])} ${tSay(p[3])}</p></div>`).join('')}`}
 function tIrr(){const q=(T.iq||'').toLowerCase();const L=(window.IRR||[]).filter(r=>!q||r.join(' ').toLowerCase().includes(q)||r[3].includes(q));return`<button class=btn2 type=button onclick="T.p='main';draw()">← Translator</button><h1>IRREGULAR VERBS</h1><div class=card><input id=tiq type=search value="${esc(T.iq||'')}" placeholder="Search a verb (English or Arabic)" oninput="T.iq=this.value;tIrrDraw()" aria-label="Search irregular verbs"></div><div id=tirr>${tIrrRows(L)}</div>`}
@@ -138,3 +138,43 @@ async function tOtherGo(q,dir,en){const el=$('#tsr'),st=$('#tst');if(!el)return;
   if(st)st.textContent=(en?'English → ':tLangName(T.lang)+' → ')+(en?tLangName(T.lang):'English');
   el.innerHTML='<p style="font-size:21px;margin:6px 0"><b>'+esc(t)+'</b> '+(en?'':tSay(t))+'</p>'+(alt.length?'<p class=mut>Other versions:</p>'+alt.map(a=>'<p class=mut>'+esc(a)+'</p>').join(''):'')+'<p class=mut>Machine translation (MyMemory). Check important sentences with a teacher.</p>'}
  catch(e){if(st)st.textContent='The online translation is not available now. Check your connection and try again.'}}
+
+/* First visit: the learner says which languages they speak. The first one becomes the Translator language. The site itself stays in English. */
+let TLP=[];
+function tlOnboard(){let done=1;try{done=localStorage.getItem('ef_tl_set')}catch(e){}if(done)return'';
+ return`<div class=card style="border-color:var(--ac2)"><b>Which languages do you speak?</b><p class=mut>The lessons are in English. The Translator will use the language you pick first. You can change it any time in the Translator.</p><div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0">${TLANGS.map(x=>`<button type=button class="chip ${TLP.includes(x[0])?'on':''}" onclick="tlPick('${x[0]}')">${TLP.includes(x[0])?(TLP.indexOf(x[0])+1)+'. ':''}${x[1]}</button>`).join('')}</div><button class=btn type=button onclick="tlSave()">Save</button> <button class=btn2 type=button onclick="tlSkip()">Skip</button></div>`}
+function tlPick(c){const i=TLP.indexOf(c);if(i>=0)TLP.splice(i,1);else TLP.push(c);draw()}
+function tlSave(){try{if(TLP.length){T.lang=TLP[0];localStorage.setItem('ef_tl',T.lang);localStorage.setItem('ef_langs',JSON.stringify(TLP))}localStorage.setItem('ef_tl_set','1')}catch(e){}draw()}
+function tlSkip(){try{localStorage.setItem('ef_tl_set','1')}catch(e){}draw()}
+
+/* Help in my language: full help at levels 1-4, on tap at levels 5-10, none from level 11. Uses the Translator language. */
+const nlOn=()=>{try{return localStorage.getItem('ef_nl')!=='0'}catch(e){return true}};
+function nlSet(v){try{localStorage.setItem('ef_nl',v?'1':'0')}catch(e){}draw()}
+const NLC={};
+function nlLine(t,small){if(!nlOn()||!t)return'';const L=curLevel();if(L>10)return'';const k=esc(t).replace(/"/g,'&quot;');
+ return L<=4?`<div class="nl ${small?'nls':''}" dir=auto data-auto=1 data-t="${k}"></div>`:`<span class="nlw"><button type=button class="chip nlb" onclick="nlTap(this)">🌐 In my language</button><div class="nl ${small?'nls':''}" dir=auto data-t="${k}"></div></span>`}
+function nlTap(b){const d=b.nextElementSibling;b.hidden=true;nlFill(d)}
+async function nlGet(text){const L=T.lang||'ar',key=L+'|'+text;if(NLC[key])return NLC[key];
+ try{const c=localStorage.getItem('ef_nlc_'+key);if(c)return NLC[key]=c}catch(e){}
+ if(L=='ar'&&typeof LEX!='undefined'&&LEX[text.toLowerCase()])return NLC[key]=LEX[text.toLowerCase()];
+ const parts=text.match(/[^.!?]+[.!?]*\s*/g)||[text],out=[];let cur='';const chunks=[];
+ for(const p of parts){if((cur+p).length>380&&cur){chunks.push(cur);cur=p}else cur+=p}if(cur)chunks.push(cur);
+ for(const c of chunks){const ct=new AbortController(),tm=setTimeout(()=>ct.abort(),9000);
+  try{const r=await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(c.trim())+'&langpair=en|'+encodeURIComponent(L),{signal:ct.signal});clearTimeout(tm);const j=await r.json(),x=j.responseData&&j.responseData.translatedText;if(!x||/MYMEMORY WARNING|INVALID|QUERY LENGTH/i.test(x))throw 0;out.push(x)}catch(e){clearTimeout(tm);throw e}}
+ const res=out.join(' ');NLC[key]=res;try{localStorage.setItem('ef_nlc_'+key,res)}catch(e){}return res}
+async function nlFill(d){if(!d||d.dataset.done)return;d.dataset.done=1;d.textContent='…';
+ try{d.textContent=await nlGet(d.dataset.t.replace(/&quot;/g,'"').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>'))}catch(e){d.textContent=''}}
+function nlRun(){document.querySelectorAll('.nl[data-auto]').forEach(nlFill)}
+try{let tm;new MutationObserver(()=>{clearTimeout(tm);tm=setTimeout(nlRun,120)}).observe(document.documentElement,{childList:true,subtree:true})}catch(e){}
+
+/* Settings: languages. Main language = Translator and Help in my language. Other languages = quick-switch list. */
+const tlKnown=()=>{try{const a=JSON.parse(localStorage.getItem('ef_langs')||'[]');return Array.isArray(a)?a.filter(c=>TLANGS.some(x=>x[0]==c)):[]}catch(e){return[]}};
+function tlToggle(c){let a=tlKnown();const i=a.indexOf(c);if(i>=0)a.splice(i,1);else a.push(c);try{localStorage.setItem('ef_langs',JSON.stringify(a))}catch(e){}draw()}
+function tlReset(){try{localStorage.removeItem('ef_tl_set')}catch(e){}TLP=[];go('learn')}
+function tlSettings(){const k=tlKnown(),nm=c=>(TLANGS.find(x=>x[0]==c)||[c,c])[1];
+ return`<div id=langs><p class=mut>The lessons stay in English. Your language is used for the Translator and for “Help in my language”, so you can understand the explanations.</p>
+ <div class=set>My main language<select aria-label="My main language" onchange="tSetLang(this.value)">${TLANGS.map(x=>`<option value="${x[0]}" ${x[0]==T.lang?'selected':''}>${esc(x[1])}</option>`).join('')}</select></div>
+ <p><b>Other languages I know</b></p><p class=mut>Tap to add or remove. Then tap “Use for help” to switch quickly.</p>
+ <div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0">${TLANGS.filter(x=>x[0]!=T.lang).map(x=>`<button type=button class="chip ${k.includes(x[0])?'on':''}" aria-pressed="${k.includes(x[0])}" onclick="tlToggle('${x[0]}')">${k.includes(x[0])?'✓ ':''}${esc(x[1])}</button>`).join('')}</div>
+ ${k.filter(c=>c!=T.lang).length?`<p class=mut>Use for help:</p><div style="display:flex;flex-wrap:wrap;gap:6px">${k.filter(c=>c!=T.lang).map(c=>`<button type=button class=btn2 onclick="tSetLang('${c}')">${esc(nm(c))}</button>`).join('')}</div>`:''}
+ <p class=mut>Help in my language: full help at levels 1 to 4, on tap at levels 5 to 10, and none from level 11 (you will be reading English only).</p></div>`}

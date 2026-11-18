@@ -34,3 +34,26 @@ end;
 $$;
 revoke all on function public.delete_my_account() from public, anon;
 grant execute on function public.delete_my_account() to authenticated;
+
+-- v23 hardening (least privilege): API roles never need TRUNCATE/TRIGGER/REFERENCES, and the sign-up log is private.
+revoke truncate, trigger, references on public.progress from authenticated, anon;
+revoke all on public.signup_attempts from anon, authenticated;
+revoke all on function public.delete_my_account() from public, anon;
+grant execute on function public.delete_my_account() to authenticated;
+
+-- ===== Certificates (v25): server-issued, verifiable by code =====
+create table if not exists public.certificates(
+  code text primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  kind text not null check (kind in ('level','course')),
+  level int not null default 0 check (level between 0 and 30),
+  holder text not null check (char_length(holder) between 1 and 60),
+  score int not null check (score between 0 and 100),
+  issued_at timestamptz not null default now(),
+  unique (user_id, kind, level));
+alter table public.certificates enable row level security;
+revoke all on public.certificates from anon, authenticated;
+grant select on public.certificates to authenticated;
+drop policy if exists cert_own_select on public.certificates;
+create policy cert_own_select on public.certificates for select to authenticated using (user_id = (select auth.uid()));
+-- Functions issue_certificate(kind, level) and verify_certificate(code) are already applied on the live project (migration "certificates_issue_and_verify").

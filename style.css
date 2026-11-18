@@ -443,3 +443,25 @@ body:not(.qnb) #coachT{bottom:24px}
 .chip.on{background:#0b4aa8;color:#fff;border-color:#0b4aa8}
 .phc{margin:8px 0}.phh{display:flex;align-items:center;justify-content:space-between;gap:8px}.phe{font-size:18px}
 .phq.ok{background:#e1f6e8;border-color:#2e9e5b}.phq.no{background:#fde4e4;border-color:#d64545}
+
+.nl{margin:6px 0;padding:6px 10px;border-radius:10px;background:rgba(47,125,225,.1);font-size:16px;line-height:1.6;text-align:start}.nl:empty{display:none}.nls{font-size:13px;margin:2px 0;padding:2px 8px}.nlw{display:block;margin:6px 0}
+
+/* brand name keeps its exact spelling: LanguWay English */
+.auth h1,.cert h2,.sb__t,.au__title{text-transform:none!important}.auth h1::first-letter{text-transform:none}
+
+.wpic{font-size:34px;line-height:1;flex:none;width:44px;text-align:center}.wpic--big{display:block;font-size:72px;width:auto;margin:4px auto 8px}
+.chip .wpic{display:inline;font-size:20px;width:auto;vertical-align:middle}h3 .wpic{display:inline-block;font-size:26px;width:auto;vertical-align:middle}
+
+/* certificates */
+.cert{position:relative;overflow:hidden;text-align:center;border:3px solid #b8893a;outline:2px solid #b8893a;outline-offset:-10px;padding:34px 22px;background:#fffdf6;color:#2a2a2a}
+.cert--course{border-color:#6b4ee6;outline-color:#6b4ee6}
+.cert__bg{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:#b8893a;stroke-width:.5;opacity:.28;pointer-events:none}.cert--course .cert__bg{stroke:#6b4ee6}
+.cert__in{position:relative}.cert__brand{font:700 15px/1 Georgia,serif;letter-spacing:.18em;text-transform:uppercase!important;color:#7a5a1a}
+.cert__t{font:600 22px/1.2 Georgia,serif;margin:10px 0}.cert__s{margin:4px 0;color:#555}.cert h1{font:700 32px/1.15 Georgia,serif;margin:8px 0;color:#1d1d1d;word-break:break-word}
+.cert__row{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin:14px 0}.cert__seal{width:112px;height:112px;flex:none}
+.cert__seal .s1{fill:#fff;stroke:#b8893a;stroke-width:2}.cert__seal .s2{fill:none;stroke:#b8893a;stroke-width:1}.cert__seal .s3{font:700 7.2px Arial,sans-serif;letter-spacing:.9px;fill:#7a5a1a}.cert__seal .s4{fill:#b8893a}.cert__seal .s5{font:700 11px Georgia,serif;fill:#7a5a1a}
+.cert--course .cert__seal .s1,.cert--course .cert__seal .s2{stroke:#6b4ee6}.cert--course .cert__seal .s3,.cert--course .cert__seal .s5{fill:#4a35b0}.cert--course .cert__seal .s4{fill:#6b4ee6}
+.cert__ver{font-size:13px;margin:0;text-align:left;max-width:260px}.cert__code{font:700 18px/1.4 'Courier New',monospace;letter-spacing:.06em}
+.cert__micro{font:5px/1.2 Arial,sans-serif;letter-spacing:.3px;color:#8a6a2a;overflow:hidden;white-space:nowrap;margin:6px 0 0;opacity:.8}
+.cert__fine{font-size:11px;color:#666;margin:8px 0 0}.cert__warn{color:#b3261e}.cert__ok{color:#0a7d4f;font-weight:700;font-size:18px;margin:6px 0}
+@media print{@page{size:A4 landscape;margin:10mm}.cert{border-color:#b8893a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}

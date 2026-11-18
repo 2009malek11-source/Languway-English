@@ -49,3 +49,12 @@ The "Tutor" notes after each answer are rule-based (definitions, the evidence se
 - The placement test is asked only when opening Learn (or Grammar lessons). Home, Settings, Translator, Explore, Stories and Phrases open without it. A complete beginner can start at Level 1.
 - Learn shows CEFR bands (A1, A2, B1, B2, C1).
 - The opening splash lasts 3 seconds (tap to skip).
+
+
+## Certificates (v25)
+- A certificate for each level (all lessons, unit tests and the level test at 75% or more) and a full-course certificate after all 30 levels.
+- Signed-in learners get a unique code (LW-XXXX-XXXX-XXXX) created and stored on the server by the `issue_certificate` function, which checks the saved progress first. Anyone can check a code in Certificates, Verify a certificate (`verify_certificate`).
+- The printed page has a seal, a guilloche pattern, microtext and the code. Honest limit: progress is stored from the browser, so the server record proves who was issued a code and when, not that a person truly learned the material.
+
+## Pictures
+`wpic.js` gives each word an emoji picture that works offline (lessons, review, notebook, helper, Translator). Abstract words use a symbolic emoji.

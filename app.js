@@ -34,6 +34,7 @@ const lvWords=n=>LS.filter(l=>l.lv==n).flatMap(l=>l.w);
 /* ---------- State ---------- */
 const DEF=()=>({cid:{},sec:{},gr:{},ver:3,ls:{},rv:0,sty:{},start:0,ut:{},lt:{},placed:0,sk:{},done:{},vocab:{},mist:[],days:{},fav:{},test:null,upd:0,rst:0,ex:{xl:{},wk:{},wr:[],sv:{},wd:{}},set:{theme:'system',acc:'en-US',rate:.9,name:'',goal:1,font:'normal',calm:false,auto:false,sa:false,vib:true,fx:true,rem:'off',wk:5,wl:false,cmp:false,vo:'',rp:1}});
 let S=DEF(),INQ=0;
+const jq=s=>esc(JSON.stringify(String(s==null?'':s)));
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const isO=o=>o&&typeof o=='object'&&!Array.isArray(o);
 const num=(v,d)=>typeof v=='number'&&isFinite(v)?v:d;
@@ -116,7 +117,7 @@ function friendly(e){const m=String((e&&e.message)||e||''),c=String((e&&(e.code|
   if(c=='over_request_rate_limit'||c=='over_sms_send_rate_limit'||st==429||/rate limit|too many/i.test(m))return'Too many attempts in a short time. Wait a minute and try again.';
  if(c=='invalid_credentials'||/invalid login/i.test(m))return'The username or password is not correct. Check the spelling. If you have no account yet, tap “Create an account”.';
   if(c=='user_already_exists'||c=='email_exists'||/already registered|already been registered|already exists/i.test(m))return'This username is already taken. Choose another one, or sign in if it is yours.';
- if(c=='weak_password'||(/password/i.test(m)&&/(weak|at least|short|characters)/i.test(m)))return'Choose a longer password: at least 6 characters.';
+ if(c=='weak_password'||(/password/i.test(m)&&/(weak|at least|short|characters)/i.test(m)))return'Choose a longer password: at least 8 characters.';
  if(c=='email_address_invalid'||/email address.*invalid|invalid.*email/i.test(m))return'This username is not accepted. Use 3 to 20 letters, numbers or _.';
  if(c=='signup_disabled'||/signups? (not allowed|disabled)/i.test(m))return'New sign-ups are switched off in the cloud settings.';
  if(/failed to fetch|network|load failed/i.test(m))return'No connection. Check your internet and try again.';
@@ -160,7 +161,7 @@ const UEM=u=>u+'@languway.app',UNAME=()=>((EMAIL||'').split('@')[0]||'');
 async function signInRetry(em,pw,n){let r;for(let i=0;i<n;i++){r=await sb.auth.signInWithPassword({email:em,password:pw});if(!r.error)return r;const er=r.error,retry=er.code=='invalid_credentials'?i<2:(er.status>=500||er.status===0||/fetch|network|timeout|retryable/i.test((er.name||'')+(er.message||'')));if(!retry||i>=n-1)break;await new Promise(z=>setTimeout(z,600+Math.random()*900+i*700))}return r}
 async function cauth(){const g=id=>($(id)||{}).value||'',un=g('#au').trim().toLowerCase(),pw=g('#ap'),pw2=g('#ap2'),nm=g('#an').trim();
  if(!/^[a-z0-9_]{3,20}$/.test(un))return msg('Username: 3 to 20 letters, numbers or underscore (_). No spaces.');
- if(AM=='up'){if(!nm)return msg('Enter your name.');if(pw.length<6)return msg('Password must have at least 6 characters.');if(pw!==pw2)return msg('The two passwords do not match.')}
+ if(AM=='up'){if(!nm)return msg('Enter your name.');if(pw.length<8)return msg('Password must have at least 8 characters.');if(pw!==pw2)return msg('The two passwords do not match.')}
  else if(!pw)return msg('Enter your password.');
  const rm=$('#arm');if(AM=='in'&&rm){REM=!!rm.checked;try{localStorage.setItem('ef_rem',REM?'1':'0')}catch(e){}}
  else if(AM=='up'){REM=true;try{localStorage.setItem('ef_rem','1')}catch(e){}}
@@ -172,7 +173,7 @@ async function cauth(){const g=id=>($(id)||{}).value||'',un=g('#au').trim().toLo
     if(fr&&fr.error){const rs=fr.error.context;if(rs&&typeof rs.json=='function'){try{code=(await rs.json()).error||'failed'}catch(x){code='failed'}}else code='unavailable'}}catch(x){code='unavailable'}
    if(code=='exists')return msg('This username is already taken. Choose another one.');
    if(code=='invalid_username')return msg('Username: 3 to 20 letters, numbers or underscore (_). No spaces.');
-   if(code=='weak_password')return msg('Password must have at least 6 characters.');
+   if(code=='weak_password')return msg('Password must have at least 8 characters.');
    if(code=='rate_limited')return msg('Too many new accounts were created from this network. Please try again in an hour.');
    if(code){/* fallback: ordinary sign-up (works when “Confirm email” is off) */
     const s=await sb.auth.signUp({email:em,password:pw,options:{data:{name:nm.slice(0,30),username:un}}});
@@ -186,7 +187,7 @@ async function cauth(){const g=id=>($(id)||{}).value||'',un=g('#au').trim().toLo
 let CPM='',CPK=0,SO={},PWF=0;
 function cpSet(m,k){CPM=m;CPK=k;const e=$('#cpm');if(e){e.textContent=m;e.className='msg '+(k?'ok':'bad')}}
 async function cpDone(){const o=g=>(($(g)||{}).value)||'',cur=o('#cpo'),pw=o('#cpn'),pw2=o('#cpn2');
- if(!cur)return cpSet('Enter your current password.',0);if(pw.length<6)return cpSet('The new password must have at least 6 characters.',0);if(pw!==pw2)return cpSet('The two new passwords do not match.',0);if(pw===cur)return cpSet('Choose a password that is different from your current one.',0);
+ if(!cur)return cpSet('Enter your current password.',0);if(pw.length<8)return cpSet('The new password must have at least 8 characters.',0);if(pw!==pw2)return cpSet('The two new passwords do not match.',0);if(pw===cur)return cpSet('Choose a password that is different from your current one.',0);
  cpSet('Saving…',1);PWF=1;
  try{const v=await sb.auth.signInWithPassword({email:EMAIL,password:cur});if(v.error)throw v.error;const u=await sb.auth.updateUser({password:pw});if(u.error)throw u.error;
   ['#cpo','#cpn','#cpn2'].forEach(x=>{const e=$(x);if(e)e.value=''});cpSet('Password changed.',1)}catch(e){cpSet(e&&e.code=='invalid_credentials'?'Your current password is not correct.':friendly(e),0)}finally{setTimeout(()=>{PWF=0},1500)}}
@@ -229,7 +230,7 @@ function mnHtml(){const on=v=>V==v||((V=='lesson'||V=='gram')&&v=='learn')||(V==
  const nm=esc(S.set.name||(C?UNAME():isG(USER)?'Guest':USER)||'Learner'),who=C?esc(SL[SYNC]):isG(USER)?'Saved on this device only':'Saved on this device';
  const act=C?`<button class=sb__a type=button onclick="mnDo(signOut,'See you <em>soon.</em>')" title="Sign out">${ic('out')}<span class=sb__t>Sign out</span></button>`:isG(USER)?`<button class=sb__a type=button onclick="mnDo(wantAuth,'Welcome <em>back.</em>')" title="Sign in">${ic('user')}<span class=sb__t>Sign in or create account</span></button>`:`<button class=sb__a type=button onclick="localStorage.removeItem('ef_cur');location.reload()" title="Log out">${ic('out')}<span class=sb__t>Log out</span></button>`;
  const item=x=>`<button type=button class="sb__i ${on(x[0])?'on':''}" title="${x[2]}" onclick="go('${x[0]}')">${ic(x[1])}<span class=sb__t>${x[2]}</span>${x[0]=='review'&&d?`<b>${d}</b>`:''}</button>`;
- return`<div class=sb__bd onclick="mnToggle()"></div><aside class=side aria-label="Menu"><div class=sb__hd><img class=sb__lg src=logo-light.png alt="" width=40 height=40><b class=sb__t>LanguWay</b>${dk?'':`<button class=sb__x type=button onclick="mnToggle()" aria-label="Close menu">✕</button>`}</div>
+ return`<div class=sb__bd onclick="mnToggle()"></div><aside class=side aria-label="Menu"><div class=sb__hd><img class=sb__lg src=logo-light.png alt="" width=40 height=40><b class=sb__t>LanguWay English</b>${dk?'':`<button class=sb__x type=button onclick="mnToggle()" aria-label="Close menu">✕</button>`}</div>
  ${srch('msq','','Search','mnSearch()','sb__s')}
  <div class=sb__l>${MG().map(g=>g.map(item).join('')).join('<hr class=sb__dv>')}<hr class=sb__dv><button type=button class=sb__i onclick="mnDo(hOpen,'Ask the <em>helper.</em>')" title="Ask the helper">${ic('chat')}<span class=sb__t>Ask the helper</span></button></div>
  <div class=sb__ft><div class=sb__who>${ic('user')}<span class=sb__t><b>${nm}</b><br><span id=mst>${who}</span></span></div>${act}</div></aside>`}
@@ -245,7 +246,7 @@ function mnDo(fn,title){navFx(()=>{mnHide();fn()},title)}
 function mnSearch(){SQ=(($('#msq')||{}).value||'');go('search')}
 function auEye(){const p=$('#ap'),b=$('#aey');if(!p)return;const s=p.type=='password';p.type=s?'text':'password';if(b){b.textContent=s?'Hide':'Show';b.setAttribute('aria-pressed',s?'true':'false')}}
 function auStr(v){const m=$('#aum');if(!m||!m.dataset)return;v=v||'';let n=0;if(v.length>=6)n++;if(v.length>=10)n++;if(/[a-z]/i.test(v)&&/\d/.test(v))n++;if((/[A-Z]/.test(v)&&/[a-z]/.test(v))||/[^A-Za-z0-9]/.test(v))n++;
- m.dataset.s=!v?'':v.length<6?'0':String(Math.max(1,n));const h=$('#auh');if(h)h.textContent=!v?'Use 6 or more characters. Letters and numbers make it stronger.':v.length<6?'Use at least 6 characters ('+v.length+'/6).':['','Weak. Add letters and numbers.','Okay. Add letters and numbers.','Good.','Strong.'][Math.max(1,n)]}
+ m.dataset.s=!v?'':v.length<8?'0':String(Math.max(1,n));const h=$('#auh');if(h)h.textContent=!v?'Use 8 or more characters. Letters and numbers make it stronger.':v.length<6?'Use at least 8 characters ('+v.length+'/6).':['','Weak. Add letters and numbers.','Okay. Add letters and numbers.','Good.','Strong.'][Math.max(1,n)]}
 function auHint(){try{const f=$('#afg');if(f&&f.classList){f.classList.remove('pulse');void f.offsetWidth;f.classList.add('pulse')}}catch(e){}}
 function authView(L){
  const m=AM=='up'?'up':'in',t=AUT[m];
@@ -255,7 +256,7 @@ function authView(L){
   <div class=au__row data-m=up><label for=an>Your name</label><input id=an maxlength=30 autocomplete=name enterkeyhint=next placeholder="What should we call you?"></div>
   <div class=au__row><label for=au>Username</label><input id=au maxlength=20 autocomplete=username autocapitalize=none autocorrect=off spellcheck=false enterkeyhint=next placeholder="letters, numbers, _"></div>
   <div class=au__row><label for=ap>Password</label><div class=au__pw><input id=ap type=password ${L?'':'oninput="auStr(this.value)"'} autocomplete="${m=='up'?'new-password':'current-password'}" enterkeyhint=${m=='up'?'next':'go'} placeholder="${m=='up'?'Create a password (6+)':'Your password'}"><button type=button class=au__eye id=aey onclick="auEye()" aria-pressed=false aria-label="Show or hide password">Show</button></div>
-   <div class=au__meter id=aum data-m=up><i></i><i></i><i></i><i></i></div><p class=au__hint id=auh data-m=up>Use 6 or more characters. Letters and numbers make it stronger.</p></div>
+   <div class=au__meter id=aum data-m=up><i></i><i></i><i></i><i></i></div><p class=au__hint id=auh data-m=up>Use 8 or more characters. Letters and numbers make it stronger.</p></div>
   <div class=au__row data-m=up><label for=ap2>Confirm password</label><input id=ap2 type=password autocomplete=new-password enterkeyhint=go placeholder="Type the password again"></div>
   <label class=au__rm data-m=in><input type=checkbox id=arm ${REM?'checked':''} onchange="$('#armh').textContent=this.checked?'You will stay signed in on this device.':'You will be signed out when you close the browser.'"><span>Remember me</span></label><p class="au__rmh" data-m=in id=armh role=status>${REM?'You will stay signed in on this device.':'You will be signed out when you close the browser.'}</p>
   <p id=ae class="msg bad" role=alert aria-live=polite>${esc(AMSG)}</p>
@@ -268,12 +269,14 @@ function authView(L){
  <div class=au__band id=aub aria-hidden=true><span class="band__edge band__edge--trail"></span><div class=band__inner><div class=band__page><div class="au__head au__head--band"><img class=au__logo src=logo-light.png alt="" width=46 height=46><h3 class=au__title id=abt></h3><p class=au__sub id=abs></p></div></div></div><span class="band__edge band__edge--lead"></span></div>
  </div></div></div>`}
 function vCloudAuth(){return authView(0)}
-async function hash(p,s){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s+p));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){let x=5381;for(const c of s+p)x=(x*33^c.charCodeAt(0))>>>0;return'x'+x}}
+async function hash(p,s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s+p));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}/* legacy only, kept to read old local accounts */
+async function hash2(p,sh){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveBits']),salt=new Uint8Array(sh.match(/../g).map(x=>parseInt(x,16))),b=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt,iterations:310000},k,256);return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+const newSalt=()=>[...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(16).padStart(2,'0')).join('');
 function vLocalAuth(){return authView(1)}
 async function localAuth(){const u=$('#au').value.trim().toLowerCase(),p=$('#ap').value,L=ACC(),e=m=>msg(m),nm=AM=='up'?$('#an').value.trim():'';
- if(!/^[a-z0-9_]{3,20}$/.test(u))return e('Username: 3 to 20 letters, numbers or _');if(p.length<6)return e('Password must have at least 6 characters.');
- if(AM=='up'){if($('#ap2')&&$('#ap2').value!==p)return e('The two passwords do not match.');if(L[u])return e('This username is taken.');const s=Math.random().toString(36).slice(2);L[u]={s,h:await hash(p,s)};localStorage.setItem('ef_acc',JSON.stringify(L))}
- else{const a=L[u];if(!a||a.h!=await hash(p,a.s))return e('Wrong username or password.')}
+ if(!/^[a-z0-9_]{3,20}$/.test(u))return e('Username: 3 to 20 letters, numbers or _');if(p.length<8)return e('Password must have at least 8 characters.');
+ if(AM=='up'){if($('#ap2')&&$('#ap2').value!==p)return e('The two passwords do not match.');if(L[u])return e('This username is taken.');const s2=newSalt();L[u]={s2,h:await hash2(p,s2)};localStorage.setItem('ef_acc',JSON.stringify(L))}
+ else{const a=L[u];if(!a)return e('Wrong username or password.');if(a.s2){if(a.h!=await hash2(p,a.s2))return e('Wrong username or password.')}else{if(a.h!=await hash(p,a.s))return e('Wrong username or password.');const s2=newSalt();L[u]={s2,h:await hash2(p,s2)};localStorage.setItem('ef_acc',JSON.stringify(L))}}
  USER=u;localStorage.setItem('ef_cur',u);loadS();mergeGuest();AUTHV=0;if(nm)S.set.name=nm.slice(0,30);save();theme();applyPrefs();go('home')}
 function vAuth(){if(CFGOK&&!sb)return`<div class="card auth"><h1>LanguWay English</h1><p>Cloud sign-in needs an internet connection. Check your connection and try again.</p><button class=btn onclick="location.reload()">Try again</button>${GBTN()}</div>`;return sb?vCloudAuth():vLocalAuth()}
 function applyPrefs(){const f={small:'14px',normal:'16px',large:'18px',xl:'20px'}[S.set.font]||'16px';document.documentElement.style.fontSize=f;document.documentElement.classList.toggle('calm',!!S.set.calm);document.documentElement.classList.toggle('cmp',!!S.set.cmp);wlSync()}
@@ -325,7 +328,7 @@ function go(v,a){try{uTrack(v)}catch(e){}if(v=='explore'&&V!='explore'){X={p:'ho
 let SQ='',TD='Lessons';
 function tgl(){S.set.theme=document.documentElement.hasAttribute('data-d')?'light':'dark';save();theme()}
 
-const ICP={
+const ICP={globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>',
 home:'<path d="M3 11.2 12 3.8l9 7.4"/><path d="M5.5 9.8v10.4h13V9.8"/><rect class=f x="10" y="13.6" width="4" height="6.6" rx="1.2"/>',
 learn:'<circle cx="12" cy="12" r="9.2"/><path class=f d="m16 8-2.1 5.9L8 16l2.1-5.9z"/><circle class=g cx="12" cy="12" r="1.1"/>',
 review:'<rect x="3.5" y="6.5" width="13" height="14" rx="2.2"/><path d="M7.5 3.5h11a2 2 0 0 1 2 2V16"/><path class=f d="M7 11h6v2H7z"/><path d="M7 16.5h4"/>',
@@ -369,7 +372,7 @@ function todo(){const cl=curLevel();let r='';const tr=(pc,t,s,a,l)=>`<div class=
 let HL=[],HO=0;
 function hOpen(){HO=!HO;const p=$('#hp');if(!p)return;p.hidden=!HO;const fb=$('#fab');if(fb)fb.style.visibility=HO?'hidden':'';document.body.style.overflow=HO?'hidden':'';if(HO){hDraw();if(!HL.length)hWelcome()}}
 function hBot(t,acts){HL.push({b:1,t,acts:acts||[]});hDraw()}
-function hDraw(){const l=$('#hl');if(!l)return;l.innerHTML=HL.slice(-12).map(m=>m.b?`<div class=hb>${m.t}${(m.acts||[]).map(a=>`<br><button class=chip onclick="hAct('${a[1]}')">${esc(a[0])}</button>`).join('')}</div>`:`<div class=hu>${esc(m.t)}</div>`).join('');l.scrollTop=l.scrollHeight}
+function hDraw(){const l=$('#hl');if(!l)return;l.innerHTML=HL.slice(-12).map(m=>m.b?`<div class=hb>${m.t}${(m.acts||[]).map(a=>`<br><button class=chip onclick="hAct(${jq(a[1])})">${esc(a[0])}</button>`).join('')}</div>`:`<div class=hu>${esc(m.t)}</div>`).join('');l.scrollTop=l.scrollHeight}
 function hSend(){const i=$('#hi'),q=i.value.trim();if(!q)return;i.value='';HL.push({t:q});hDraw();let h=0;try{h=hPre(q)}catch(e){h=0}if(!h)hAns(q)}
 function hClose(){if(HO)hOpen()}
 function hAct(a){if(a=='close')return hOpen();if(hAct2(a))return;if(a.indexOf('rule:')==0)return hRule(+a.slice(5));if(a.indexOf('rq:')==0){const p=a.split(':');return hRQ(+p[1],+p[2])}if(a.indexOf('rsay:')==0){const g=GR[+a.slice(5)];if(g)say(g.t+'! '+g.e+' '+g.x[0]);return}if(a.indexOf('rlist:')==0)return hRList(+a.slice(6));if(a.indexOf('part:')==0){const p=a.split(':');return hBot(gPart(+p[1],p[2])+'<br>Is it clearer now?',[['Yes, thanks','say:Great']].slice(0,0).concat([['Another part','part:'+p[1]+':'+(p[2]=='f'?'x':p[2]=='x'?'m':'f')],['Open the full lesson','gram:'+p[1]]]))}hClose();if(a=='next')return hNext();if(a=='gram'){const d=grDue();return d.length?go('gram',d[0]):go('learn')}if(a=='tests')return hBot2('Unit test: 15 questions after the 3 lessons and the grammar rule of a unit (75% to pass). Level test: 30 questions after the 4 unit tests. The placement test finds your level and opens all levels below it.');
@@ -382,7 +385,7 @@ function hRule(gu){const g=GR[gu];if(!g)return hBot('I could not find that rule.
  let h=`<b>${CHEER[gu%CHEER.length]} 🎉</b><br>Today’s rule: <b style="color:var(--ac)">${esc(g.t)}</b> <span class=mut>(Level ${lvOf(gu)})</span><p style="margin:6px 0">${esc(g.e)}</p>`;
  h+=`<div class=hpat><b>Pattern</b><br>${pos?pat.map(x=>`<button type=button class=chip onclick='say(${JSON.stringify(x).replace(/'/g,"&#39;")})'>${esc(x)}</button>`).join(''):`<span class=hfm>${esc(g.f)}</span>`}</div>`;
  h+='<div class=hx><b>Examples. Tap to listen</b>'+g.x.map(x=>`<button type=button class="chip hxi" onclick='say(${JSON.stringify(x).replace(/'/g,"&#39;")})'>▶ ${esc(x)}</button>`).join('')+'</div>';
- h+=`<div class=hmis><span style="color:var(--bad)">✘ ${esc(g.m[0])}</span><br><span style="color:var(--ok)">✔ ${esc(g.m[1])}</span></div>`;
+ h+=nlLine(g.e);h+=`<div class=hmis><span style="color:var(--bad)">✘ ${esc(g.m[0])}</span><br><span style="color:var(--ok)">✔ ${esc(g.m[1])}</span></div>`;
  
  if(GP[gu])h+=pImg(gu);
  hBot(h,[['🔊 Listen to the explanation','rsay:'+gu],['Practice: question 1 of '+g.q.length,'rq:'+gu+':0'],['Open the full lesson','gram:'+gu]]);try{say(g.t+'! '+g.e)}catch(e){}}
@@ -408,7 +411,7 @@ function hAns(q){const t=q.toLowerCase();let tx=t;
  if(/speak|mic|microphone|pronounc/.test(tx))return hBot('In the Speaking section the browser listens while you read a sentence and shows wrong words in red. It works best in Chrome or Edge. If your browser cannot listen, you can read aloud and confirm yourself.');
  if(gi.length&&gi[0][1]>=2){const g=GR[gi[0][0]];return hBot(`This rule may help: <b>${esc(g.t)}</b> (Level ${lvOf(gi[0][0])}, Unit ${unOf(gi[0][0])+1}). ${esc(g.e)}<br>Do you want the step-by-step explanation with practice?`,[['✨ Explain it with pictures and practice','rule:'+gi[0][0]],['Open the full lesson','gram:'+gi[0][0]]])}
  const wd=tok.map(w=>w).find(w=>LEX[w])||Object.keys(LEX).find(w=>q.toLowerCase().includes(w)&&w.length>3);
- if(wd){const ls=LS.filter(l=>l.w.some(x=>x.en==wd));return hBot(`<b>${esc(wd)}</b> means “${esc(DEFS[wd]||'')}”${ls[0]?`<br>Found in: ${esc(ls[0].t)} (Level ${ls[0].lv})`:''}`,[['Listen','say:'+wd],...(ls[0]?[['Open the lesson','lesson:'+ls[0].id]]:[])])}
+ if(wd){const ls=LS.filter(l=>l.w.some(x=>x.en==wd));return hBot(`${wpic(wd,1)}<b>${esc(wd)}</b> means “${esc(DEFS[wd]||'')}”${ls[0]?`<br>Found in: ${esc(ls[0].t)} (Level ${ls[0].lv})`:''}`,[['Listen','say:'+wd],...(ls[0]?[['Open the lesson','lesson:'+ls[0].id]]:[])])}
  const lz=LS.filter(l=>tok.some(w=>l.t.toLowerCase().includes(w)||l.ut.toLowerCase().includes(w))).slice(0,3);
  if(lz.length)return hBot('I found these lessons:',lz.map(l=>[l.t+' · L'+l.lv,'lesson:'+l.id]));
  hBot('I did not find that. I can explain a grammar rule (for example “explain passive”), find a lesson or word, tell you what to study, or show your weak points.',[['What should I study?','adv'],['Next lesson','next'],['Grammar to do','gram']])}
@@ -429,7 +432,7 @@ function vHome(){const cl=curLevel(),nm=S.set.name?', '+esc(S.set.name):'',rv=Ma
  rem=S.set.rem!='off'&&!(S.days[today()]>0)&&new Date().getHours()>=(S.set.rem=='morning'?8:18);
  const bad=AUTHBAD?`<div class="card note" role=alert><b>Your progress is not reaching your account.</b><p>The server did not accept this device. Tap below, then sign in again. Nothing is lost: a copy stays on this device and is uploaded after you sign in.</p><button class=btn type=button onclick="signOut()">Sign out and sign in again</button></div>`:'';
  const pf=(isC(USER)&&SESS&&!PULLOK&&!AUTHBAD)?`<div class="card note" role=status><b>Loading your saved progress…</b><p class=mut>Your account is signed in, but the progress could not be loaded yet. Nothing is overwritten. It will retry by itself.</p><button class=btn2 type=button onclick="syncNow().then(()=>draw())">Try now</button></div>`:'';
- return bad+pf+`<section class=hero><div class=hero__t><p class=hero__k>${greet()}${nm}</p><h2 class=hero__h>Level ${cl} · ${LV[cl-1]}</h2><p class=hero__s>About ${CEFR(cl)} · ${doneN()} of ${LS.length} lessons finished${S.ls[cl]&&!(S.lt[cl]>=75)?' · '+dayLbl(cl):''}</p><button class=hero__b type=button onclick="hNext()">Continue learning</button></div><div class=hero__r style="--p:${gp}" title="Daily goal"><i>${gp}%</i><small>today</small></div></section>
+ return bad+pf+tlOnboard()+`<section class=hero><div class=hero__t><p class=hero__k>${greet()}${nm}</p><h2 class=hero__h>Level ${cl} · ${LV[cl-1]}</h2><p class=hero__s>About ${CEFR(cl)} · ${doneN()} of ${LS.length} lessons finished${S.ls[cl]&&!(S.lt[cl]>=75)?' · '+dayLbl(cl):''}</p><button class=hero__b type=button onclick="hNext()">Continue learning</button></div><div class=hero__r style="--p:${gp}" title="Daily goal"><i>${gp}%</i><small>today</small></div></section>
  ${quickHtml()}${coachCard(2)}
  ${todo()}
  ${rem?`<div class="card note"><b>Time to study</b><p class=mut>You have not studied yet today. One quiz keeps your ${streak()}-day streak alive.</p><button class=btn type=button onclick="hNext()">Start now</button></div>`:''}
@@ -463,7 +466,7 @@ function setSec(id,i){S.sec[id]=(S.sec[id]||0)|(1<<i);save()}
 const secOpen=(id,i)=>i==0||secBit(id,i-1);
 function vLesson(){const l=LM[A];if(!S.ls[l.lv]){S.ls[l.lv]=today();save()}const fv=S.fav[l.id],id=l.id,tabs=SEC.map((s,i)=>{const op=secOpen(id,i),dn=secBit(id,i);return`<button class="${P==i?'btn':'btn2'}" ${op?'':'disabled'} onclick="P=${i};draw()">${dn?'✔':op?s[0]:'🔒'} ${s[1]}</button>`}).join('')+`<button class="${P==4?'btn':'btn2'}" ${secAll(id)?'':'disabled'} onclick="P=4;draw()">${secAll(id)?'📝':'🔒'} Quiz</button>`;
  let body='';
- if(P==0)body=`${vid(id,0)}<div class=card><h2>Read</h2><p style="font-size:19px;line-height:1.7">${esc(l.r)}</p><button class=btn2 onclick="say(${esc(JSON.stringify(l.r)).replace(/&quot;/g,'&#34;')})">▶ Listen to the text</button> <button class=btn2 onclick="say(${esc(JSON.stringify(l.r)).replace(/&quot;/g,'&#34;')},.6)">🐢 Slowly</button></div><div class=card><h2>Key words</h2>${l.w.map(w=>`<div class=w><b>${esc(w.en)}</b><span class=dfn>${esc(w.d)}</span><button class=btn2 aria-label="Listen to ${esc(w.en)}" onclick="say(${esc(JSON.stringify(w.en)).replace(/&quot;/g,'&#34;')})">▶</button></div>`).join('')}</div><button class=btn onclick="startSec(${id},0)">${secBit(id,0)?'Answer the questions again':'Now answer 3 questions about the text'}</button>`;
+ if(P==0)body=`${vid(id,0)}<div class=card><h2>Read</h2><p style="font-size:19px;line-height:1.7">${esc(l.r)}</p>${nlLine(l.r)}<button class=btn2 onclick="say(${esc(JSON.stringify(l.r)).replace(/&quot;/g,'&#34;')})">▶ Listen to the text</button> <button class=btn2 onclick="say(${esc(JSON.stringify(l.r)).replace(/&quot;/g,'&#34;')},.6)">🐢 Slowly</button></div><div class=card><h2>Key words</h2>${l.w.map(w=>`<div class=w>${wpic(w.en)}<b>${esc(w.en)}</b><span class=dfn>${esc(w.d)}</span><button class=btn2 aria-label="Listen to ${esc(w.en)}" onclick="say(${esc(JSON.stringify(w.en)).replace(/&quot;/g,'&#34;')})">▶</button></div>`).join('')}</div><button class=btn onclick="startSec(${id},0)">${secBit(id,0)?'Answer the questions again':'Now answer 3 questions about the text'}</button>`;
  else if(P==1)body=`<div class=card><h2>Listen and write</h2><p>${l.lv<=2?'You will hear a word. Write it.':'You will hear a sentence. Write it exactly.'} You can play it again, or slowly.</p></div><button class=btn onclick="startSec(${id},1)">${secBit(id,1)?'Practise again':'Start writing'}</button>`;
  else if(P==2)body=`<div class=card><h2>Listen and choose</h2><p>You will hear a sentence. Choose the sentence you heard.</p></div><button class=btn onclick="startSec(${id},2)">${secBit(id,2)?'Practise again':'Start listening'}</button>`;
  else if(P==3)body=vSpeak(l);
@@ -754,10 +757,10 @@ let R=null;
 function vReview(){const due=Object.entries(S.vocab).filter(x=>x[1].due<=Date.now());
  if(!Object.keys(S.vocab).length)return'<h1>Review</h1><div class=card><p>Your notebook is empty. Finish a lesson and its words will appear here.</p></div>';
  if(!due.length)return`<h1>Review</h1><div class=card><p>Nothing is due now. ${Object.keys(S.vocab).length} words are in your notebook.</p></div>${notebook()}`;
- const [en,v]=due[0];return`<h1>Review</h1><p class=mut>${due.length} due</p><div class=card style="text-align:center"><h2>${en}</h2><button class=btn2 onclick="say('${en}')">▶ Listen</button>
+ const [en,v]=due[0];return`<h1>Review</h1><p class=mut>${due.length} due</p><div class=card style="text-align:center">${wpic(en,1)}<h2>${esc(en)}</h2><button class=btn2 onclick="say(${jq(en)})">▶ Listen</button>${nlLine(en)}
  <p id=ans style="visibility:hidden;font-size:19px">${esc(DEFS[en]||'')}</p><button class=btn2 onclick="$('#ans').style.visibility='visible'">Show meaning</button>
- <p>Did you remember it?</p><button class=btn onclick="rate('${en}',1)">Yes</button> <button class=btn2 onclick="rate('${en}',0)">No</button></div>`}
-function notebook(){return'<div class=card><h2>Notebook</h2>'+Object.entries(S.vocab).map(([e,v])=>`<div class=w><b>${e}</b><span class=dfn>${esc(DEFS[e]||'')}</span><span class=mut>Box ${v.box+1}/6</span></div>`).join('')+'</div>'}
+ <p>Did you remember it?</p><button class=btn onclick="rate(${jq(en)},1)">Yes</button> <button class=btn2 onclick="rate(${jq(en)},0)">No</button></div>`}
+function notebook(){return'<div class=card><h2>Notebook</h2>'+Object.entries(S.vocab).map(([e,v])=>`<div class=w>${wpic(e)}<b>${esc(e)}</b><span class=dfn>${esc(DEFS[e]||'')}</span>${nlLine(e,1)}<span class=mut>Box ${v.box+1}/6</span></div>`).join('')+'</div>'}
 function rate(en,ok){const v=S.vocab[en],gap=[0,1,2,4,8,16];v.box=ok?Math.min(5,v.box+1):0;v.due=Date.now()+(ok?gap[v.box]*864e5:6e5);v.t=Date.now();save();draw()}
 
 function vProgress(){const b=[['First Lesson',doneN()>=1],['Vocabulary Builder',Object.keys(S.vocab).length>=25],['Unit Champion',Object.values(S.ut).some(v=>v>=75)],['Level Graduate',Object.values(S.lt).some(v=>v>=75)]];
@@ -765,12 +768,39 @@ function vProgress(){const b=[['First Lesson',doneN()>=1],['Vocabulary Builder',
  <div class=card><h2>Skills</h2>${Object.keys(S.sk).map(k=>{const t=S.sk[k],q=t[1]?Math.round(t[0]/t[1]*100):0;return`<div class=w><b>${k}</b><span>${q}%</span></div><div class=bar><i style="width:${q}%"></i></div>`}).join('')||'<p class=mut>Answer some questions to see your skills.</p>'}</div>
  <div class=card><h2>Achievements</h2>${b.map(x=>`<p>${x[1]?'🏅':'🔒'} ${x[0]}</p>`).join('')}</div>
  <div class=card><h2>Lesson scores</h2>${LS.filter(l=>S.done[l.id]!=null).map(l=>`<div class=w><b>L${l.lv} · ${l.t}</b><span>${S.done[l.id]}%</span></div>`).join('')||'<p class=mut>No lessons finished yet.</p>'}</div>
- <div class=card><h2>Mistakes</h2>${S.mist.length?S.mist.slice(0,10).map(m=>`<div class=w><b>${m.en}</b><span class=dfn>${esc(DEFS[m.en]||'')}</span></div>`).join('')+'<button class=btn onclick="pract()">Practise mistakes</button>':'<p class=mut>No mistakes yet.</p>'}</div>`}
+ <div class=card><h2>Mistakes</h2>${S.mist.length?S.mist.slice(0,10).map(m=>`<div class=w>${wpic(m.en)}<b>${esc(m.en)}</b><span class=dfn>${esc(DEFS[m.en]||'')}</span></div>`).join('')+'<button class=btn onclick="pract()">Practise mistakes</button>':'<p class=mut>No mistakes yet.</p>'}</div>`}
 function pract(){POOL=ALL;runQuiz(S.mist.slice(0,8).map(mc),'Mistakes',p=>`<h1>${p}%</h1><button class=btn onclick="go('progress')">Back</button>`)}
-function vCert(){const n=A,dn=Object.keys(S.lt).filter(k=>S.lt[k]>=75);
- if(!n||!(S.lt[n]>=75))return'<h1>CERTIFICATES</h1>'+(dn.length?dn.map(k=>`<div class=card><b>Level ${k} · ${LV[k-1]}</b><br><button class=btn onclick="go('cert',${k})">View certificate</button></div>`).join(''):'<div class=card><p>Finish a level to earn its certificate: all its lessons, its unit tests and the level test, each with 75% or more.</p></div>');
- const id='EF-L'+n+'-'+(S.cid[n]=S.cid[n]||Math.random().toString(36).slice(2,8).toUpperCase());save();
- return`<div class=cert><h2>LanguWay English</h2><p>Certificate of Completion</p><h1>${esc(S.set.name)||'Learner'}</h1><p>has completed Level ${n} · ${LV[n-1]}<br>Level test score ${S.lt[n]}% · ${today()}</p><p class=mut>${id}<br>Issued by the platform. Not an official or externally accredited certificate.</p></div><p class=noprint><button class=btn onclick="print()">Print or save as PDF</button></p>`}
+/* ---------- Certificates: issued and recorded on the server so anyone can verify the code ---------- */
+let CERT={},CERTB={};
+const certDate=d=>{try{return new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}catch(e){return String(d).slice(0,10)}};
+const certBg=()=>{let p='';for(let k=0;k<14;k++){let d='M0 '+(50+k*6);for(let x=10;x<=400;x+=10)d+=' L'+x+' '+(50+k*6+Math.sin(x/22+k*.5)*(10+k%4*3)).toFixed(1);p+=`<path d="${d}"/>`}return`<svg class=cert__bg viewBox="0 0 400 190" preserveAspectRatio="none" aria-hidden=true>${p}</svg>`};
+const certSeal=(kind)=>`<svg class=cert__seal viewBox="0 0 120 120" role=img aria-label="LanguWay English official seal"><defs><path id=sealc d="M60 60 m-47 0 a47 47 0 1 1 94 0 a47 47 0 1 1 -94 0"/></defs><circle cx=60 cy=60 r=57 class=s1 /><circle cx=60 cy=60 r=52 class=s2 /><circle cx=60 cy=60 r=34 class=s2 /><text class=s3><textPath href="#sealc" startOffset="0">LANGUWAY ENGLISH ✦ ${kind=='course'?'COURSE COMPLETED':'LEVEL COMPLETED'} ✦ OFFICIAL SEAL ✦</textPath></text><path class=s4 d="m60 36 6.2 12.6 13.8 2-10 9.8 2.4 13.8L60 67.6l-12.4 6.6L50 60.4l-10-9.8 13.8-2z"/><text x=60 y=88 text-anchor=middle class=s5>LW</text></svg>`;
+async function certGet(kind,n){const key=kind+n;if(CERT[key]||CERTB[key]===1)return;CERTB[key]=1;
+ try{if(!sb||!SESS)throw new Error('offline');try{await push()}catch(e){}
+  const r=await sb.rpc('issue_certificate',{p_kind:kind,p_level:n});if(r.error)throw r.error;CERT[key]=r.data;CERTB[key]=0}
+ catch(e){CERTB[key]=0;CERT[key+'e']=String((e&&e.message)||e).includes('not_earned')?'The server has not seen your finished level yet. Open Settings, tap Save now, and try again.':'Could not reach the server. Connect to the internet and try again.'}
+ if(V=='cert')draw()}
+function certView(kind,n){const key=kind+n,c=CERT[key],er=CERT[key+'e'],course=kind=='course';
+ if(!c&&!er&&sb&&SESS&&!CERTB[key])certGet(kind,n);
+ const holder=c?c.holder:(S.set.name||'Learner'),sc=c?c.score:(course?avgLv():S.lt[n]);
+ const what=course?'has completed the full LanguWay English course, all '+NLV+' levels':'has completed Level '+n+' · '+LV[n-1];
+ const code=c?`<b class=cert__code>${esc(c.code)}</b><br>Issued ${esc(certDate(c.issued_at))} · recorded on the LanguWay English server`:(er?`<span class=cert__warn>${esc(er)}</span>`:(sb&&SESS?'Getting your verification code…':'<span class=cert__warn>Preview only. Sign in to your account to get a certificate with a verification code.</span>'));
+ return`<div class="cert cert--${kind}">${certBg()}<div class=cert__in><div class=cert__brand>LanguWay English</div><p class=cert__t>${course?'Certificate of Course Completion':'Certificate of Completion'}</p><p class=cert__s>This certifies that</p><h1>${esc(holder)}</h1><p>${what}<br>${course?'Average level test score':'Level test score'} ${sc}%</p><div class=cert__row>${certSeal(kind)}<p class=cert__ver>${code}</p></div><p class=cert__micro aria-hidden=true>${('LANGUWAY ENGLISH · '+(c?c.code:'')+' · ').repeat(14)}</p><p class=cert__fine>To check this certificate, open LanguWay English → Certificates → Verify a certificate, and enter the code. Issued by the platform; not an official or externally accredited qualification.</p></div></div>
+ <p class=noprint><button class=btn onclick="print()" ${c?'':'disabled'}>Print or save as PDF</button> <button class=btn2 onclick="go('cert')">Back</button></p>`}
+const avgLv=()=>{let t=0;for(let i=1;i<=NLV;i++)t+=S.lt[i]||0;return Math.round(t/NLV)};
+async function certVerify(){const el=$('#cv'),out=$('#cvo');if(!el||!out)return;const code=el.value.trim().toUpperCase();
+ if(!/^LW-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(code)){out.innerHTML='<p class=cert__warn>The code looks like LW-XXXX-XXXX-XXXX.</p>';return}
+ if(!sb){out.innerHTML='<p class=cert__warn>Verification needs the online service, which is not available now.</p>';return}
+ out.textContent='Checking…';
+ try{const r=await sb.rpc('verify_certificate',{p_code:code});if(r.error)throw r.error;const d=r.data||{};
+  out.innerHTML=d.valid?`<p class=cert__ok>✔ Valid certificate</p><p><b>${esc(d.holder)}</b><br>${d.kind=='course'?'Full course completed (average '+(+d.score)+'%)':'Level '+(+d.level)+' · '+esc(LV[(+d.level)-1]||'')+' (score '+(+d.score)+'%)'}<br>Issued ${esc(certDate(d.issued_at))}</p>`:'<p class=cert__warn>✖ No certificate with this code exists. It may be forged or mistyped.</p>'}
+ catch(e){out.innerHTML='<p class=cert__warn>Could not check now. Connect to the internet and try again.</p>'}}
+function vCert(){const n=A,earned=Object.keys(S.lt).map(Number).filter(k=>k>=1&&k<=NLV&&S.lt[k]>=75).sort((x,y)=>x-y),all=earned.length>=NLV;
+ if(n==='course'&&all)return certView('course',0);
+ if(n>=1&&S.lt[n]>=75)return certView('level',n);
+ return'<h1>CERTIFICATES</h1>'+`<div class=card><b>Full course certificate</b><p class=mut>${earned.length} of ${NLV} levels finished with 75% or more.</p>${all?`<button class=btn onclick="go('cert','course')">View course certificate</button>`:'<div class=bar><i style="width:'+Math.round(earned.length/NLV*100)+'%"></i></div>'}</div>`+
+ (earned.length?earned.map(k=>`<div class=card><b>Level ${k} · ${LV[k-1]}</b><br><button class=btn onclick="go('cert',${k})">View certificate</button></div>`).join(''):'<div class=card><p>Finish a level to earn its certificate: all its lessons, its unit tests and the level test, each with 75% or more.</p></div>')+
+ `<div class=card><h2>Verify a certificate</h2><p class=mut>Enter the code printed on a LanguWay English certificate.</p><input id=cv placeholder="LW-XXXX-XXXX-XXXX" maxlength=17 autocapitalize=characters autocomplete=off aria-label="Certificate code" style="width:100%"><p><button class=btn type=button onclick="certVerify()">Verify</button></p><div id=cvo aria-live=polite></div></div>`}
 function sel(lbl,opts,cur,fn){return`<div class=set>${lbl}<select onchange="${fn}">${opts.map(o=>`<option value="${o[0]}" ${String(o[0])==String(cur)?'selected':''}>${o[1]}</option>`).join('')}</select></div>`}
 const prSvg=p=>`<svg viewBox="0 0 100 100" aria-hidden=true><circle class=pr__t cx=50 cy=50 r=42 /><circle class=pr__v cx=50 cy=50 r=42 pathLength=100 stroke-dasharray="${Math.round(p*100)} 100" /></svg><i class=pr__k style="--a:${Math.round(p*360)}deg"></i><i class=pr__s></i>`;
 function qExit(){if(Q&&Q.i>0&&!confirm('Leave this quiz? Your answers so far will not be saved.'))return;INQ=0;draw()}
@@ -790,7 +820,7 @@ function vSet(){const s=S.set,C=isC(USER);
  ${sel('Daily goal',[[1,'1 quiz'],[2,'2 quizzes'],[3,'3 quizzes']],s.goal,'S.set.goal=+this.value;save()')}
  ${sel('Accent',[['en-US','American'],['en-GB','British']],s.acc,'S.set.acc=this.value;save()')}
  ${sel('Voice',[['','Automatic (best available)']].concat(VOICES.map(v=>[v.name,v.name.replace(/^(Microsoft|Google)\s+/,'$1 ').slice(0,38)+' ('+v.lang+')'])),s.vo,'S.set.vo=this.value;save()')}<div class=set>Hear the voice<button class=btn2 type=button onclick="say('Hello! I am your English voice. Listen to how I say: thirteen, thirty, and three.')">▶ Test</button></div>
- ${chk('auto','Play audio automatically')}
+ ${chk('auto','Play audio automatically')}<div class=set>Help in my language (levels 1 to 10)<input type=checkbox ${nlOn()?'checked':''} onchange="nlSet(this.checked)"></div>
  ${sel('Speech speed',[['.6','Slow'],['.9','Normal'],['1.15','Fast']],s.rate,'S.set.rate=+this.value;save()')}
  ${sel('Story scene plays',[[1,'Once'],[2,'Twice'],[3,'3 times']],s.rp,'S.set.rp=+this.value;save()')}
  <p class=mut>Pronunciation uses your browser's voices, which differ by device.</p>`;
@@ -805,7 +835,7 @@ function vSet(){const s=S.set,C=isC(USER);
  const data=`<p class=mut>${C?'Your progress is saved in your account. You can also keep a backup file.':'Your progress is stored in this browser only. Export a backup to move it to another device.'}</p>
  <button class=btn2 onclick="exp()">Export backup</button> <label class=btn2 style="display:inline-block">Import backup<input type=file accept=.json hidden onchange="imp(this.files[0])"></label> <button class=btn2 onclick="resetProg()">Reset progress</button>`;
  const about=`<p class=mut>LanguWay English · version ${VER}</p><p class=mut id=updm>Updates install only when you choose. Your progress is kept.</p><button class=btn2 type=button onclick="chkUpd()">Check for updates</button> <button class=btn2 type=button onclick="go('help')">Help</button>`;
- return`<h1>SETTINGS</h1>${acc('acct','Account','user',acct)}${acc('learn','Learning','learn',learn)}${acc('tools','Study tools','pen',tools)}${acc('look','Appearance','gear',look)}${acc('inst','Install and share','share','<p class=mut>Install the app, share it with friends, or show the QR code.</p><button class=btn type=button onclick="go(\'share\')">Open install and share</button>')}${acc('data','Your data','doc',data)}${acc('about','About and updates','help',about)}`}
+ return`<h1>SETTINGS</h1>${acc('acct','Account','user',acct)}${acc('learn','Learning','learn',learn)}${acc('langs','My languages','globe',tlSettings())}${acc('tools','Study tools','pen',tools)}${acc('look','Appearance','gear',look)}${acc('inst','Install and share','share','<p class=mut>Install the app, share it with friends, or show the QR code.</p><button class=btn type=button onclick="go(\'share\')">Open install and share</button>')}${acc('data','Your data','doc',data)}${acc('about','About and updates','help',about)}`}
 let DIP=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();DIP=e;if((V=='settings'||V=='share')&&!INQ)draw()});
 addEventListener('appinstalled',()=>{DIP=null;if((V=='settings'||V=='share')&&!INQ)draw()});
@@ -814,7 +844,7 @@ function instCard(){return`<div class=card><h2>Install and share</h2><p class=mu
 function instCardOld(){if(isApp())return'';const ios=/iphone|ipad|ipod/i.test(navigator.userAgent||'');
  return`<div class=card><h2>Install the app</h2><p class=mut>Install LanguWay English on your phone or computer. It opens like an app, works offline, and keeps your progress.</p>${DIP?'<button class=btn onclick="DIP.prompt();DIP.userChoice.finally(()=>{DIP=null;draw()})">Install now</button>':ios?'<p>On iPhone or iPad: tap the Share button in Safari, then <b>Add to Home Screen</b>.</p>':'<p class=mut>In Chrome or Edge, open the browser menu and choose <b>Install app</b> (or <b>Add to Home screen</b> on Android).</p>'}</div>`}
 function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(clean(S))],{type:'application/json'}));a.download='languway-english-backup.json';a.click()}
-function imp(f){if(!f||f.size>500000)return alert('This file could not be read.');f.text().then(t=>{try{const o=JSON.parse(t);if(!isO(o))throw 0;S=mergeS(S,clean(o));save();theme();applyPrefs();go('home')}catch(e){alert('This file could not be read.')}})}
+function imp(f){if(!f||f.size>500000||!/\.json$/i.test(f.name||''))return alert('This file could not be read. Choose a .json backup made by this app.');f.text().then(t=>{try{const o=JSON.parse(t);if(!isO(o))throw 0;S=mergeS(S,clean(o));save();theme();applyPrefs();go('home')}catch(e){alert('This file could not be read.')}})}
 function resetProg(){if(!confirm('Reset all your learning progress? Your account stays.'))return;const st=S.set;S=DEF();S.set=st;S.rst=Date.now();save();go('home')}
 function vHelp(){const q=[['How do I start?','Create an account, take the placement test, then open Learn.'],['How do I unlock the next unit?','Pass each lesson quiz with 75%, then pass the unit test with 75%.'],['Why is a level locked?','A level opens when you pass the level test of the level before it, or when your placement result puts you higher.'],['What are the 4 sections of a lesson?','Reading (then 3 questions), Writing (listen and write), Listening (choose the sentence you hear) and Speaking (read aloud and the browser corrects you). Finish them in order, then pass the quiz.'],['Where is grammar?','Each unit has one grammar rule with a step-by-step explanation and practice. If you were placed in a higher level, earlier rules wait in your to-do list so that none is missed.'],['The sound does not play','Pronunciation uses your browser voices. Check the volume, try Chrome or Safari, and make sure an English voice is installed on your device.'],['My progress is missing on my phone','Sign in with the same account on both devices. Progress syncs when you are online. The cloud icon at the top shows the sync state.'],['How do I retake the placement test?','Open Home, then the Tests tab in the to do list, and tap Retake.']];
  return`<h1>HELP</h1>${q.map(x=>`<div class=card><b>${x[0]}</b><p class=mut>${x[1]}</p></div>`).join('')}<button class=btn2 onclick="go('settings')">Back to Settings</button>`}

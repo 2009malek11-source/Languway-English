@@ -183,7 +183,7 @@ function hPre(q){
 function hWeak(){const st=skStats().filter(x=>x.n>=5).sort((a,b)=>a.p-b.p),m=S.mist||[];
  if(!st.length&&!m.length)return hBot(BI('I need a little more practice data first. Finish a few quizzes and I will show your weak points.','أحتاج إلى بيانات تدريب أكثر أولًا. أنهِ بضعة اختبارات وسأُظهر لك نقاط ضعفك.'),[['Continue my lesson','q:next']]),true;
  let h=st.length?BI('Your weakest skill is <b>'+SKN[st[0].k][0]+'</b> ('+st[0].p+'% correct). Your strongest is <b>'+SKN[st[st.length-1].k][0]+'</b> ('+st[st.length-1].p+'%).','أضعف مهاراتك هي <b>'+SKN[st[0].k][1]+'</b> ('+st[0].p+'% إجابات صحيحة). وأقواها <b>'+SKN[st[st.length-1].k][1]+'</b> ('+st[st.length-1].p+'%).'):'';
- if(m.length)h+=`<div class=hnote><b>${BI('Words you got wrong','كلمات أخطأت فيها')}</b><br>`+m.slice(0,6).map(x=>`<button type=button class=chip onclick="say('${esc(x.en).replace(/'/g,'')}')">🔊 ${esc(x.en)}</button>`).join('')+'</div>';
+ if(m.length)h+=`<div class=hnote><b>${BI('Words you got wrong','كلمات أخطأت فيها')}</b><br>`+m.slice(0,6).map(x=>`<button type=button class=chip onclick="say(${jq(x.en)})">🔊 ${esc(x.en)}</button>`).join('')+'</div>';
  hBot(h,[[st[0]?'Practise '+SKN[st[0].k][0]+'':'Open Review','q:'+(SKGO[st[0]&&st[0].k]||'go:review')],['Open Review','q:go:review']]);return true}
 
 /* Extra helper action codes (q:<action>, adv, prog, weak) */

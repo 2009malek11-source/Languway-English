@@ -1,12 +1,14 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' data:; connect-src 'self' https://api.languagetool.org https://api.mymemory.translated.net https://api.dictionaryapi.dev https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net; frame-src https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<script>if(location.protocol==='http:'&&!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname))location.replace('https://'+location.host+location.pathname+location.search+location.hash)</script>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' data:; connect-src 'self' https://api.languagetool.org https://api.mymemory.translated.net https://api.dictionaryapi.dev https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net; frame-src https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="description" content="LanguWay English: a free English course with 30 levels, reading, writing, listening, speaking and grammar. Learn from A1 to C1.">
 <meta property="og:title" content="LanguWay English"><meta property="og:description" content="A free English course from beginner to advanced, with grammar, listening, speaking and a placement test."><meta property="og:type" content="website"><meta property="og:image" content="logo.png"><meta name="twitter:card" content="summary">
 <meta name="theme-color" content="#0b4aa8"><link rel="icon" href="favicon.png"><link rel="manifest" href="manifest.json"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="LanguWay English"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon.png"><link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
 <title>LanguWay English</title>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"LanguWay English","description":"A free English course with 30 levels from A1 to C1: reading, writing, listening, speaking, grammar, stories and a placement test.","applicationCategory":"EducationApplication","operatingSystem":"Any","inLanguage":"en","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 <link rel="stylesheet" href="style.css"></head><body>
 <div class="app" id="app"></div>
 <div id=mn hidden role=dialog aria-modal=true aria-label="Menu"></div>
@@ -49,6 +51,7 @@
 <script src="dict2.js"></script>
 <script src="translate.js"></script>
 <script src="phrases.js"></script>
+<script src="wpic.js"></script>
 <script src="scenes.js"></script>
 <script src="coach.js"></script>
 <script src="app.js"></script></body></html>
