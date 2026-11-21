@@ -65,13 +65,13 @@ function tSense(s,i,hit){return`<div class=xfx style="${hit?'border-color:var(--
  <p class=mut style="margin:4px 0">🔎 How to know: ${esc(s[5])}</p></div>`}
 function tEnWord(w){if(!w)return'';const I=tIndex(),l=tLemma(w),e=I.en[l],sv=XS().sv,ctxPick=e?tPick(e,T.ctx):-1;let h='';
  const uk=(typeof XUK!='undefined'?XUK:[]).find(r=>r[0].replace(/ \(.*\)/,'')==l||r[1]==l);
- h+=`<div class=card><div style="text-align:center">${wpic(w,1)}</div><h2 style="margin:0">${esc(w)} ${tSay(w,'🔊')}</h2>${l!=w?`<p class=mut>Base form: <b>${esc(l)}</b></p>`:''}`;
+ h+=`<div class=card><div id=tph class=tph data-w="${esc(l)}" data-n="${!e||e[2].some(s=>s[0]=='n')?1:0}" style="text-align:center">${wpic(w,1)}</div><h2 style="margin:0">${esc(w)} ${tSay(w,'🔊')}</h2>${l!=w?`<p class=mut>Base form: <b>${esc(l)}</b></p>`:''}`;
  if(e){h+=`<p class=mut>${e[2].length} meaning${e[2].length>1?'s':''} found</p></div>`;e[2].forEach((s,i)=>h+=tSense(s,i,i==ctxPick));
   if(e[2].length>1)h+=`<div class=card><b>Which meaning?</b><p class=mut>Look at the words around it. Each meaning above has a “How to know” clue. You can also type the sentence in the optional box and translate again.</p></div>`}
  else{const ar=LEX[l],df=(typeof DEFS!='undefined'&&DEFS[l])||'';
   if(ar||df){h+=`</div><div class=card><div style="font-size:20px" dir=rtl lang=ar><b>${esc(ar||'')}</b></div>${df?`<p><b>Definition:</b> ${esc(df)}</p>`:''}<p class=mut>This word is in your lessons. For more meanings, use “More meanings online”.</p></div>`}
   else h+=`</div><div class=card><p>I do not have “${esc(w)}” in the offline dictionary.</p><p class=mut>Tap “More meanings online” (needs internet), or check the spelling.</p></div>`}
- const f=tForms(l,e);
+ const f=tForms(l,e);h+=tExplain(l,e,f);
  if(f&&f.v)h+=`<div class=card><h3 style="margin-top:0">Verb forms</h3><div class=xtab><span><small>base</small><b>${esc(f.v[0])}</b></span><span><small>he / she / it</small><b>${esc(f.v[1])}</b></span><span><small>past</small><b>${esc(f.v[2])}</b></span><span><small>past participle</small><b>${esc(f.v[3])}</b></span><span><small>-ing</small><b>${esc(f.v[4])}</b></span></div>${f.ir?'<p class=mut>This is an irregular verb.</p>':''}<p class=mut>Examples: I <b>${esc(f.v[0])}</b> · He <b>${esc(f.v[1])}</b> · Yesterday I <b>${esc(String(f.v[2]).split(' ')[0])}</b> · I have <b>${esc(String(f.v[3]).split(' ')[0])}</b> · I am <b>${esc(f.v[4])}</b></p></div>`;
  else if(f&&f.n)h+=`<div class=card><h3 style="margin-top:0">Word forms</h3><p>${f.n.map(x=>`<span class=chip style="cursor:default">${esc(x)}</span>`).join(' ')}</p></div>`;
  else if(/^[a-z]+$/.test(l)&&!e&&LEX[l]===undefined){}
