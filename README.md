@@ -1,8 +1,8 @@
 # Languway-English  (v5, CEFR edition)
 
 ## What changed in v5
-- Course: 5 CEFR levels (A1, A2, B1, B2, C1) x 10 units x 5 lessons = 250 lessons (`curriculum.js`, `lvnew.js`, `lv01-lv20.js`).
-  206 lessons come from the first course (re-ordered by topic and difficulty), 44 were written new (`lvnew.js`). 7 new grammar rules are in `curriculum.js`.
+- Course: Pre-A1 Starter (4 units: alphabet, sounds, writing basics, first sentences) + 5 CEFR levels (A1-C1, 10 units each) x 5 lessons = 270 lessons; no vocabulary word is taught twice (`lvfix.js`) (`curriculum.js`, `lvnew.js`, `lv01-lv20.js`).
+  206 lessons come from the first course (re-ordered by topic and difficulty), 64 were written new (`lvnew.js`, `lvstart.js`). 7 new grammar rules are in `curriculum.js`.
 - Lesson = 8 steps + a check (Warm-up, Words, Grammar, Listening, Reading, Speaking, Writing, Practice, Lesson check 80%).
 - Every lesson has its own Workbook (opens after the lesson check). Unit test: 20 questions, Final Level Exam: 40 questions, pass mark 80%.
 - Placement test (adaptive) maps to A1-C1. Old progress from the 30-level course is reset once (words, streak and settings are kept).

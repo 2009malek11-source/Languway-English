@@ -72,10 +72,10 @@ function xXL(){const n=X.lv||curFine(),e=XS();
  return`${xBack()}<h1>EXTRA LESSONS</h1><p class=mut>Pick any level. These lessons are extra practice and never block your normal lessons.</p>
  <div class=card><label for=xlv><b>Level</b></label> <select id=xlv onchange="X.lv=+this.value;draw()">${Array.from({length:30},(_,i)=>`<option value=${i+1} ${i+1==n?'selected':''}>Level ${i+1} · ${CEFR(i+1)}</option>`).join('')}</select></div>
  ${XK.map(k=>{const v=e.xl[n+'-'+k[0]];return`<button type=button class=xt style="width:100%;text-align:left;display:block;margin:8px 0" onclick="xLesson(${n},'${k[0]}')"><span class=xi>${k[2]}</span><b>${k[1]}</b> <small>${k[3]}</small>${v!=null?`<i class=xb>${v}%</i>`:''}</button>`}).join('')}`}
-function xLvData(n){const L=LS.filter(l=>l.lv==Math.ceil(n/6));return{L,W:L.flatMap(l=>l.w),S:L.flatMap(l=>l.ds.length?l.ds:l.ss)}}
+function xLvData(n){const L=LS.filter(l=>l.lv==1+Math.ceil(n/6));return{L,W:L.flatMap(l=>l.w),S:L.flatMap(l=>l.ds.length?l.ds:l.ss)}}
 function xLesson(n,k){const d=xLvData(n),key=n+'-'+k,day=xDay(),done=p=>{const e=XS();e.xl[key]=Math.max(e.xl[key]||0,p);if(p>=75){S.days[today()]=S.days[today()]||0}save()},t='Level '+n+' · '+XK.find(x=>x[0]==k)[1];
  if(!d.L.length)return xGo('xl');
- if(k=='gr'){const gs=[];for(let g=0;g<GR.length;g++)if(lvOf(g)==Math.ceil(n/6))gs.push(g);if(!gs.length)return xGo('xl');const gu=gs[day%gs.length],g=GR[gu];
+ if(k=='gr'){const gs=[];for(let g=0;g<GR.length;g++)if(lvOf(g)==1+Math.ceil(n/6))gs.push(g);if(!gs.length)return xGo('xl');const gu=gs[day%gs.length],g=GR[gu];
   const it=g.q.map(q=>({t:'mc',q:q[0],o:sh(q.slice(1)),a:q[1],why:'Pattern: '+g.f,sk:'Grammar'}));g.x.slice(0,2).forEach(x=>{const w=x.split(' ');if(w.length>=3&&w.length<=9)it.push({t:'ord',w:sh(w),a:x,ar:'Build this example sentence.'})});
   XL={n,k,gu};X={p:'xlp',intro:`<h2>${esc(g.t)}</h2><p>${esc(g.e)}</p><p><b>Pattern:</b> <span style="color:var(--ac)">${esc(g.f)}</span></p>${g.x.map(x=>`<p>${xBtnSay(x)} <b>${esc(x)}</b></p>`).join('')}<p><span style="color:var(--bad)">✘ ${esc(g.m[0])}</span><br><span style="color:var(--ok)">✔ ${esc(g.m[1])}</span></p>`,items:it,t,done};return draw()}
  if(k=='vo'){const hasD=w=>DEFS[w.en],W0=d.W.length>=4?d.W:ALL,W=W0.filter(hasD).length>=4?W0.filter(hasD):ALL.filter(hasD),pick=sh(W).slice(0,6),dd=ALL.filter(hasD).map(w=>DEFS[w.en]),it=pick.map(w=>({t:'mc',q:'What does “'+w.en+'” mean?',say:w.en,o:xDistract(DEFS[w.en],dd,4),a:DEFS[w.en],why:'',sk:'Vocabulary'}));
@@ -90,7 +90,7 @@ function xLP(){return`${xBack('xl','Extra lessons')}<h1>${esc(X.t)}</h1><div cla
 /* ---------- Rule of the week ---------- */
 const XDN=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 function xWkKey(){const d=new Date(),t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())),dn=(t.getUTCDay()+6)%7;t.setUTCDate(t.getUTCDate()-dn+3);const y=t.getUTCFullYear(),j=new Date(Date.UTC(y,0,4)),w=1+Math.round(((t-j)/864e5-3+((j.getUTCDay()+6)%7))/7);return y+'-W'+String(w).padStart(2,'0')}
-function xWeek(){const e=XS(),key=xWkKey(),cl=curFine(),pool=[];for(let g=0;g<GR.length;g++)if(lvOf(g)<=Math.ceil(cl/6)+1)pool.push(g);if(!pool.length)pool.push(0);
+function xWeek(){const e=XS(),key=xWkKey(),cl=curFine(),pool=[];for(let g=0;g<GR.length;g++)if(lvOf(g)<=Math.ceil(cl/6)+2)pool.push(g);if(!pool.length)pool.push(0);
  const wn=Math.floor((xDay()+3)/7),gu=pool[wn%pool.length],st=e.wk[key]||{d:0,t:-1};return{key,gu,g:GR[gu],st,di:(new Date().getDay()+6)%7}}
 const XPN=[['Meaning','What the rule means'],['Pattern','The formula'],['Examples','Listen and repeat'],['Mistakes','Avoid the common error'],['Practice','Three questions'],['Write','Use the rule in your own sentences'],['Test','Final test of the week']];
 function xWeekPg(){const w=xWeek(),g=w.g,d=w.st.d|0,open=i=>w.di>=i&&(i==0||(d>>(i-1)&1)),dn=i=>(d>>i)&1;

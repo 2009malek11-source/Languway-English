@@ -636,3 +636,7 @@ body.qnb .app{padding-bottom:calc(110px + env(safe-area-inset-bottom))!important
 .sd{background:none!important;box-shadow:none!important;border:0}.sd.dn .ix{width:34px;height:34px;padding:0;border:0;background:none}
 .sd.on .ix{background:rgba(91,60,240,.16)}
 .wcard .tph,.wph{display:block;margin:0 auto 6px}.wph img{width:100%;max-width:220px;height:140px;object-fit:cover;border-radius:16px;box-shadow:var(--shadow)}
+
+.lvs{grid-template-columns:repeat(6,1fr)}
+@media(max-width:620px){.lvs{grid-template-columns:repeat(3,1fr)}}
+.vw h1,.lz-h h1,.lz-card h2,.wcard h2{text-transform:none!important}

@@ -40,10 +40,10 @@ window.CURR=[
 {lv:2,t:"Work and Jobs",ar:"العمل والمهن",g:[9],L:["3.2.1","3.2.2","3.2.3","3.1.2","n:a2-work"]},
 {lv:2,t:"Study and Education",ar:"الدراسة والتعليم",g:["n:obj"],L:["5.1.1","n:a2-class","5.1.2","n:a2-homew","5.1.3"]},
 {lv:2,t:"Hobbies and Interests",ar:"الهوايات والاهتمامات",g:["n:conj"],L:["n:a2-music","4.2.1","4.2.2","n:a2-books","4.2.3"]},
-{lv:2,t:"Describing People and Places",ar:"وصف الأشخاص والأماكن",g:[14],L:["n:a2-people","5.3.1","5.3.2","4.3.1","5.3.3"]},
-{lv:2,t:"The Past and Future Plans",ar:"الحديث عن الماضي والخطط المستقبلية",g:[12,13],L:["4.1.1","4.1.2","4.1.3","5.4.1","5.4.3"]},
+{lv:2,t:"Describing People and Places",ar:"وصف الأشخاص والأماكن",g:[14,18],L:["n:a2-people","5.3.1","5.3.2","4.3.1","5.3.3"]},
+{lv:2,t:"The Past and Future Plans",ar:"الحديث عن الماضي والخطط المستقبلية",g:[10,12,13],L:["4.1.1","4.1.2","4.1.3","5.4.1","5.4.3"]},
 /* ---------------- B1 ---------------- */
-{lv:3,t:"Social Relationships",ar:"العلاقات الاجتماعية",g:[16,28],L:["8.1.1","7.3.1","8.4.3","6.4.1","9.4.1"]},
+{lv:3,t:"Social Relationships",ar:"العلاقات الاجتماعية",g:[16,24,28],L:["8.1.1","7.3.1","8.4.3","6.4.1","9.4.1"]},
 {lv:3,t:"Technology and the Internet",ar:"التكنولوجيا والإنترنت",g:[21],L:["8.2.1","8.2.2","8.2.3","6.2.2","7.2.3"]},
 {lv:3,t:"Culture and Societies",ar:"الثقافة والمجتمعات",g:[15,32],L:["8.4.1","8.4.2","9.3.1","9.3.2","6.4.3"]},
 {lv:3,t:"Education and Jobs",ar:"التعليم والوظائف",g:[17,26],L:["7.2.1","7.2.2","9.1.1","9.1.2","9.1.3"]},
@@ -52,7 +52,7 @@ window.CURR=[
 {lv:3,t:"Environment and Nature",ar:"البيئة والطبيعة",g:[30],L:["6.3.1","6.3.2","6.3.3","9.2.1","7.3.2"]},
 {lv:3,t:"Health and Lifestyle",ar:"الصحة ونمط الحياة",g:[20,29],L:["6.1.1","6.1.2","6.1.3","7.3.3","10.1.3"]},
 {lv:3,t:"Ambitions and Goals",ar:"الطموحات والأهداف",g:[65],L:["7.4.1","7.4.2","7.4.3","10.3.2","9.4.3"]},
-{lv:3,t:"Opinions and Discussion",ar:"إبداء الرأي ومناقشة الأفكار",g:[45],L:["9.2.2","9.2.3","9.3.3","9.4.2","8.1.3"]},
+{lv:3,t:"Opinions and Discussion",ar:"إبداء الرأي ومناقشة الأفكار",g:[51,45],L:["9.2.2","9.2.3","9.3.3","9.4.2","8.1.3"]},
 /* ---------------- B2 ---------------- */
 {lv:4,t:"Economy and Business",ar:"الاقتصاد والأعمال",g:[31,48],L:["12.1.1","12.1.2","12.1.3","10.3.1","10.3.3"]},
 {lv:4,t:"Science and Technology",ar:"العلوم والتكنولوجيا",g:[33],L:["10.1.1","10.1.2","11.3.1","11.3.2","11.3.3"]},
@@ -69,10 +69,25 @@ window.CURR=[
 {lv:5,t:"Philosophical and Critical Thinking",ar:"التفكير الفلسفي والنقدي",g:[57,60],L:["18.2.1","18.2.2","18.2.3","17.4.1","17.4.3"]},
 {lv:5,t:"Advanced Business and Economics",ar:"الأعمال والاقتصاد المتقدم",g:[67],L:["17.3.1","17.3.2","17.3.3","14.1.2","14.1.1"]},
 {lv:5,t:"Rhetoric and Persuasion",ar:"الخطاب والإقناع",g:[69,68],L:["17.1.1","17.1.2","17.1.3","16.4.3","20.3.3"]},
-{lv:5,t:"Literature and Text Analysis",ar:"الأدب وتحليل النصوص",g:[64,"n:idiom"],L:["20.1.1","20.1.2","20.1.3","17.4.2","18.3.3"]},
+{lv:5,t:"Literature and Text Analysis",ar:"الأدب وتحليل النصوص",g:["n:idiom"],L:["20.3.1","20.1.2","20.1.3","17.4.2","18.3.3"]},
 {lv:5,t:"Media and Public Discourse",ar:"الإعلام والخطاب العام",g:[70],L:["16.4.1","16.4.2","16.2.1","16.2.2","16.2.3"]},
 {lv:5,t:"Advanced Professional Communication",ar:"التواصل المهني المتقدم",g:[55,72],L:["20.2.1","20.2.2","20.2.3","16.3.1","16.3.3"]},
-{lv:5,t:"Scientific Research",ar:"البحث العلمي",g:[63],L:["17.2.1","17.2.2","17.2.3","16.1.3","19.2.1"]},
+{lv:5,t:"Scientific Research",ar:"البحث العلمي",g:[54],L:["17.2.1","17.2.2","17.2.3","16.1.3","19.2.1"]},
 {lv:5,t:"Complex Discussions and Abstract Ideas",ar:"النقاشات المعقدة والأفكار المجردة",g:[52,75],L:["18.3.1","18.3.2","19.1.1","19.1.2","19.2.2"]},
 {lv:5,t:"Nuance, Register and Mastery",ar:"الفروق الدقيقة والأساليب الرسمية وغير الرسمية",g:[61,74,79],L:["18.4.1","18.4.2","18.4.3","20.4.1","20.4.3"]}
 ];
+
+Object.assign(window.NEWG,{
+alpha:{t:"The English alphabet",f:"26 letters · 5 vowels (a e i o u) · 21 consonants",e:"English has 26 letters. Five letters are vowels: a, e, i, o and u. The other 21 letters are consonants. Each letter has a capital form (A) and a small form (a). Every letter has a name and a sound.",a:"في الإنجليزية 26 حرفاً: خمسة منها حروف علّة (a e i o u) و21 حرفاً ساكناً. لكل حرف شكل كبير (A) وشكل صغير (a)، ولكل حرف اسم وصوت.",x:["A a: apple","B b: bag","Z z: zebra"],m:["The letters b and d are the same.","The letters b and d are different: b has its circle on the right, d has it on the left."],q:[["How many letters are in the English alphabet?","26","24","28","20"],["Which letter is a vowel?","E","B","T","M"],["Which word starts with a vowel?","apple","bag","cat","dog"]]},
+sounds:{t:"Short vowels, magic e and digraphs",f:"cat · pig · box · cake · chair · ship · think",e:"Short vowel sounds are in words like cat, bed, pig, hot and cup. When a word ends in e, the e is silent and the vowel says its name: cake, bike, home. Two letters can make one sound: ch in chair, sh in ship and th in think.",a:"الحروف المتحركة القصيرة مثل cat وbed وpig. وعندما تنتهي الكلمة بحرف e صامت (magic e) ينطق الحرف المتحرك باسمه: cake وbike. وبعض الحروف تجتمع لتعطي صوتاً واحداً: ch وsh وth.",x:["cat, hat, map","cake, bike, home","chair, ship, think"],m:["I read cake as cack.","The final e is silent and makes the a say its name, so we read cake as kayk."],q:[["Which word has the sh sound?","ship","chair","cat","bed"],["In cake, what does the final e do?","It is silent","It says e","It says k","It says o"],["Which word has a short o sound?","hot","cake","bike","home"]]},
+writing:{t:"Capital letters and punctuation",f:"Capital letter + words + full stop or question mark",e:"A sentence starts with a capital letter and ends with a full stop (.) or a question mark (?). Names, the word I and the days of the week also start with a capital letter. Leave a space between words.",a:"تبدأ الجملة بحرف كبير وتنتهي بنقطة (.) أو علامة استفهام (?). والأسماء والضمير I وأيام الأسبوع تبدأ بحرف كبير أيضاً، مع ترك مسافة بين الكلمات.",x:["My name is Sara.","Is this your bag?","I can swim."],m:["my name is omar","My name is Omar."],q:[["Which sentence is correct?","I have a cat.","i have a cat.","I have a cat","i have a Cat"],["What ends a question?","A question mark","A full stop","A space","A capital letter"],["Which word needs a capital letter?","Monday","table","green","fast"]]},
+words:{t:"Naming, doing and describing words",f:"noun (a cat) · verb (run) · adjective (big)",e:"A noun names a person, an animal, a place or a thing: boy, dog, garden, ball. A verb shows what someone does: run, jump, bring. An adjective describes a noun: a big dog, a red ball. A short sentence needs a noun and a verb: The dog runs.",a:"الاسم (noun) يسمّي شخصاً أو حيواناً أو مكاناً أو شيئاً، والفعل (verb) يدل على عمل، والصفة (adjective) تصف الاسم. والجملة القصيرة تحتاج اسماً وفعلاً: The dog runs.",x:["The boy runs.","A big dog jumps.","The red ball is in the garden."],m:["Dog the runs.","The dog runs."],q:[["Which word is a noun?","garden","run","big","fast"],["Which word is a verb?","jump","ball","red","little"],["Which sentence is in the right order?","The dog runs.","Dog the runs.","Runs the dog.","The runs dog."]]}
+});
+const _S=(k)=>"s:"+k;
+window.CURR=[
+{lv:1,t:"The English Alphabet",ar:"الأبجدية الإنجليزية",g:["n:alpha"],L:["s-a1","s-a2","s-a3","s-a4","s-a5"].map(_S)},
+{lv:1,t:"Sounds and First Words",ar:"الأصوات والكلمات الأولى",g:["n:sounds"],L:["s-b1","s-b2","s-b3","s-b4","s-b5"].map(_S)},
+{lv:1,t:"Writing Basics",ar:"أساسيات الكتابة",g:["n:writing"],L:["s-c1","s-c2","s-c3","s-c4","s-c5"].map(_S)},
+{lv:1,t:"Your First Sentences",ar:"جملك الأولى",g:["n:words"],L:["s-d1","s-d2","s-d3","s-d4","s-d5"].map(_S)}
+].concat(window.CURR.map(u=>Object.assign({},u,{lv:u.lv+1})));
+window.CEFRL.unshift({c:"Pre-A1",n:"Starter",ar:"تأسيس",d:"You learn the English letters and sounds, and you read and write your first words and sentences.",goal:"Start from zero: the alphabet, sounds, writing basics and your first sentences."});
